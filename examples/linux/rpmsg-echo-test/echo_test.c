@@ -236,6 +236,20 @@ static void lookup_channel(char *out, struct rpmsg_endpoint_info *pep)
 	fprintf(stderr, "No dev file for %s in %s\n", pep->name, dpath);
 }
 
+/* s is argv[0] */
+void print_help(const char *s)
+{
+	const char *default_bin_name = "echo_test";
+	if (!s)
+		s = default_bin_name;
+	printf("\r\nusage: %s [option: -d, -n, -s, -e]\r\n", s);
+	printf("-d - rpmsg device name\r\n");
+	printf("-n - number of times payload will be sent\r\n");
+	printf("-s - source end point address\r\n");
+	printf("-e - destination end point address\r\n");
+	printf("\r\n");
+}
+
 int main(int argc, char *argv[])
 {
 	int ret, i, j;
@@ -269,19 +283,20 @@ int main(int argc, char *argv[])
 			strncpy(rpmsg_dev, optarg, sizeof(rpmsg_dev));
 			break;
 		case 'n':
-			ntimes = atoi(optarg);
+			ntimes = strtol(optarg, NULL, 10);
 			break;
 		case 's':
-			eptinfo.src = atoi(optarg);
+			eptinfo.src = strtol(optarg, NULL, 10);
 			break;
 		case 'e':
-			eptinfo.dst = atoi(optarg);
+			eptinfo.dst = strtol(optarg, NULL, 10);
 			break;
 		default:
-			printf("getopt return unsupported option: -%c\n",opt);
-			break;
+			print_help(argv[0]);
+			return -EINVAL;
 		}
 	}
+
 
 	sprintf(fpath, RPMSG_BUS_SYS "/devices/%s", rpmsg_dev);
 	if (access(fpath, F_OK)) {
