@@ -1,3 +1,4 @@
+//SPDX-License-Identifier: BSD-3-Clause
 /*
  * echo_test.c
  *
@@ -6,11 +7,9 @@
  */
 
 /*
- * Test application that data integraty of inter processor
- * communication from linux userspace to a remote software
- * context. The application sends chunks of data to the
+ * The application sends chunks of data to the
  * remote processor. The remote side echoes the data back
- * to application which then validates the data returned.
+ * to application which then app validates the data returned.
  */
 
 #include <dirent.h>
