@@ -64,7 +64,7 @@ void send_shutdown(int fd)
 		perror("write SHUTDOWN_MSG\n");
 }
 
-int rpmsg_create_ept(int rpfd, struct rpmsg_endpoint_info *eptinfo)
+int app_rpmsg_create_ept(int rpfd, struct rpmsg_endpoint_info *eptinfo)
 {
 	int ret;
 
@@ -311,11 +311,11 @@ int main(int argc, char *argv[])
 		return charfd;
 
 	/* Create endpoint from rpmsg char driver */
-	PR_DBG("rpmsg_create_ept: %s[src=%#x,dst=%#x]\n",
+	PR_DBG("app_rpmsg_create_ept: %s[src=%#x,dst=%#x]\n",
 		eptinfo.name, eptinfo.src, eptinfo.dst);
-	ret = rpmsg_create_ept(charfd, &eptinfo);
+	ret = app_rpmsg_create_ept(charfd, &eptinfo);
 	if (ret) {
-		fprintf(stderr, "rpmsg_create_ept %s\n", strerror(errno));
+		fprintf(stderr, "app_rpmsg_create_ept %s\n", strerror(errno));
 		return -EINVAL;
 	}
 	if (!get_rpmsg_ept_dev_name(rpmsg_char_name, eptinfo.name,
