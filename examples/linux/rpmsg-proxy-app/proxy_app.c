@@ -33,7 +33,6 @@ struct _proxy_data {
 static struct _proxy_data *proxy;
 char fw_dst_path[] = "/lib/firmware/image_rpc_demo";
 char sbuf[512];
-int r5_id = 0;
 
 int handle_open(struct _sys_rpc *rpc)
 {
@@ -403,16 +402,6 @@ void kill_action_handler(int signum)
 	stop_remote();
 }
 
-void display_help_msg(void)
-{
-	printf("\r\nLinux proxy application.\r\n");
-	printf("-v	 Displays proxy application version.\n");
-	printf("-c	 Whether to use RPMsg char driver.\n");
-	printf("-f	 Accepts path of firmware to load on remote core.\n");
-	printf("-r       Which remoteproc instance\n");
-	printf("-h	 Displays this help message.\n");
-}
-
 int main(int argc, char *argv[])
 {
 	struct sigaction exit_action;
@@ -440,37 +429,6 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &exit_action, NULL);
 	sigaction(SIGKILL, &kill_action, NULL);
 	sigaction(SIGHUP, &kill_action, NULL);
-
-	while ((opt = getopt(argc, argv, "vhf:r:")) != -1) {
-		switch (opt) {
-		case 'f':
-			user_fw_path = optarg;
-			break;
-		case 'r':
-			r5_id = atoi(optarg);
-			if (r5_id != 0 && r5_id != 1) {
-				display_help_msg();
-				return -1;
-			}
-			break;
-		case 'v':
-			printf("\r\nLinux proxy application version 1.1\r\n");
-			return 0;
-		case 'h':
-			display_help_msg();
-			return 0;
-		default:
-			printf("getopt return unsupported option: -%c\n",opt);
-			break;
-		}
-	}
-
-	/* Bring up remote firmware */
-	printf("\r\nMaster>Loading remote firmware\r\n");
-	if (user_fw_path) {
-		sprintf(sbuf, "cp %s %s", user_fw_path, fw_dst_path);
-		system(sbuf);
-	}
 
 	/* Load rpmsg_char driver */
 	printf("\r\nHost>probe rpmsg_char\r\n");
