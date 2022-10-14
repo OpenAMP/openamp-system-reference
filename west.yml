@@ -1,0 +1,18 @@
+# Copyright (c) 2022 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  remotes:
+    - name: openamp
+      url-base: https://github.com/OpenAMP
+  defaults:
+    remote: openamp
+
+  self:
+    path: openamp-system-reference
+
+  projects:
+    - name: openamp-zephyr-staging
+      path: zephyr
+      revision: v3.2-branch
+      import: true
