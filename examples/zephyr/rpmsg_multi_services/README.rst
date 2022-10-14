@@ -1,7 +1,7 @@
 .. _openAMP_rsc_table_sample:
 
-OpenAMP Sample Application using resource table
-###############################################
+OpenAMP multi services sample Application using resource table
+##############################################################
 
 Overview
 ********
@@ -24,13 +24,16 @@ Zephyr
 
 .. zephyr-app-commands::
    :zephyr-app: samples/subsys/ipc/openamp_rsc_table
-   :goals: test
 
 Linux
 ------
 
-Enable SAMPLE_RPMSG_CLIENT configuration to build and install
-the rpmsg_client_sample.ko module on the target.
+Enable:
+
+- the SAMPLE_RPMSG_CLIENT configuration to build and install
+  the rpmsg_client_sample.ko module on the target,
+- the RPMSG_TTY configuration to build and install the
+  rpmsg_tty.ko module on the target
 
 Running the sample
 *******************
