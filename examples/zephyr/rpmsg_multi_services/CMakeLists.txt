@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.20.0)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
-project(openamp_rsc_table_remote)
+project(rpmsg_multi_services)
 
 # METAL_MAX_DEVICE_REGIONS is used to give the number of memory regions shared
 # between processors. By default only one region is defined for the vrings
