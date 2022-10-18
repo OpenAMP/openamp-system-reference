@@ -127,9 +127,38 @@ static void receive_message(unsigned char **msg, unsigned int *len)
 	}
 }
 
+static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
+{
+	LOG_INF("destroy end point name %s\n", ept->name);
+	/*
+	 * FIXME: need to set endpoint name to void to not send a ns destroy
+	 * announcement that generates an error on Linux side
+	 */
+	ept->name[0] = 0;
+	rpmsg_destroy_ept(ept);
+}
+
 static void new_service_cb(struct rpmsg_device *rdev, const char *name,
 			   uint32_t src)
 {
+	int ret;
+
+	if (strcmp(name, "rpmsg-tty") == 0  && !tty_ept[1].rdev) {
+		tty_ept[1].priv = &tty_msg[1];
+		ret = rpmsg_create_ept(&tty_ept[1], rpdev, "rpmsg-tty",
+				       RPMSG_ADDR_ANY, src,
+				       rpmsg_recv_tty_callback,
+				       rpmsg_service_unbind);
+		if (ret != 0) {
+			LOG_ERR("Creating remote endpoint %s failed with error %d", name, ret);
+			return;
+		}
+
+		LOG_INF("request to bind new service %s\n", name);
+		rpmsg_send(&tty_ept[1], "bound", sizeof("bound"));
+
+		return;
+	}
 	LOG_ERR("%s: unexpected ns service receive for name %s\n",
 		__func__, name);
 }
