@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, STMICROELECTRONICS
+ * Copyright (c) 2022, STMICROELECTRONICS
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -32,6 +32,8 @@ LOG_MODULE_REGISTER(openamp_rsc_table, LOG_LEVEL_DBG);
 #define SHM_SIZE		DT_REG_SIZE(SHM_NODE)
 
 #define APP_TASK_STACK_SIZE (512)
+
+#define MAX_TTY_EPT  2
 
 /* Add 512 extra bytes for the TTY task stack for the "tx_buff" buffer. */
 #define APP_TTY_TASK_STACK_SIZE (1024)
@@ -79,8 +81,8 @@ static char rx_cs_msg[20];  /* should receive "Hello world!" */
 static struct rpmsg_endpoint cs_ept;
 static struct rpmsg_rcv_msg cs_msg = {.data = rx_cs_msg};
 
-static struct rpmsg_endpoint tty_ept;
-static struct rpmsg_rcv_msg tty_msg;
+static struct rpmsg_endpoint tty_ept[MAX_TTY_EPT];
+static struct rpmsg_rcv_msg tty_msg[MAX_TTY_EPT];
 
 static K_SEM_DEFINE(data_sem, 0, 1);
 static K_SEM_DEFINE(data_cs_sem, 0, 1);
@@ -303,29 +305,35 @@ void app_rpmsg_tty(void *arg1, void *arg2, void *arg3)
 	ARG_UNUSED(arg2);
 	ARG_UNUSED(arg3);
 	unsigned char tx_buff[512];
-	int ret = 0;
+	int i, ret = 0;
 
 	k_sem_take(&data_tty_sem,  K_FOREVER);
 
 	printk("\r\nOpenAMP[remote] Linux tty responder started\r\n");
 
-	tty_ept.priv = &tty_msg;
-	ret = rpmsg_create_ept(&tty_ept, rpdev, "rpmsg-tty",
+	/*
+	 * The first TTY channel instance is created locally
+	 * The second one will be instantiate on a name service announcement
+	 */
+	tty_ept[0].priv = &tty_msg[0];
+	ret = rpmsg_create_ept(&tty_ept[0], rpdev, "rpmsg-tty",
 			       RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
 			       rpmsg_recv_tty_callback, NULL);
 
-	while (tty_ept.addr !=  RPMSG_ADDR_ANY) {
+	while (tty_ept[0].addr !=  RPMSG_ADDR_ANY) {
 		k_sem_take(&data_tty_sem,  K_FOREVER);
-		if (tty_msg.len) {
-			snprintf(tx_buff, 13, "TTY 0x%04x: ", tty_ept.addr);
-			memcpy(&tx_buff[12], tty_msg.data, tty_msg.len);
-			rpmsg_send(&tty_ept, tx_buff, tty_msg.len + 13);
-			rpmsg_release_rx_buffer(&tty_ept, tty_msg.data);
+		for (i = 0; i < MAX_TTY_EPT; i++) {
+			if (tty_msg[i].len) {
+				snprintf(tx_buff, 8, "TTY %d: ", i);
+				memcpy(&tx_buff[7], tty_msg[i].data, tty_msg[i].len);
+				rpmsg_send(&tty_ept[i], tx_buff, tty_msg[i].len + 8);
+				rpmsg_release_rx_buffer(&tty_ept[i], tty_msg[i].data);
+			}
+			tty_msg[i].len = 0;
+			tty_msg[i].data = NULL;
 		}
-		tty_msg.len = 0;
-		tty_msg.data = NULL;
 	}
-	rpmsg_destroy_ept(&tty_ept);
+	rpmsg_destroy_ept(&tty_ept[0]);
 
 	printk("OpenAMP Linux TTY responder ended\n");
 }
