@@ -34,17 +34,21 @@ LOG_MODULE_REGISTER(openamp_rsc_table, LOG_LEVEL_DBG);
 #define APP_TASK_STACK_SIZE (512)
 
 #define MAX_TTY_EPT  2
+#define MAX_RAW_EPT  2
 
 /* Add 512 extra bytes for the TTY task stack for the "tx_buff" buffer. */
 #define APP_TTY_TASK_STACK_SIZE (1024)
+#define APP_RAW_TASK_STACK_SIZE (1024)
 
 K_THREAD_STACK_DEFINE(thread_mng_stack, APP_TASK_STACK_SIZE);
 K_THREAD_STACK_DEFINE(thread_rp__client_stack, APP_TASK_STACK_SIZE);
 K_THREAD_STACK_DEFINE(thread_tty_stack, APP_TTY_TASK_STACK_SIZE);
+K_THREAD_STACK_DEFINE(thread_raw_stack, APP_RAW_TASK_STACK_SIZE);
 
 static struct k_thread thread_mng_data;
 static struct k_thread thread_rp__client_data;
 static struct k_thread thread_tty_data;
+static struct k_thread thread_raw_data;
 
 static const struct device *const ipm_handle =
 	DEVICE_DT_GET(DT_CHOSEN(zephyr_ipc));
@@ -66,6 +70,7 @@ struct metal_device shm_device = {
 struct rpmsg_rcv_msg {
 	void *data;
 	size_t len;
+	uint32_t src;
 };
 
 static struct metal_io_region *shm_io;
@@ -84,9 +89,13 @@ static struct rpmsg_rcv_msg cs_msg = {.data = rx_cs_msg};
 static struct rpmsg_endpoint tty_ept[MAX_TTY_EPT];
 static struct rpmsg_rcv_msg tty_msg[MAX_TTY_EPT];
 
+static struct rpmsg_endpoint raw_ept[MAX_RAW_EPT];
+static struct rpmsg_rcv_msg raw_msg[MAX_RAW_EPT];
+
 static K_SEM_DEFINE(data_sem, 0, 1);
 static K_SEM_DEFINE(data_cs_sem, 0, 1);
 static K_SEM_DEFINE(data_tty_sem, 0, 1);
+static K_SEM_DEFINE(data_raw_sem, 0, 1);
 
 static void platform_ipm_callback(const struct device *dev, void *context,
 				  uint32_t id, volatile void *data)
@@ -114,6 +123,21 @@ static int rpmsg_recv_tty_callback(struct rpmsg_endpoint *ept, void *data,
 	tty_msg->data = data;
 	tty_msg->len = len;
 	k_sem_give(&data_tty_sem);
+
+	return RPMSG_SUCCESS;
+}
+
+static int rpmsg_recv_raw_callback(struct rpmsg_endpoint *ept, void *data,
+				   size_t len, uint32_t src, void *priv)
+{
+	struct rpmsg_rcv_msg *raw_msg = priv;
+
+	rpmsg_hold_rx_buffer(ept, data);
+	raw_msg->data = data;
+	raw_msg->len = len;
+	raw_msg->src = src;
+
+	k_sem_give(&data_raw_sem);
 
 	return RPMSG_SUCCESS;
 }
@@ -367,6 +391,50 @@ void app_rpmsg_tty(void *arg1, void *arg2, void *arg3)
 	printk("OpenAMP Linux TTY responder ended\n");
 }
 
+void app_rpmsg_raw(void *arg1, void *arg2, void *arg3)
+{
+	ARG_UNUSED(arg1);
+	ARG_UNUSED(arg2);
+	ARG_UNUSED(arg3);
+	unsigned char buff[512];
+	int i, ret = 0;
+
+	k_sem_take(&data_raw_sem,  K_FOREVER);
+
+	printk("\r\nOpenAMP[remote] Linux raw data responder started\r\n");
+
+	raw_ept[0].priv = &raw_msg[0];
+	ret = rpmsg_create_ept(&raw_ept[0], rpdev, "rpmsg-raw",
+			       RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
+			       rpmsg_recv_raw_callback, NULL);
+
+	printk("\r\nOpenAMP[remote] create a endpoint with address and dest_address set to 0x1\r\n");
+
+	ret = rpmsg_create_ept(&raw_ept[1], rpdev, "rpmsg-raw",
+			       0x1, 0x1,
+			       rpmsg_recv_raw_callback, NULL);
+
+	raw_ept[1].priv = &raw_msg[1];
+	while (raw_ept[0].addr !=  RPMSG_ADDR_ANY) {
+		k_sem_take(&data_raw_sem,  K_FOREVER);
+		for (i = 0; i < MAX_RAW_EPT; i++) {
+			if (raw_msg[i].len) {
+				snprintf(buff, 18, "from ept 0x%04x: ", raw_ept[i].addr);
+				memcpy(&buff[17], raw_msg[i].data, raw_msg[i].len);
+				rpmsg_sendto(&raw_ept[i], buff, raw_msg[i].len + 18,
+					     raw_msg[i].src);
+				rpmsg_release_rx_buffer(&raw_ept[i], raw_msg[i].data);
+			}
+			raw_msg[i].len = 0;
+			raw_msg[i].data = NULL;
+		}
+	}
+	rpmsg_destroy_ept(&raw_ept[0]);
+	rpmsg_destroy_ept(&raw_ept[1]);
+
+	printk("OpenAMP Linux raw data responder ended\n");
+}
+
 void rpmsg_mng_task(void *arg1, void *arg2, void *arg3)
 {
 	ARG_UNUSED(arg1);
@@ -397,6 +465,7 @@ void rpmsg_mng_task(void *arg1, void *arg2, void *arg3)
 	/* start the rpmsg clients */
 	k_sem_give(&data_cs_sem);
 	k_sem_give(&data_tty_sem);
+	k_sem_give(&data_raw_sem);
 
 	while (1) {
 		receive_message(&msg, &len);
@@ -419,5 +488,8 @@ void main(void)
 			NULL, NULL, NULL, K_PRIO_COOP(7), 0, K_NO_WAIT);
 	k_thread_create(&thread_tty_data, thread_tty_stack, APP_TTY_TASK_STACK_SIZE,
 			(k_thread_entry_t)app_rpmsg_tty,
+			NULL, NULL, NULL, K_PRIO_COOP(7), 0, K_NO_WAIT);
+	k_thread_create(&thread_raw_data, thread_raw_stack, APP_TASK_STACK_SIZE * 2,
+			(k_thread_entry_t)app_rpmsg_raw,
 			NULL, NULL, NULL, K_PRIO_COOP(7), 0, K_NO_WAIT);
 }
