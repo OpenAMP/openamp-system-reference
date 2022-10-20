@@ -1,17 +1,25 @@
-OUT := rpmsgexport
+EPT := rpmsg_export_ept
 
 CFLAGS := -Wall -g -O2
 LDFLAGS := 
 prefix := /usr/local
 
-SRCS := rpmsgexport.c
+SRCS := rpmsg_export_ept.c
 OBJS := $(SRCS:.c=.o)
 
-$(OUT): $(OBJS)
+$(EPT): rpmsg_export_ept.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
-install: $(OUT)
-	install -D -m 755 $< $(DESTDIR)$(prefix)/bin/$<
+all: $(EPT)
+.PHONY : all
+
+	$(CC) $(LDFLAGS) -o $@ $^
+
+install: $(EPT)
+	install -D -m 755 $(EPT) $(DESTDIR)$(prefix)/bin/$(EPT)
 
 clean:
-	rm -f $(OUT) $(OBJS)
+	rm -f $(EPT) $(OBJS)
+
+distclean:
+	rm -f $(DESTDIR)$(prefix)/bin/$(EPT)
