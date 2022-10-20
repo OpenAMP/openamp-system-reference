@@ -75,15 +75,15 @@ static struct rpmsg_virtio_device rvdev;
 static void *rsc_table;
 static struct rpmsg_device *rpdev;
 
-static char rx_sc_msg[20];  /* should receive "Hello world!" */
-static struct rpmsg_endpoint sc_ept;
-static struct rpmsg_rcv_msg sc_msg = {.data = rx_sc_msg};
+static char rx_cs_msg[20];  /* should receive "Hello world!" */
+static struct rpmsg_endpoint cs_ept;
+static struct rpmsg_rcv_msg cs_msg = {.data = rx_cs_msg};
 
 static struct rpmsg_endpoint tty_ept;
 static struct rpmsg_rcv_msg tty_msg;
 
 static K_SEM_DEFINE(data_sem, 0, 1);
-static K_SEM_DEFINE(data_sc_sem, 0, 1);
+static K_SEM_DEFINE(data_cs_sem, 0, 1);
 static K_SEM_DEFINE(data_tty_sem, 0, 1);
 
 static void platform_ipm_callback(const struct device *dev, void *context,
@@ -96,9 +96,9 @@ static void platform_ipm_callback(const struct device *dev, void *context,
 static int rpmsg_recv_cs_callback(struct rpmsg_endpoint *ept, void *data,
 				  size_t len, uint32_t src, void *priv)
 {
-	memcpy(sc_msg.data, data, len);
-	sc_msg.len = len;
-	k_sem_give(&data_sc_sem);
+	memcpy(cs_msg.data, data, len);
+	cs_msg.len = len;
+	k_sem_give(&data_cs_sem);
 
 	return RPMSG_SUCCESS;
 }
@@ -145,7 +145,7 @@ int mailbox_notify(void *priv, uint32_t id)
 int platform_init(void)
 {
 	void *rsc_tab_addr;
-	int rsc_size;
+	int rcs_size;
 	struct metal_device *device;
 	struct metal_init_params metal_params = METAL_INIT_DEFAULTS;
 	int status;
@@ -179,11 +179,11 @@ int platform_init(void)
 	}
 
 	/* declare resource table region */
-	rsc_table_get(&rsc_tab_addr, &rsc_size);
+	rsc_table_get(&rsc_tab_addr, &rcs_size);
 	rsc_table = (struct st_resource_table *)rsc_tab_addr;
 
 	metal_io_init(&device->regions[1], rsc_table,
-		      (metal_phys_addr_t *)rsc_table, rsc_size, -1, 0, NULL);
+		      (metal_phys_addr_t *)rsc_table, rcs_size, -1, 0, NULL);
 
 	rsc_io = metal_device_io_region(device, 1);
 	if (!rsc_io) {
@@ -279,20 +279,20 @@ void app_rpmsg_client_sample(void *arg1, void *arg2, void *arg3)
 	unsigned int msg_cnt = 0;
 	int ret = 0;
 
-	k_sem_take(&data_sc_sem,  K_FOREVER);
+	k_sem_take(&data_cs_sem,  K_FOREVER);
 
 	printk("\r\nOpenAMP[remote] Linux sample client responder started\r\n");
 
-	ret = rpmsg_create_ept(&sc_ept, rpdev, "rpmsg-client-sample",
+	ret = rpmsg_create_ept(&cs_ept, rpdev, "rpmsg-client-sample",
 			       RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
 			       rpmsg_recv_cs_callback, NULL);
 
 	while (msg_cnt < 100) {
-		k_sem_take(&data_sc_sem,  K_FOREVER);
+		k_sem_take(&data_cs_sem,  K_FOREVER);
 		msg_cnt++;
-		rpmsg_send(&sc_ept, sc_msg.data, sc_msg.len);
+		rpmsg_send(&cs_ept, cs_msg.data, cs_msg.len);
 	}
-	rpmsg_destroy_ept(&sc_ept);
+	rpmsg_destroy_ept(&cs_ept);
 
 	printk("OpenAMP Linux sample client responder ended\n");
 }
@@ -358,7 +358,7 @@ void rpmsg_mng_task(void *arg1, void *arg2, void *arg3)
 	}
 
 	/* start the rpmsg clients */
-	k_sem_give(&data_sc_sem);
+	k_sem_give(&data_cs_sem);
 	k_sem_give(&data_tty_sem);
 
 	while (1) {
