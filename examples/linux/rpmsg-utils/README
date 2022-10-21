@@ -26,3 +26,8 @@ SUBSYSTEM=="rpmsg", KERNEL=="rpmsg[0-9]*", \
 eptdestroy
 ====
 "rpmsg_destroy_ept" implements RPMSG_DESTROY_EPT_IOCTL to destroy an endpoint created by the RPMSG_CREATE_EPT_IOCTL.
+
+ping
+====
+"rpmsg_ping" is a test binary that open a rpmsg chardev for a an echo
+test (write a pattern and wait an answer).
