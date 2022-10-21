@@ -30,4 +30,10 @@ eptdestroy
 ping
 ====
 "rpmsg_ping" is a test binary that open a rpmsg chardev for a an echo
-test (write a pattern and wait an answer).
+test (write a patern and wait an answer)
+
+rpmsgexportdev
+==============
+"rpmsg_export_dev" implements RPMSG_CREATE_DEV_IOCTL to create local RPMsg device
+as remoteproc devices are booted.
+Adding option -d as first argument release the device using RPMSG_RELEASE_DEV_IOCTL control.
