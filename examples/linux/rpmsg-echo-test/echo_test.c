@@ -236,13 +236,11 @@ static void lookup_channel(char *out, struct rpmsg_endpoint_info *pep)
 	fprintf(stderr, "No dev file for %s in %s\n", pep->name, dpath);
 }
 
-/* s is argv[0] */
-void print_help(const char *s)
+void print_help(void)
 {
-	const char *default_bin_name = "echo_test";
-	if (!s)
-		s = default_bin_name;
-	printf("\r\nusage: %s [option: -d, -n, -s, -e]\r\n", s);
+	extern char *__progname;
+
+	printf("\r\nusage: %s [option: -d, -n, -s, -e]\r\n", __progname);
 	printf("-d - rpmsg device name\r\n");
 	printf("-n - number of times payload will be sent\r\n");
 	printf("-s - source end point address\r\n");
@@ -293,7 +291,7 @@ int main(int argc, char *argv[])
 			eptinfo.dst = strtol(optarg, NULL, 10);
 			break;
 		default:
-			print_help(argv[0]);
+			print_help();
 			return -EINVAL;
 		}
 	}
