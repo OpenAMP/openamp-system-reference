@@ -274,6 +274,12 @@ int main(int argc, char *argv[])
 		return -EINVAL;
 	}
 
+	/*
+	 * try probbing rpmsg_ctrl for new kernel, However it's not failure
+	 * if rpmsg_ctrl is not available in case of kernel < 6.0
+	 */
+	system("modprobe rpmsg_ctrl");
+
 	lookup_channel(rpmsg_dev, &eptinfo);
 
 	while ((opt = getopt(argc, argv, "d:n:s:e:")) != -1) {
