@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
 	printf("\r\n Echo test start \r\n");
 
 	/* Load rpmsg_char driver */
-	printf("\r\nMaster>probe rpmsg_char\r\n");
+	printf("\r\nHost>probe rpmsg_char\r\n");
 	ret = system("set -x; lsmod; modprobe rpmsg_char");
 	if (ret < 0) {
 		perror("Failed to load rpmsg_char driver.\n");
