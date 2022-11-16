@@ -410,7 +410,7 @@ int main(int argc, char *argv[])
 	int opt = 0;
 	int ret = 0;
 	char *user_fw_path = 0;
-	char rpmsg_dev_name[NAME_MAX];
+	char rpmsg_dev_name[NAME_MAX] = "virtio0.rpmsg-openamp-demo-channel.-1.0";
 	char rpmsg_ctrl_dev_name[NAME_MAX] = "virtio0.rpmsg_ctrl.0.0";
 	char rpmsg_char_name[16];
 	int rpmsg_char_fd = -1;
