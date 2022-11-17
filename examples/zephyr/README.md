@@ -1,8 +1,7 @@
 # Zephyr Example Application
 
 This repository contains Zephyr example applications. The main purpose of this
-repository is to provide references and demo on the use of OpenAMP on Zephyr based
-applications. features demonstrated in this example are:
+repository is to provide references and demo on the use of OpenAMP on Zephyr based applications. features demonstrated in this example are:
 
 - [rpmsg multi service][rms_app] application
 
@@ -34,11 +33,10 @@ west update
 The application can be built by running:
 
 ```shell
-west z openamp-zephyr-staging build -b $BOARD app
+west build -b $BOARD `$ZEPHYR_EXAMPLE`
 ```
 
 where `$BOARD` is the target board and `$ZEPHYR_EXAMPLE`.
-The `custom_plank` board found in this repository can be used.
 Note that Zephyr sample boards may be used if an appropriate overlay is provided (see `app/boards`).
 
 A sample debug configuration is also provided. You can apply it by running:
