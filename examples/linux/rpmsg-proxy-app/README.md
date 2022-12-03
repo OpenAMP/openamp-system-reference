@@ -1,6 +1,6 @@
-app: proxy_app
+# app: proxy_app
 
-Description:
+## Description:
 
   This app demonstrates two functionality
   1) Use of host processor's file system by remote processor
@@ -40,5 +40,6 @@ Description:
   remote via rpmsg_char driver and Remote communicates to Host via redirected
   Standard IO.
 
-Remote processor firmware: Xilinx ZynqMP cortex-r5 platform
+## Remote processor firmware: Xilinx ZynqMP cortex-r5 platform
+
   https://github.com/OpenAMP/open-amp/blob/main/apps/examples/rpc_demo/rpc_demo.c
