@@ -1,6 +1,7 @@
-app: mat_mul_demo
+# app: mat_mul_demo
 
-Description:
+## Description:
+
   This example demonstrate interprocessor communication using rpmsg framework
   in the Linux kernelspace. Host (this) application generates two random matrices and send
   them to remote processor using rpmsg framework in the Linux kernelspace and waits for
@@ -11,5 +12,6 @@ Description:
   User can also pass custom endpoint information with -s (source address)
   and -e (destination address) options as well.
 
-Remote processor firmware: Xilinx ZynqMP cortex-r5 platform
+## Remote processor firmware: Xilinx ZynqMP cortex-r5 platform
+
   https://github.com/OpenAMP/open-amp/blob/main/apps/examples/matrix_multiply/matrix_multiply.c
