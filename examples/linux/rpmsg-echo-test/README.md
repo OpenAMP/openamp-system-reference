@@ -1,36 +1,43 @@
-# app: echo_test
+# Demo: echo_test
 
-## Description:
-
-  This demo uses kernel rpmsg framework to send various size of data buffer to remote
+  This demo uses the Linux kernel rpmsg framework to send various size of data buffer to remote
   processor and validates integrity of received buffer from remote processor.
   If buffer data does not match, then number of different bytes are reported on
-  console
+  console.
 
-## Remote processor firmware: Xilinx ZynqMP cortex-r5 platform
+  Platform: Xilinx Zynq UltraScale+ MPSoC(a.k.a ZynqMP)
 
-  https://github.com/OpenAMP/open-amp/blob/main/apps/examples/echo/rpmsg-echo.c
+  Board: ZynqMP Zcu102
 
-## How to Build for Xilinx ZynqMP platform
-  * https://github.com/OpenAMP/open-amp#example-to-compile-zynq-ultrascale-mpsoc-r5-genericbaremetal-remote
+  ## Remote Processor firmware (image_echo_test)
+
+  * Remote processor firmware for Xilinx ZynqMP cortex-r5 platform based on: [rpmsg-echo.c](https://github.com/OpenAMP/open-amp/blob/main/apps/examples/echo/rpmsg-echo.c)
+
+  * Instructions to compile: [ZynqMP r5f generic baremetal](https://github.com/OpenAMP/open-amp/blob/main/README.md#example-to-compile-zynq-ultrascale-mpsoc-r5-genericbaremetal-remote)
+
   * RPU firmware elf file is expected in sdk at path: /lib/firmware/
-  * This build step needs Xilinx Vendor specific toolchain xsdb
 
-## How to run on zcu102 board/QEMU:
+  * Xilinx Vendor specific SDK is required to build RPU firmware: [Xilinx Petalinux](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/embedded-design-tools.html)
 
-Assume all the binaries are zcu102 board specific.
+  * More information is provided here: [Xilinx Wiki page for OpenAMP](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841718/OpenAMP)
 
-   ##### Specify Echo Test Firmware to be loaded.
-   `echo image_echo_test > /sys/class/remoteproc/remoteproc0/firmware`
+  ## Run the demo
 
-   ##### Load and start target Firmware onto remote processor
-   `echo start > /sys/class/remoteproc/remoteproc0/state`
+  Assume all the binaries are board specific.
 
-   ##### check remote processor state
-   `cat /sys/class/remoteproc/remoteproc0/state`
+  ```
+  # Specify remote processor firmware to be loaded.
+  echo image_echo_test > /sys/class/remoteproc/remoteproc0/firmware
 
-   ##### Run echo_test application
-   `echo_test`
+  # Load and start target firmware onto remote processor
+  echo start > /sys/class/remoteproc/remoteproc0/state
 
-   ##### stop target firmware
-   `echo stop > /sys/class/remoteproc/remoteproc0/state`
+  # check remote processor state
+  cat /sys/class/remoteproc/remoteproc0/state
+
+  # Run echo_test application on host processor
+  echo_test
+
+  # Stop remote processor
+  echo stop > /sys/class/remoteproc/remoteproc0/state
+  ```

@@ -1,6 +1,4 @@
-# app: mat_mul_demo
-
-## Description:
+# Demo: matrix multiply
 
   This example demonstrate interprocessor communication using rpmsg framework
   in the Linux kernelspace. Host (this) application generates two random matrices and send
@@ -12,26 +10,38 @@
   User can also pass custom endpoint information with -s (source address)
   and -e (destination address) options as well.
 
-## Remote processor firmware: Xilinx ZynqMP cortex-r5 platform
+  Platform: Xilinx Zynq UltraScale+ MPSoC(a.k.a ZynqMP) 
 
-  https://github.com/OpenAMP/open-amp/blob/main/apps/examples/matrix_multiply/matrix_multiply.c
+  Board: ZynqMP Zcu102
 
-## How to Build for Xilinx ZynqMP platform
-  * https://github.com/OpenAMP/open-amp#example-to-compile-zynq-ultrascale-mpsoc-r5-genericbaremetal-remote
+  ## Remote Processor firmware (image_matrix_multiply)
+
+  * Remote processor firmware for Xilinx ZynqMP cortex-r5 platform based on: [matrix_multiply.c](https://github.com/OpenAMP/open-amp/blob/main/apps/examples/matrix_multiply/matrix_multiply.c)
+
+  * Instructions to compile: [ZynqMP r5f generic baremetal](https://github.com/OpenAMP/open-amp/blob/main/README.md#example-to-compile-zynq-ultrascale-mpsoc-r5-genericbaremetal-remote)
+
   * RPU firmware elf file is expected in sdk at path: /lib/firmware/
-  * This build step needs Xilinx Vendor specific toolchain xsdb
 
-## How to run on zcu102 board/QEMU:
-Assume all the binaries are zcu102 board specific.
+  * Xilinx Vendor specific SDK is required to build RPU firmware: [Xilinx Petalinux](https://www.xilinx.com/support/download/index.html/content/xilinx/en/downloadNav/embedded-design-tools.html)
+  * More information is provided here: [Xilinx Wiki page for OpenAMP](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841718/OpenAMP)
 
-  ##### Specify Matrix multiplication to get Firmare onto remote processor.
-  `echo image_matrix_multiply > /sys/class/remoteproc/remoteproc0/firmware`
+  ## Run the demo
 
-  ##### Load and start target Firmware onto remote processor.
-  `echo start > /sys/class/remoteproc/remoteproc0/state`
+  Assume all the binaries are board specific.
 
-  ##### Run Matrix multiplication test linux application.
-  `mat_mul_demo`
+  ```
+  # Specify remote processor firmware to be loaded.
+  echo image_matrix_multiply > /sys/class/remoteproc/remoteproc0/firmware
 
-  ##### Stop target firmware
-  `echo stop > /sys/class/remoteproc/remoteproc0/state`
+  # Load and start target Firmware onto remote processor
+  echo start > /sys/class/remoteproc/remoteproc0/state
+
+  # check remote processor state
+  cat /sys/class/remoteproc/remoteproc0/state
+
+  # Run Matrix multiplication application on host processor
+  mat_mul_demo
+
+  # Stop remote processor
+  echo stop > /sys/class/remoteproc/remoteproc0/state
+  ```
