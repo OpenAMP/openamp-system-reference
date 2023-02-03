@@ -265,21 +265,6 @@ int main(int argc, char *argv[])
 	char ept_dev_path[32];
 
 	printf("\r\n Echo test start \r\n");
-
-	/* Load rpmsg_char driver */
-	printf("\r\nHost>probe rpmsg_char\r\n");
-	ret = system("set -x; lsmod; modprobe rpmsg_char");
-	if (ret < 0) {
-		perror("Failed to load rpmsg_char driver.\n");
-		return -EINVAL;
-	}
-
-	/*
-	 * try probbing rpmsg_ctrl for new kernel, However it's not failure
-	 * if rpmsg_ctrl is not available in case of kernel < 6.0
-	 */
-	system("modprobe rpmsg_ctrl");
-
 	lookup_channel(rpmsg_dev, &eptinfo);
 
 	while ((opt = getopt(argc, argv, "d:n:s:e:")) != -1) {

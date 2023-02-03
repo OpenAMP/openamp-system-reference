@@ -204,12 +204,6 @@ int file_write(char *path, char *str)
 	return 0;
 }
 
-/* Stop remote CPU and Unload drivers */
-void stop_remote(void)
-{
-	system("modprobe -r rpmsg_char");
-}
-
 void exit_action_handler(int signum)
 {
 	proxy->active = 0;
@@ -397,9 +391,6 @@ void kill_action_handler(int signum)
 	free(proxy->rpc);
 	free(proxy->rpc_response);
 	free(proxy);
-
-	/* Stop remote cpu and unload drivers */
-	stop_remote();
 }
 
 int main(int argc, char *argv[])
@@ -430,17 +421,6 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &exit_action, NULL);
 	sigaction(SIGKILL, &kill_action, NULL);
 	sigaction(SIGHUP, &kill_action, NULL);
-
-	/* Load rpmsg_char driver */
-	printf("\r\nHost>probe rpmsg_char\r\n");
-	ret = system("modprobe rpmsg_char");
-	if (ret < 0) {
-		perror("Failed to load rpmsg_char driver.\n");
-		ret = -EINVAL;
-		goto error0;
-	}
-
-	system("modprobe rpmsg_ctrl");
 
 	/* Wait for rpmsg dev to be probed */
 	sleep(1);
@@ -558,8 +538,6 @@ error0:
 	if (rpmsg_char_fd >= 0)
 		close(rpmsg_char_fd);
 	free(proxy);
-
-	stop_remote();
 
 	return ret;
 }

@@ -65,8 +65,20 @@
   # Load and start target Firmware onto remote processor.
   echo start > /sys/class/remoteproc/remoteproc0/state
 
+  # load rpmsg_char driver
+  modprobe rpmsg_char
+
+  # load rpmsg_ctrl driver
+  modprobe rpmsg_ctrl
+
   # Run proxy application.
   proxy_app
+
+  # unload rpmsg_ctrl driver
+  modprobe -r rpmsg_ctrl
+
+  #unload rpmsg_char driver
+  modprobe -r rpmsg_char
 
   # Stop target firmware
   echo stop > /sys/class/remoteproc/remoteproc0/state
