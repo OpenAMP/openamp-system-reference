@@ -35,8 +35,20 @@
   # check remote processor state
   cat /sys/class/remoteproc/remoteproc0/state
 
+  # load rpmsg_char driver
+  modprobe rpmsg_char
+
+  # load rpmsg_ctrl driver
+  modprobe rpmsg_ctrl
+
   # Run echo_test application on host processor
   echo_test
+
+  # unload rpmsg_ctrl driver
+  modprobe -r rpmsg_ctrl
+
+  #unload rpmsg_char driver
+  modprobe -r rpmsg_char
 
   # Stop remote processor
   echo stop > /sys/class/remoteproc/remoteproc0/state

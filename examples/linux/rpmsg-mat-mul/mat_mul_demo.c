@@ -311,16 +311,6 @@ int main(int argc, char *argv[])
 	char ept_dev_path[32];
 
 	printf("\r\n Matrix multiplication demo start \r\n");
-
-	/* Load rpmsg_char driver */
-	printf("\r\nHost>probe rpmsg_char\r\n");
-	ret = system("set -x; lsmod; modprobe rpmsg_char");
-	if (ret < 0) {
-		perror("Failed to load rpmsg_char driver.\n");
-		return -EINVAL;
-	}
-	system("modprobe rpmsg_ctrl");
-
 	lookup_channel(rpmsg_dev, &eptinfo);
 
 	while ((opt = getopt(argc, argv, "d:n:s:e:")) != -1) {
