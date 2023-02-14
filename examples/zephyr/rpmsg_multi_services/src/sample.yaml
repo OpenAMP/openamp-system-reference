@@ -6,4 +6,5 @@ tests:
     sample.subsys.ipc.openamp_rs_table:
         build_only: true
         platform_allow: stm32mp157c_dk2
+        platform_allow: qemu_cortex_r5
         tags: ipm
