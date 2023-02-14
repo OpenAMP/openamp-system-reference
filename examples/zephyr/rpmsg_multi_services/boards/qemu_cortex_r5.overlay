@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) 2023, Advanced Micro Devices, Inc. All rights reserved.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	model = "QEMU Cortex-R5";
+	compatible = "xlnx,zynqmp-qemu";
+
+	chosen {
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,ipc = &rpu0_apu_mailbox;
+		zephyr,ipc_shm = &rpu0_ipc_shm;
+	};
+
+	reserved-memory {
+		compatible = "reserved-memory";
+		#address-cells = <1>;
+		#size-cells = <1>;
+		status = "okay";
+		ranges;
+
+		rpu0_ipc_shm: memory@3ed40000 {
+			reg = <0x3ed40000 DT_SIZE_K(512)>;
+		};
+	};
+};
+
+&rpu0_ipi {
+	status = "okay";
+};
+
+&rpu0_apu_mailbox {
+	status = "okay";
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	clock-frequency = <99999901>;
+};
+
+&ttc0 {
+	status = "okay";
+	clock-frequency = <5000000>;
+};
+
+/delete-node/ &uart0;
+/delete-node/ &gem0;
+/delete-node/ &gem1;
+/delete-node/ &gem2;
+/delete-node/ &gem3;
