@@ -208,40 +208,6 @@ void exit_action_handler(int signum)
 	proxy->active = 0;
 }
 
-static int get_rpmsg_chrdev_fd(const char *rpmsg_dev_name,
-			       char *rpmsg_ctrl_name)
-{
-	char dpath[2*NAME_MAX];
-	DIR *dir;
-	struct dirent *ent;
-	int fd;
-
-	sprintf(dpath, "%s/devices/%s/rpmsg", RPMSG_BUS_SYS, rpmsg_dev_name);
-	printf("opendir %s\n", dpath);
-	dir = opendir(dpath);
-	if (dir == NULL) {
-		fprintf(stderr, "opendir %s, %s\n", dpath, strerror(errno));
-		return -EINVAL;
-	}
-	while ((ent = readdir(dir)) != NULL) {
-		if (!strncmp(ent->d_name, "rpmsg_ctrl", 10)) {
-			sprintf(dpath, "/dev/%s", ent->d_name);
-			printf("open %s\n", dpath);
-			fd = open(dpath, O_RDWR | O_NONBLOCK);
-			if (fd < 0) {
-				fprintf(stderr, "open %s, %s\n",
-					dpath, strerror(errno));
-				return fd;
-			}
-			sprintf(rpmsg_ctrl_name, "%s", ent->d_name);
-			return fd;
-		}
-	}
-
-	fprintf(stderr, "No rpmsg char dev file is found\n");
-	return -EINVAL;
-}
-
 static void set_src_dst(char *out, struct rpmsg_endpoint_info *pep)
 {
 	long dst = 0;

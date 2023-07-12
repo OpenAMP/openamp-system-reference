@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <linux/rpmsg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -102,4 +104,39 @@ int bind_rpmsg_chrdev(const char *rpmsg_dev_name)
 	}
 	close(fd);
 	return 0;
+}
+
+int get_rpmsg_chrdev_fd(const char *rpmsg_dev_name, char *rpmsg_ctrl_name)
+{
+	char dpath[2*NAME_MAX];
+	DIR *dir;
+	struct dirent *ent;
+	int fd;
+
+	sprintf(dpath, "%s/devices/%s/rpmsg", RPMSG_BUS_SYS, rpmsg_dev_name);
+	printf("opendir %s\n", dpath);
+	dir = opendir(dpath);
+	if (dir == NULL) {
+		fprintf(stderr, "opendir %s, %s\n", dpath, strerror(errno));
+		return -EINVAL;
+	}
+	while ((ent = readdir(dir)) != NULL) {
+		if (!strncmp(ent->d_name, "rpmsg_ctrl", 10)) {
+			sprintf(dpath, "/dev/%s", ent->d_name);
+			closedir(dir);
+			printf("open %s\n", dpath);
+			fd = open(dpath, O_RDWR | O_NONBLOCK);
+			if (fd < 0) {
+				fprintf(stderr, "open %s, %s\n",
+					dpath, strerror(errno));
+				return fd;
+			}
+			sprintf(rpmsg_ctrl_name, "%s", ent->d_name);
+			return fd;
+		}
+	}
+
+	fprintf(stderr, "No rpmsg_ctrl file found in %s\n", dpath);
+	closedir(dir);
+	return -EINVAL;
 }
