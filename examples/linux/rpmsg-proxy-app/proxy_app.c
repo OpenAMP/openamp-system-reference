@@ -29,8 +29,6 @@ struct _proxy_data {
 };
 
 static struct _proxy_data *proxy;
-char fw_dst_path[] = "/lib/firmware/image_rpc_demo";
-char sbuf[512];
 
 int handle_open(struct _sys_rpc *rpc)
 {

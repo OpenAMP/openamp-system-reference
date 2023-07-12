@@ -30,9 +30,6 @@ struct _payload {
 	char data[];
 };
 
-struct _payload *i_payload;
-struct _payload *r_payload;
-
 #define RPMSG_GET_KFIFO_SIZE 1
 #define RPMSG_GET_AVAIL_DATA_SIZE 2
 #define RPMSG_GET_FREE_SPACE 3
@@ -91,6 +88,8 @@ int main(int argc, char *argv[])
 	};
 	char ept_dev_name[16];
 	char ept_dev_path[32];
+	struct _payload *i_payload;
+	struct _payload *r_payload;
 
 	printf("\r\n Echo test start \r\n");
 	lookup_channel(rpmsg_dev, &eptinfo);
