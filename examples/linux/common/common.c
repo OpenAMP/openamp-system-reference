@@ -7,6 +7,7 @@
 #include <linux/rpmsg.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -138,5 +139,49 @@ int get_rpmsg_chrdev_fd(const char *rpmsg_dev_name, char *rpmsg_ctrl_name)
 
 	fprintf(stderr, "No rpmsg_ctrl file found in %s\n", dpath);
 	closedir(dir);
+	return -EINVAL;
+}
+
+static void set_src_dst(char *out, struct rpmsg_endpoint_info *pep)
+{
+	long dst = 0;
+	char *lastdot = strrchr(out, '.');
+
+	if (lastdot == NULL)
+		return;
+	dst = strtol(lastdot + 1, NULL, 10);
+	if ((errno == ERANGE && (dst == LONG_MAX || dst == LONG_MIN))
+	    || (errno != 0 && dst == 0)) {
+		return;
+	}
+	pep->dst = (unsigned int)dst;
+}
+
+/*
+ * return the first dirent matching rpmsg-openamp-demo-channel
+ * in /sys/bus/rpmsg/devices/ E.g.:
+ *	virtio0.rpmsg-openamp-demo-channel.-1.1024
+ */
+int lookup_channel(char *out, struct rpmsg_endpoint_info *pep)
+{
+	char dpath[] = RPMSG_BUS_SYS "/devices";
+	struct dirent *ent;
+	DIR *dir = opendir(dpath);
+
+	if (dir == NULL) {
+		fprintf(stderr, "opendir %s, %s\n", dpath, strerror(errno));
+		return -EINVAL;
+	}
+	while ((ent = readdir(dir)) != NULL) {
+		if (strstr(ent->d_name, pep->name)) {
+			strncpy(out, ent->d_name, NAME_MAX);
+			set_src_dst(out, pep);
+			printf("using dev file: %s\n", out);
+			closedir(dir);
+			return 0;
+		}
+	}
+	closedir(dir);
+	fprintf(stderr, "No dev file for %s in %s\n", pep->name, dpath);
 	return -EINVAL;
 }

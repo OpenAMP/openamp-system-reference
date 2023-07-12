@@ -13,5 +13,6 @@ char *get_rpmsg_ept_dev_name(const char *rpmsg_char_name,
                              char *ept_dev_name);
 int bind_rpmsg_chrdev(const char *rpmsg_dev_name);
 int get_rpmsg_chrdev_fd(const char *rpmsg_dev_name, char *rpmsg_ctrl_name);
+int lookup_channel(char *out, struct rpmsg_endpoint_info *pep);
 
 #endif /* __COMMON__H__ */
