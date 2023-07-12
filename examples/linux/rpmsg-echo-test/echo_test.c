@@ -18,11 +18,12 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
 #include <time.h>
 #include <fcntl.h>
 #include <string.h>
 #include <linux/rpmsg.h>
+
+#include "../common/common.h"
 
 struct _payload {
 	unsigned long num;
@@ -62,16 +63,6 @@ void send_shutdown(int fd)
 	umsg.sdown.size = sizeof(umsg);
 	if (write(fd, &umsg, sizeof(umsg)) < 0)
 		perror("write SHUTDOWN_MSG\n");
-}
-
-int app_rpmsg_create_ept(int rpfd, struct rpmsg_endpoint_info *eptinfo)
-{
-	int ret;
-
-	ret = ioctl(rpfd, RPMSG_CREATE_EPT_IOCTL, eptinfo);
-	if (ret)
-		perror("Failed to create endpoint.\n");
-	return ret;
 }
 
 static char *get_rpmsg_ept_dev_name(const char *rpmsg_char_name,
