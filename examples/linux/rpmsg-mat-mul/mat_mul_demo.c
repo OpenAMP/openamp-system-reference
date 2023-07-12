@@ -73,31 +73,25 @@ static void generate_matrices(int num_matrices,
 
 }
 
-static int charfd = -1, fd;
-static struct _matrix i_matrix[2];
-static struct _matrix r_matrix;
-
-void matrix_mult(int ntimes)
+void matrix_mult(int fd)
 {
-	int i;
+	struct _matrix i_matrix[2];
+	struct _matrix r_matrix;
 
-	for (i=0; i < ntimes; i++){
-		/* Generate two random matrices */
-		generate_matrices(2, MATRIX_SIZE, i_matrix);
+	/* Generate two random matrices */
+	generate_matrices(2, MATRIX_SIZE, i_matrix);
 
-		printf("%d: write rpmsg: %lu bytes\n", i, sizeof(i_matrix));
-		ssize_t rc = write(fd, i_matrix, sizeof(i_matrix));
-		if (rc < 0)
-			fprintf(stderr, "write,errno = %ld, %d\n", rc, errno);
+	printf("write rpmsg: %lu bytes\n", sizeof(i_matrix));
+	ssize_t rc = write(fd, i_matrix, sizeof(i_matrix));
+	if (rc < 0)
+		fprintf(stderr, "write,errno = %ld, %d\n", rc, errno);
 
-		puts("read results");
-		do {
-			rc = read(fd, &r_matrix, sizeof(r_matrix));
-		} while (rc < (int)sizeof(r_matrix));
-		printf(" \r\n Host : Linux : Printing results \r\n");
-		matrix_print(&r_matrix);
-		printf("End of Matrix multiplication demo Round %d\n", i);
-	}
+	puts("read results");
+	do {
+		rc = read(fd, &r_matrix, sizeof(r_matrix));
+	} while (rc < (int)sizeof(r_matrix));
+	printf(" \r\n Host : Linux : Printing results \r\n");
+	matrix_print(&r_matrix);
 }
 
 /*
@@ -106,6 +100,7 @@ void matrix_mult(int ntimes)
  */
 void send_shutdown(int fd)
 {
+	struct _matrix i_matrix[2];
 	memset(i_matrix, SHUTDOWN_MSG, sizeof(struct _matrix));
 	if (write(fd, i_matrix, sizeof(i_matrix)) < 0)
 		perror("write SHUTDOWN_MSG\n");
@@ -125,7 +120,7 @@ void print_help(void)
 int main(int argc, char *argv[])
 {
 	int ntimes = 1;
-	int opt, ret;
+	int opt, ret, fd, charfd = -1;
 	char rpmsg_dev[NAME_MAX] = "virtio0.rpmsg-openamp-demo-channel.-1.0";
 	char rpmsg_ctrl_dev_name[NAME_MAX] = "virtio0.rpmsg_ctrl.0.0";
 	char rpmsg_char_name[16];
@@ -199,7 +194,10 @@ int main(int argc, char *argv[])
 	}
 
 	PR_DBG("matrix_mult(%d)\n", ntimes);
-	matrix_mult(ntimes);
+	for (int i = 0; i < ntimes; i++) {
+		matrix_mult(fd);
+		printf("End of Matrix multiplication demo Round %d\n", i);
+	}
 
 	send_shutdown(fd);
 	close(fd);
