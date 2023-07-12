@@ -10,6 +10,7 @@
  */
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -94,15 +95,11 @@ void matrix_mult(int fd)
 	matrix_print(&r_matrix);
 }
 
-/*
- * Probably an overkill to memset(.., sizeof(struct _matrix)) as
- * the firmware looks for SHUTDOWN_MSG in the first 32 bits.
- */
+/* The firmware looks for SHUTDOWN_MSG in the first 32 bits */
 void send_shutdown(int fd)
 {
-	struct _matrix i_matrix[2];
-	memset(i_matrix, SHUTDOWN_MSG, sizeof(struct _matrix));
-	if (write(fd, i_matrix, sizeof(i_matrix)) < 0)
+	uint32_t msg = SHUTDOWN_MSG;
+	if (write(fd, &msg, sizeof(msg)) < 0)
 		perror("write SHUTDOWN_MSG\n");
 }
 
