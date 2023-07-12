@@ -8,11 +8,12 @@
 #include <time.h>
 #include <fcntl.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <signal.h>
 #include <unistd.h>
 #include "proxy_app.h"
 #include <linux/rpmsg.h>
+
+#include "../common/common.h"
 
 #define RPMSG_BUS_SYS "/sys/bus/rpmsg"
 
@@ -207,16 +208,6 @@ int file_write(char *path, char *str)
 void exit_action_handler(int signum)
 {
 	proxy->active = 0;
-}
-
-static int app_rpmsg_create_ept(int rpfd, struct rpmsg_endpoint_info *eptinfo)
-{
-	int ret;
-
-	ret = ioctl(rpfd, RPMSG_CREATE_EPT_IOCTL, eptinfo);
-	if (ret)
-		perror("Failed to create endpoint.\n");
-	return ret;
 }
 
 static char *get_rpmsg_ept_dev_name(const char *rpmsg_char_name,

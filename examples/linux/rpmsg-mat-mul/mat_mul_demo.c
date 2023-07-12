@@ -15,11 +15,12 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
-#include <sys/ioctl.h>
 #include <time.h>
 #include <fcntl.h>
 #include <string.h>
 #include <linux/rpmsg.h>
+
+#include "../common/common.h"
 
 #define RPMSG_BUS_SYS "/sys/bus/rpmsg"
 
@@ -111,16 +112,6 @@ void send_shutdown(int fd)
 	memset(i_matrix, SHUTDOWN_MSG, sizeof(struct _matrix));
 	if (write(fd, i_matrix, sizeof(i_matrix)) < 0)
 		perror("write SHUTDOWN_MSG\n");
-}
-
-int app_rpmsg_create_ept(int rpfd, struct rpmsg_endpoint_info *eptinfo)
-{
-	int ret;
-
-	ret = ioctl(rpfd, RPMSG_CREATE_EPT_IOCTL, eptinfo);
-	if (ret)
-		perror("Failed to create endpoint.\n");
-	return ret;
 }
 
 static char *get_rpmsg_ept_dev_name(const char *rpmsg_char_name,
