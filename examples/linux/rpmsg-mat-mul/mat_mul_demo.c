@@ -24,7 +24,6 @@
 
 #define RPMSG_BUS_SYS "/sys/bus/rpmsg"
 
-#define PR_DBG(fmt, args ...) printf("%s():%u "fmt, __func__, __LINE__, ##args)
 #define SHUTDOWN_MSG    0xEF56A55A
 #define MATRIX_SIZE 6
 
@@ -82,15 +81,16 @@ void matrix_mult(int fd)
 	/* Generate two random matrices */
 	generate_matrices(2, MATRIX_SIZE, i_matrix);
 
-	printf("write rpmsg: %lu bytes\n", sizeof(i_matrix));
+	printf("Sending RPMSG: %lu bytes\n", sizeof(i_matrix));
 	ssize_t rc = write(fd, i_matrix, sizeof(i_matrix));
 	if (rc < 0)
 		fprintf(stderr, "write,errno = %ld, %d\n", rc, errno);
 
-	puts("read results");
 	do {
 		rc = read(fd, &r_matrix, sizeof(r_matrix));
 	} while (rc < (int)sizeof(r_matrix));
+	printf("Received RPMSG: %lu bytes\n", rc);
+
 	printf(" \r\n Host : Linux : Printing results \r\n");
 	matrix_print(&r_matrix);
 }
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	char ept_dev_name[16];
 	char ept_dev_path[32];
 
-	printf("\r\n Matrix multiplication demo start \r\n");
+	printf("Matrix multiplication demo start\n");
 	lookup_channel(rpmsg_dev, &eptinfo);
 
 	while ((opt = getopt(argc, argv, "d:n:s:e:")) != -1) {
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Create endpoint from rpmsg char driver */
-	PR_DBG("app_rpmsg_create_ept: %s[src=%#x,dst=%#x]\n",
+	printf("Creating RPMSG endpoint with name: %s, src=%#x, dst=%#x\n",
 		eptinfo.name, eptinfo.src, eptinfo.dst);
 	ret = app_rpmsg_create_ept(charfd, &eptinfo);
 	if (ret) {
@@ -190,10 +190,10 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	PR_DBG("matrix_mult(%d)\n", ntimes);
+	printf("Start of Matrix multiplication demo with %d rounds\n", ntimes);
 	for (int i = 0; i < ntimes; i++) {
 		matrix_mult(fd);
-		printf("End of Matrix multiplication demo Round %d\n", i);
+		printf("End of Matrix multiplication demo round %d\n", i);
 	}
 
 	send_shutdown(fd);
