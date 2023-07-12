@@ -9,7 +9,6 @@
  * and transmits the results back to this application.
  */
 
-#include <dirent.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -112,49 +111,6 @@ void send_shutdown(int fd)
 	memset(i_matrix, SHUTDOWN_MSG, sizeof(struct _matrix));
 	if (write(fd, i_matrix, sizeof(i_matrix)) < 0)
 		perror("write SHUTDOWN_MSG\n");
-}
-
-static void set_src_dst(char *out, struct rpmsg_endpoint_info *pep)
-{
-	long dst = 0;
-	char *lastdot = strrchr(out, '.');
-
-	if (lastdot == NULL)
-		return;
-	dst = strtol(lastdot + 1, NULL, 10);
-	if ((errno == ERANGE && (dst == LONG_MAX || dst == LONG_MIN))
-	    || (errno != 0 && dst == 0)) {
-		return;
-	}
-	pep->dst = (unsigned int)dst;
-}
-
-/*
- * return the first dirent matching rpmsg-openamp-demo-channel
- * in /sys/bus/rpmsg/devices/ E.g.:
- *	virtio0.rpmsg-openamp-demo-channel.-1.1024
- */
-static void lookup_channel(char *out, struct rpmsg_endpoint_info *pep)
-{
-	char dpath[] = RPMSG_BUS_SYS "/devices";
-	struct dirent *ent;
-	DIR *dir = opendir(dpath);
-
-	if (dir == NULL) {
-		fprintf(stderr, "opendir %s, %s\n", dpath, strerror(errno));
-		return;
-	}
-	while ((ent = readdir(dir)) != NULL) {
-		if (strstr(ent->d_name, pep->name)) {
-			strncpy(out, ent->d_name, NAME_MAX);
-			set_src_dst(out, pep);
-			PR_DBG("using dev file: %s\n", out);
-			closedir(dir);
-			return;
-		}
-	}
-	closedir(dir);
-	fprintf(stderr, "No dev file for %s in %s\n", pep->name, dpath);
 }
 
 void print_help(void)
