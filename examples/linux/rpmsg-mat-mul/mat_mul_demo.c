@@ -114,50 +114,6 @@ void send_shutdown(int fd)
 		perror("write SHUTDOWN_MSG\n");
 }
 
-static int bind_rpmsg_chrdev(const char *rpmsg_dev_name)
-{
-	char fpath[256];
-	char *rpmsg_chdrv = "rpmsg_chrdev";
-	int fd;
-	int ret;
-
-	/* rpmsg dev overrides path */
-	sprintf(fpath, "%s/devices/%s/driver_override",
-		RPMSG_BUS_SYS, rpmsg_dev_name);
-	PR_DBG("open %s\n", fpath);
-	fd = open(fpath, O_WRONLY);
-	if (fd < 0) {
-		fprintf(stderr, "Failed to open %s, %s\n",
-			fpath, strerror(errno));
-		return -EINVAL;
-	}
-	ret = write(fd, rpmsg_chdrv, strlen(rpmsg_chdrv) + 1);
-	if (ret < 0) {
-		fprintf(stderr, "Failed to write %s to %s, %s\n",
-			rpmsg_chdrv, fpath, strerror(errno));
-		return -EINVAL;
-	}
-	close(fd);
-
-	/* bind the rpmsg device to rpmsg char driver */
-	sprintf(fpath, "%s/drivers/%s/bind", RPMSG_BUS_SYS, rpmsg_chdrv);
-	fd = open(fpath, O_WRONLY);
-	if (fd < 0) {
-		fprintf(stderr, "Failed to open %s, %s\n",
-			fpath, strerror(errno));
-		return -EINVAL;
-	}
-	PR_DBG("write %s to %s\n", rpmsg_dev_name, fpath);
-	ret = write(fd, rpmsg_dev_name, strlen(rpmsg_dev_name) + 1);
-	if (ret < 0) {
-		fprintf(stderr, "Failed to write %s to %s, %s\n",
-			rpmsg_dev_name, fpath, strerror(errno));
-		return -EINVAL;
-	}
-	close(fd);
-	return 0;
-}
-
 static int get_rpmsg_chrdev_fd(const char *rpmsg_dev_name,
 			       char *rpmsg_ctrl_name)
 {
