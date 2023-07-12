@@ -36,14 +36,12 @@ static void matrix_print(struct _matrix *m)
 {
 	int i, j;
 
-	/* Generate two random matrices */
-	printf(" \r\n Host : Linux : Printing results \r\n");
-
 	for (i = 0; i < m->size; ++i) {
 		for (j = 0; j < m->size; ++j)
-			printf(" %d ", (unsigned int)m->elements[i][j]);
+			printf(" %3d ", (unsigned int)m->elements[i][j]);
 		printf("\r\n");
 	}
+	printf("\r\n");
 }
 
 static void generate_matrices(int num_matrices,
@@ -60,19 +58,17 @@ static void generate_matrices(int num_matrices,
 		/* Initialize workload */
 		p_matrix[i].size = matrix_size;
 
-		printf(" \r\n Host : Linux : Input matrix %d \r\n", i);
 		for (j = 0; j < matrix_size; j++) {
-			printf("\r\n");
 			for (k = 0; k < matrix_size; k++) {
 
 				value = (rand() & 0x7F);
 				value = value % 10;
 				p_matrix[i].elements[j][k] = value;
-				printf(" %d ",
-				(unsigned int)p_matrix[i].elements[j][k]);
 			}
 		}
-		printf("\r\n");
+
+		printf(" \r\n Host : Linux : Input matrix %d \r\n", i);
+		matrix_print(&p_matrix[i]);
 	}
 
 }
@@ -86,6 +82,7 @@ void matrix_mult(int ntimes)
 	int i;
 
 	for (i=0; i < ntimes; i++){
+		/* Generate two random matrices */
 		generate_matrices(2, MATRIX_SIZE, i_matrix);
 
 		printf("%d: write rpmsg: %lu bytes\n", i, sizeof(i_matrix));
@@ -97,6 +94,7 @@ void matrix_mult(int ntimes)
 		do {
 			rc = read(fd, &r_matrix, sizeof(r_matrix));
 		} while (rc < (int)sizeof(r_matrix));
+		printf(" \r\n Host : Linux : Printing results \r\n");
 		matrix_print(&r_matrix);
 		printf("End of Matrix multiplication demo Round %d\n", i);
 	}
