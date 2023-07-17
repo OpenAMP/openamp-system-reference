@@ -1,0 +1,6 @@
+/*
+ * Copyright 2023 Linaro.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#include "boards/pcie_ivshmem.dtsi"
