@@ -29,8 +29,7 @@ eptdestroy
 
 ping
 ====
-"rpmsg_ping" is a test binary that open a rpmsg chardev for a an echo
-test (write a patern and wait an answer)
+"rpmsg_ping" is a test binary that opens a rpmsg chardev for an echo test (write a pattern and wait an answer)
 
 rpmsgexportdev
 ==============
