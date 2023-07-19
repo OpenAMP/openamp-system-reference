@@ -84,6 +84,7 @@ int bind_rpmsg_chrdev(const char *rpmsg_dev_name)
 	if (ret < 0) {
 		fprintf(stderr, "Failed to write %s to %s, %s\n",
 			rpmsg_chdrv, fpath, strerror(errno));
+		close(fd);
 		return -EINVAL;
 	}
 	close(fd);
@@ -101,6 +102,7 @@ int bind_rpmsg_chrdev(const char *rpmsg_dev_name)
 	if (ret < 0) {
 		fprintf(stderr, "Failed to write %s to %s, %s\n",
 			rpmsg_dev_name, fpath, strerror(errno));
+		close(fd);
 		return -EINVAL;
 	}
 	close(fd);
