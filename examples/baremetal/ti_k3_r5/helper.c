@@ -35,12 +35,11 @@ HwiP_Config gHwiConfig = {
 };
 #endif
 
-// global structures used by MPU and cache init code
-CacheP_Config gCacheConfig = { 1, 0 }; // cache on, no forced writethrough
-MpuP_Config gMpuConfig = { 3, 1, 1 }; // 2 regions, background region on, MPU on
-MpuP_RegionConfig gMpuRegionConfig[] =
-{
-	// DDR region
+/* global structures used by MPU and cache init code */
+CacheP_Config gCacheConfig = { 1, 0 }; /* cache on, no forced writethrough */
+MpuP_Config gMpuConfig = { 3, 1, 1 }; /* 2 regions, background region on, MPU on */
+MpuP_RegionConfig gMpuRegionConfig[] = {
+	/* DDR region */
 	{
 		.baseAddr = DDR_BASE_ADDR,
 		.size = MpuP_RegionSize_2G,
@@ -55,7 +54,7 @@ MpuP_RegionConfig gMpuRegionConfig[] =
 			.subregionDisableMask = 0x0u,
 		},
 	},
-	// rpmsg region
+	/* rpmsg region */
 	{
 		.baseAddr = RPMSG_BASE_ADDR,
 		.size = MpuP_RegionSize_1M,
@@ -71,7 +70,7 @@ MpuP_RegionConfig gMpuRegionConfig[] =
 		},
 	},
 
-	// resource table region
+	/* resource table region */
 	{
 		.baseAddr = RSC_TABLE_BASE_ADDR,
 		.size = MpuP_RegionSize_4K,
@@ -88,7 +87,7 @@ MpuP_RegionConfig gMpuRegionConfig[] =
 	},
 };
 
-// NOTE: R5FSS defaults to ARM at reset so these must all be ARM instead of Thumb
+/* NOTE: R5FSS defaults to ARM at reset so these must all be ARM instead of Thumb */
 
 void Reset_Handler(void) __attribute__((naked, section(".boot.reset"), target("arm")));
 void Default_Handler(void) __attribute__((naked, section(".boot.handler"), target("arm")));
@@ -100,8 +99,7 @@ void DAbt_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void IRQ_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void FIQ_Handler(void) __attribute__((weak, alias("Default_Handler")));
 
-__attribute__((naked, section(".isr_vector"), target("arm"))) void vectors()
-{
+__attribute__((naked, section(".isr_vector"), target("arm"))) void vectors() {
 	asm volatile(
 		"LDR PC, =Reset_Handler \n"
 		"LDR PC, =Undef_Handler \n"
@@ -113,29 +111,27 @@ __attribute__((naked, section(".isr_vector"), target("arm"))) void vectors()
 		"LDR PC, =FIQ_Handler   \n");
 }
 
-// newlib startup code
+/* newlib startup code */
 extern void _start();
 
-void Reset_Handler()
-{
+void Reset_Handler() {
 	asm volatile(
-		// initialize stack
+		/* initialize stack */
 		"ldr sp, =__stack \n"
 
-		// disable interrupts
+		/* disable interrupts */
 		"mrs r0, cpsr \n"
 		"orr r0, r0, #0xc0 \n"
 		"msr cpsr_cf, r0 \n");
 
-	// must initialize MPU if code is on external memory
+	/* must initialize MPU if code is on external memory */
 	MpuP_init();
 	CacheP_init();
 
 	_start();
 }
 
-void Default_Handler()
-{
+void Default_Handler() {
 	while (1)
 		;
 }
@@ -144,9 +140,8 @@ char __log_shared debug_log_memory[DEBUG_LOG_SIZE];
 
 extern void CacheP_wb(void *addr, uint32_t size, uint32_t type);
 
-// retarget stdout to remoteproc trace buffer
-int _write(int handle, char *data, int size)
-{
+/* retarget stdout to remoteproc trace buffer */
+int _write(int handle, char *data, int size) {
 	static size_t idx = 0;
 	int count;
 

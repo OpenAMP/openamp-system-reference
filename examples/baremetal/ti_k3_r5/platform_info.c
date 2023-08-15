@@ -62,7 +62,7 @@ void am64_r5_a53_proc_irq_handler(void *args){
 
 	prproc = rproc->priv;
 
-	// get virtqueue number to clear interrupt
+	/* get virtqueue number to clear interrupt */
 	MailboxGetMessage(MAILBOX_BASE_ADDR, 1, &msg);
 
 	if (msg < INT32_MAX)  {
@@ -86,10 +86,10 @@ static struct remoteproc * am64_r5_a53_proc_init(struct remoteproc *rproc,
 	rproc->ops = ops;
 
 	#ifndef RPMSG_NO_IPI
-	// enable new message interrupt from the mailbox
+	/* enable new message interrupt from the mailbox */
 	MailboxEnableNewMsgInt(MAILBOX_BASE_ADDR, 0, 1);
 
-	// enable mailbox interrupt for r5f
+	/* enable mailbox interrupt for r5f */
 	HwiP_Params hwiParams;
 	HwiP_Object hwiObj;
 
@@ -162,7 +162,7 @@ static int am64_r5_a53_proc_notify(struct remoteproc *rproc, uint32_t id)
 {
 	(void)rproc;
 
-	// Put message in mailbox
+	/* Put message in mailbox */
 	if (MailboxSendMessage(MAILBOX_BASE_ADDR, 0, id) == 0)
 		printf("Sent on queue 0: %lu\n", id);
 
@@ -346,7 +346,7 @@ int platform_poll(void *priv)
 			if (!(atomic_flag_test_and_set(&prproc->ipi_nokick))) {
 				metal_irq_restore_enable(flags);
 
-				// find which virtqueue has a message by checking the virtqueue_id bitmask
+				/* find which virtqueue has a message by checking the virtqueue_id bitmask */
 				for (uint32_t i = 0; i < 32; i++) {
 					if ((virtqueue_id & (1 << i)) > 0) {
 						virtqueue_id -= virtqueue_id >> i;
@@ -384,7 +384,6 @@ void platform_cleanup(void *platform)
 
 	if (rproc)
 		remoteproc_remove(rproc);
-//	cleanup_system();
 
 	metal_finish();
 }
