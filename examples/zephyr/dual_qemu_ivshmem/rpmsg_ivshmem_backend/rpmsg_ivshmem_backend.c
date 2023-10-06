@@ -32,6 +32,9 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #define VIRTQUEUE_ID 1
 #endif
 
+#define GREEN \x1b[32m
+#define RESET \x1b[0m
+
 K_THREAD_STACK_DEFINE(ivshmem_ev_loop_stack, IVSHMEM_EV_LOOP_STACK_SIZE);
 static struct k_thread ivshmem_ev_loop_thread;
 
@@ -196,6 +199,9 @@ int init_ivshmem_backend(void)
 	}
 
 	shmem_size = ivshmem_get_mem(ivshmem_dev, &shmem_base);
+	printk(STRINGIFY(GREEN)
+	       "shmem mapped at %#lx, %ld byte(s).\n" STRINGIFY(RESET), shmem_base, shmem_size);
+
 	shmem_size -= VDEV_STATUS_SIZE;
 	vdev_status_base = shmem_base;
 	shmem_base += VDEV_STATUS_SIZE;
