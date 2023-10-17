@@ -5,6 +5,8 @@ manifest:
   remotes:
     - name: openamp
       url-base: https://github.com/OpenAMP
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
   defaults:
     remote: openamp
 
@@ -12,7 +14,7 @@ manifest:
     path: openamp-system-reference
 
   projects:
-    - name: openamp-zephyr-staging
-      path: zephyr
-      revision: v3.4-branch
+    - name: zephyr
+      remote: zephyr
+      revision: v3.5.0
       import: true
