@@ -38,7 +38,7 @@ void main(void)
 
 	if (!rpmsg_dev) {
 		printf("Could not get the RPMsg device for IVSHMEM backend!\n");
-		return;
+		return -1;
 	}
 
 	/* Creates the RPMSg endpoint to communicate with the remote side.
@@ -48,10 +48,12 @@ void main(void)
 			endpoint_cb, rpmsg_service_unbind);
 	if (status != 0) {
 		printf("rpmsg_create_ept failed %d\n", status);
-		return;
+		return status;
 	}
 
 	printf("Host Side, the communication over RPMsg is ready to use!\n");
+
+	return 0;
 }
 
 static int cmd_rpmsg_ivshmem_send(const struct shell *sh, size_t argc, char **argv)

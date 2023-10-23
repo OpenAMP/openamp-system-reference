@@ -31,13 +31,13 @@ static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
 {
 }
 
-void main(void)
+int main(void)
 {
 	rpmsg_dev = get_rpmsg_ivshmem_device();
 
 	if (!rpmsg_dev) {
 		printf("Could not get the RPMsg device for IVSHMEM backend!\n");
-		return;
+		return -1;
 	}
 
 	/* Setup the endpoint, this will notify the host side and allow it
@@ -47,8 +47,10 @@ void main(void)
 			RPMSG_ADDR_ANY, endpoint_cb, rpmsg_service_unbind);
 	if (status != 0) {
 		printf("rpmsg_create_ept failed %d\n", status);
-		return;
+		return status;
 	}
 
 	printf("Remote Side, the communication over RPMsg is ready to use!\n");
+
+	return 0;
 }
