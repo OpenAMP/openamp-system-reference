@@ -14,5 +14,5 @@ manifest:
   projects:
     - name: openamp-zephyr-staging
       path: zephyr
-      revision: v3.4-branch
+      revision: main
       import: true
