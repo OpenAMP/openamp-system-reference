@@ -4,6 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include "zynqmp_r5_override.dtsi"
+
 / {
 	model = "QEMU Cortex-R5";
 	compatible = "xlnx,zynqmp-qemu";

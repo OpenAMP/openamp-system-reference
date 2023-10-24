@@ -1,0 +1,26 @@
+/*
+ * Copyright (c) 2023 Linaro Limited
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* This file should do away once Zephyr has been adjusted for better memory
+ * configuration for zynqmp_r5
+ */
+
+/ {
+	chosen {
+		/* override zephyr for now until definitions can be fixed upstream */
+		zephyr,sram = &tcm_lockstep;
+
+		/* flash0 is QSPI XIP at offset 0 and is unlikely to be appropriate */
+		/delete-property/ zephyr,flash;
+	};
+
+	soc {
+		tcm_lockstep: memory@0 {
+			compatible = "mmio-sram";
+			reg = <0 DT_SIZE_K(256)>;
+		};
+    };
+};
