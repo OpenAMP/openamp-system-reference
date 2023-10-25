@@ -125,6 +125,32 @@
 			xlnx,ipi-id = <0x04>;
 			phandle = <0x0a>;
 		};
+
+		ipi_mailbox_rpu0: mailbox@ff990040 {
+			reg = <0x00 0xff990040 0x00 0x20>,
+			      <0x00 0xff990060 0x00 0x20>,
+			      <0x00 0xff990200 0x00 0x20>,
+			      < 0x00 0xff990220 0x00 0x20>;
+			reg-names = "local_request_region",
+				    "local_response_region",
+				    "remote_request_region",
+				    "remote_response_region";
+			#mbox-cells = <0x01>;
+			xlnx,ipi-id = <0x01>;
+		};
+
+		ipi_mailbox_rpu1: mailbox@ff990080 {
+			reg = <0x00 0xff990080 0x00 0x20>,
+			      <0x00 0xff9900a0 0x00 0x20>,
+			      <0x00 0xff990400 0x00 0x20>,
+			      <0x00 0xff990420 0x00 0x20>;
+			reg-names = "local_request_region",
+				    "local_response_region",
+				    "remote_request_region",
+				    "remote_response_region";
+			#mbox-cells = <0x01>;
+			xlnx,ipi-id = <0x02>;
+		};
 	};
 
 	dcc {
@@ -591,6 +617,30 @@
 		ranges;
 		phandle = <0x57>;
 	};
+
+	remoteproc {
+		compatible = "xlnx,zynqmp-r5fss";
+		xlnx,cluster-mode = <1>;
+
+		r5f-0 {
+			compatible = "xlnx,zynqmp-r5f";
+			power-domains = <0x12 0x7>;
+			memory-region = <&rproc_0_fw_image>, <&rpu0vdev0vring0>,
+					<&rpu0vdev0vring1>, <&rpu0vdev0buffer>;
+			mboxes = <&ipi_mailbox_rpu0 0>, <&ipi_mailbox_rpu0 1>;
+			mbox-names = "tx", "rx";
+		};
+
+		r5f-1 {
+			compatible = "xlnx,zynqmp-r5f";
+			power-domains = <0x12 0x8>;
+			memory-region = <&rproc_1_fw_image>, <&rpu1vdev1vring0>,
+					<&rpu1vdev1vring1>, <&rpu1vdev1buffer>;
+			mboxes = <&ipi_mailbox_rpu1 0>, <&ipi_mailbox_rpu1 1>;
+			mbox-names = "tx", "rx";
+		};
+	};
+
 
 	axi {
 		compatible = "simple-bus";
@@ -2421,6 +2471,54 @@
 	memory@0 {
 		device_type = "memory";
 		reg = <0x00 0x00 0x00 0x7ff00000 0x08 0x00 0x00 0x80000000>;
+	};
+
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		rproc_0_fw_image: memory@3ed00000 {
+			no-map;
+			reg = <0x0 0x3ed00000 0x0 0x40000>;
+		};
+
+		rpu0vdev0vring0: vdev0vring0@3ed40000 {
+			no-map;
+			reg = <0x00 0x3ed40000 0x00 0x4000>;
+		};
+
+		rpu0vdev0vring1: vdev0vring1@3ed44000 {
+			no-map;
+			reg = <0x00 0x3ed44000 0x00 0x4000>;
+		};
+
+		rpu0vdev0buffer: vdev0buffer@3ed48000 {
+			no-map;
+			compatible = "shared-dma-pool";
+			reg = <0x00 0x3ed48000 0x00 0x100000>;
+		};
+
+		rproc_1_fw_image: memory@3ef00000 {
+			no-map;
+			reg = <0x0 0x3ef00000 0x0 0x40000>;
+		};
+
+		rpu1vdev1vring0: vdev1vring0@3ef40000 {
+			no-map;
+			reg = <0x00 0x3ef40000 0x00 0x4000>;
+		};
+
+		rpu1vdev1vring1: vdev1vring1@3ef44000 {
+			no-map;
+			reg = <0x00 0x3ef44000 0x00 0x4000>;
+		};
+
+		rpu1vdev1buffer: vdev1buffer@3ef48000 {
+			no-map;
+			compatible = "shared-dma-pool";
+			reg = <0x00 0x3ef48000 0x00 0x100000>;
+		};
 	};
 
 	__symbols__ {
