@@ -385,31 +385,6 @@
 					};
 				};
 
-				uart1-default {
-					phandle = <0x26>;
-
-					mux {
-						groups = "uart1_5_grp";
-						function = "uart1";
-					};
-
-					conf {
-						groups = "uart1_5_grp";
-						slew-rate = <0x01>;
-						power-source = <0x01>;
-					};
-
-					conf-rx {
-						pins = "MIO21";
-						bias-high-impedance;
-					};
-
-					conf-tx {
-						pins = "MIO20";
-						bias-disable;
-					};
-				};
-
 				usb0-default {
 					phandle = <0x28>;
 
@@ -1994,24 +1969,6 @@
 			phandle = <0x99>;
 		};
 
-		serial@ff010000 {
-			u-boot,dm-pre-reloc;
-			compatible = "xlnx,zynqmp-uart\0cdns,uart-r1p12";
-			status = "okay";
-			interrupt-parent = <0x05>;
-			interrupts = <0x00 0x16 0x04>;
-			reg = <0x00 0xff010000 0x00 0x1000>;
-			clock-names = "uart_clk\0pclk";
-			power-domains = <0x12 0x22>;
-			clocks = <0x04 0x39 0x04 0x1f>;
-			pinctrl-names = "default";
-			pinctrl-0 = <0x26>;
-			cts-override;
-			device_type = "serial";
-			port-number = <0x01>;
-			phandle = <0x9a>;
-		};
-
 		usb@ff9d0000 {
 			#address-cells = <0x02>;
 			#size-cells = <0x02>;
@@ -2295,7 +2252,6 @@
 		nvmem0 = "/axi/i2c@ff030000/i2c-mux@74/i2c@0/eeprom@54";
 		rtc0 = "/axi/rtc@ffa60000";
 		serial0 = "/axi/serial@ff000000";
-		serial1 = "/axi/serial@ff010000";
 		serial2 = "/dcc";
 		spi0 = "/axi/spi@ff0f0000";
 		usb0 = "/axi/usb@ff9d0000";
@@ -2559,7 +2515,6 @@
 		pinctrl_i2c1_default = "/firmware/zynqmp-firmware/pinctrl/i2c1-default";
 		pinctrl_i2c1_gpio = "/firmware/zynqmp-firmware/pinctrl/i2c1-gpio";
 		pinctrl_uart0_default = "/firmware/zynqmp-firmware/pinctrl/uart0-default";
-		pinctrl_uart1_default = "/firmware/zynqmp-firmware/pinctrl/uart1-default";
 		pinctrl_usb0_default = "/firmware/zynqmp-firmware/pinctrl/usb0-default";
 		pinctrl_gem3_default = "/firmware/zynqmp-firmware/pinctrl/gem3-default";
 		pinctrl_can1_default = "/firmware/zynqmp-firmware/pinctrl/can1-default";
@@ -2661,7 +2616,6 @@
 		ttc2 = "/axi/timer@ff130000";
 		ttc3 = "/axi/timer@ff140000";
 		uart0 = "/axi/serial@ff000000";
-		uart1 = "/axi/serial@ff010000";
 		usb0 = "/axi/usb@ff9d0000";
 		dwc3_0 = "/axi/usb@ff9d0000/usb@fe200000";
 		usb1 = "/axi/usb@ff9e0000";
