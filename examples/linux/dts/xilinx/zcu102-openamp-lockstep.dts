@@ -570,7 +570,7 @@
 		ranges;
 	};
 
-	remoteproc {
+	remoteproc: remoteproc {
 		compatible = "xlnx,zynqmp-r5fss";
 		xlnx,cluster-mode = <0x01>;
 

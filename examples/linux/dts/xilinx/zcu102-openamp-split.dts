@@ -1,0 +1,9 @@
+/include/ "zcu102-openamp-lockstep.dts"
+
+/ {
+
+};
+
+&remoteproc {
+	xlnx,cluster-mode = <0>;
+};
