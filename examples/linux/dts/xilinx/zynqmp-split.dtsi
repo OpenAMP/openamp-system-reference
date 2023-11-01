@@ -1,0 +1,8 @@
+/* Applies to all zynqmp boards to select split mode */
+
+/ {
+    remoteproc: remoteproc {
+	    xlnx,cluster-mode = <0>;
+    };
+};
+

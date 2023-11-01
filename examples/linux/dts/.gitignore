@@ -1,1 +1,4 @@
 *.dtb
+*.dtbo
+*.dts.pp
+*.dtso.pp

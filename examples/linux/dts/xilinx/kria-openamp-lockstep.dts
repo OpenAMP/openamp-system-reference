@@ -1,0 +1,8 @@
+/* A base DTB for all kria for lockstep mode
+** A carrier card overlay will be applied to this dtb,
+** either at compile or at boot time
+*/
+
+#include "zynqmp-smk-k26-revA.dts"
+#include "zynqmp-openamp.dtsi"
+
