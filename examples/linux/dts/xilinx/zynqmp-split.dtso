@@ -1,0 +1,9 @@
+/* Applies to all zynqmp boards to select split mode */
+
+/dts-v1/;
+/plugin/;
+
+&remoteproc {
+	xlnx,cluster-mode = <0>;
+};
+

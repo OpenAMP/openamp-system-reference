@@ -1,6 +1,0 @@
-/* A complete DTB for zcu102 in lockstep mode */
-
-#include "zynqmp-zcu102-rev1.0.dts"
-#include "zcu102-openamp-base.dtsi"
-#include "zynqmp-openamp.dtsi"
-
