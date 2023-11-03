@@ -1,6 +1,12 @@
 /* Applies to all zynqmp boards to configure the IPC & memory for OpenAMP */
 
-/ {
+/dts-v1/;
+/plugin/;
+
+&{/} {
+	#address-cells = <2>;
+	#size-cells = <2>;
+
 	reserved-memory {
 		#address-cells = <0x02>;
 		#size-cells = <0x02>;
@@ -50,6 +56,10 @@
 	};
 
 	zynqmp_ipi {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
 		ipi_mailbox_rpu0: mailbox@ff990040 {
 			reg = <0x00 0xff990040 0x00 0x20>,
 			      <0x00 0xff990060 0x00 0x20>,

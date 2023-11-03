@@ -1,9 +1,0 @@
-/* Changes specific to zcu102 but common to mode */
-
-/ {
-	axi {
-		serial@ff010000 {
-			status = "disabled";
-		};
-	};
-};
