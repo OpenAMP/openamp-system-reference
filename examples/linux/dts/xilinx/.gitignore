@@ -1,4 +1,7 @@
 # These files come from a copy command in the Makefile
 # don't check them in even though they look like source files
 
+zynqmp-zcu102-rev1.0.dts
+zynqmp-smk-k26-revA.dts
 zynqmp-sck-kv-g-revB.dtso
+.linux-src-check
