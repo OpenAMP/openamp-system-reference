@@ -1,11 +1,12 @@
 # Build Devicetree Binaries and Devicetree Binary Overlays
 
 DTBS := zcu102-openamp-lockstep.dtb zcu102-openamp-split.dtb
-DTBS += kria-openamp-lockstep.dtb kria-openamp-split.dtb
+DTBS += kv260-openamp-lockstep.dtb kv260-openamp-split.dtb
 DTBS += zynqmp-smk-k26-revA.dtb zynqmp-zcu102-rev1.0.dtb
+DTBS += zcu102-xilinx-bm-lockstep.dtb kv260-xilinx-bm-lockstep.dtb
 
 DTBOS := zynqmp-split.dtbo zcu102-openamp.dtbo zynqmp-openamp.dtbo
-DTBOS += zynqmp-sck-kv-g-revB.dtbo
+DTBOS += zynqmp-sck-kv-g-revB.dtbo xilinx-openamp-for-v6.5.dtbo
 
 # any file to test we have a valid kernel source dir
 XILINX_DTS_DIR := $(LINUX_SRC_DIR)/arch/arm64/boot/dts/xilinx
@@ -84,6 +85,17 @@ kv260-openamp-split.dtb: \
 	zynqmp-smk-k26-revA.dtb zynqmp-sck-kv-g-revB.dtbo \
 	zynqmp-openamp.dtbo \
 	zynqmp-split.dtbo
+	fdtoverlay -o $@ -i $(filter-out .linux-src-check,$^)
+
+zcu102-xilinx-bm-lockstep.dtb: \
+	zynqmp-zcu102-rev1.0.dtb \
+	xilinx-openamp-for-v6.5.dtbo \
+	zcu102-openamp.dtbo
+	fdtoverlay -o $@ -i $(filter-out .linux-src-check,$^)
+
+kv260-xilinx-bm-lockstep.dtb: \
+	zynqmp-smk-k26-revA.dtb zynqmp-sck-kv-g-revB.dtbo \
+	xilinx-openamp-for-v6.5.dtbo
 	fdtoverlay -o $@ -i $(filter-out .linux-src-check,$^)
 
 clean:
