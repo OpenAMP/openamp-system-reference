@@ -38,17 +38,17 @@
 			reg = <0x0 0x3ef00000 0x0 0x40000>;
 		};
 
-		rpu1vdev1vring0: vdev1vring0@3ef40000 {
+		rpu1vdev0vring0: vdev0vring0@3ef40000 {
 			no-map;
 			reg = <0x00 0x3ef40000 0x00 0x4000>;
 		};
 
-		rpu1vdev1vring1: vdev1vring1@3ef44000 {
+		rpu1vdev0vring1: vdev0vring1@3ef44000 {
 			no-map;
 			reg = <0x00 0x3ef44000 0x00 0x4000>;
 		};
 
-		rpu1vdev1buffer: vdev1buffer@3ef48000 {
+		rpu1vdev0buffer: vdev0buffer@3ef48000 {
 			no-map;
 			compatible = "shared-dma-pool";
 			reg = <0x00 0x3ef48000 0x00 0x100000>;
@@ -96,8 +96,8 @@
 		};
 
 		r5f-1 {
-			memory-region = <&rproc_1_fw_image>, <&rpu1vdev1vring0>,
-					<&rpu1vdev1vring1>, <&rpu1vdev1buffer>;
+			memory-region = <&rproc_1_fw_image>, <&rpu1vdev0vring0>,
+					<&rpu1vdev0vring1>, <&rpu1vdev0buffer>;
 			mboxes = <&ipi_mailbox_rpu1 0>, <&ipi_mailbox_rpu1 1>;
 			mbox-names = "tx", "rx";
 		};
