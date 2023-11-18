@@ -1,0 +1,42 @@
+/* Applies to stm32mp157c-dk2 */
+
+/dts-v1/;
+/plugin/;
+
+&{/soc} {
+	audio-controller@4000b000 {
+		status = "disabled";
+	};
+
+	i2c@40012000 {
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+
+		cs42l51@4a {
+			status = "disabled";
+		};
+	};
+
+	cec@40016000 {
+		status = "disabled";
+	};
+
+	sai@4400b000 {
+		status = "disabled";
+	};
+
+	audio-controller@4400b004 {
+		status = "disabled";
+	};
+
+	audio-controller@4400b024 {
+		status = "disabled";
+	};
+
+};
+
+&{/sound} {
+	status = "disabled";
+};
+
+

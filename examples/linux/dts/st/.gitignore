@@ -1,0 +1,5 @@
+# These files come from a copy command in the Makefile
+# don't check them in even though they look like source files
+
+stm32mp157c-dk2.dts
+.linux-src-check
