@@ -1,7 +1,7 @@
 /* Changes specific to zcu102 but common to mode */
 
-/* include everything from generic zynqmp-openamp overlay */
-#include "zynqmp-openamp.dtso"
+/dts-v1/;
+/plugin/;
 
 /* Plus make these specific zcu102 changes */
 &{/axi} {
