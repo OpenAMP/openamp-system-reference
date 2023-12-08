@@ -1,0 +1,21 @@
+# virtio configuration options
+#
+# Copyright (c) 2023, STMICROLECTRONICS
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+menuconfig VIRTIO
+	bool "VirtIO devices and drivers"
+	help
+	  Enable VIRTIO Driver Configuration
+
+if VIRTIO
+
+config VIRTIO_MMIO_DEV
+	bool "virtio mmio device"
+	select CONFIG_OPENAMP
+	default n
+	help
+	  Enable virtio mmio device driver
+
+endif # VIRTIO

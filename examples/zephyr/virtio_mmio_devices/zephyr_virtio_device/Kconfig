@@ -1,0 +1,2 @@
+rsource "drivers/i2c/Kconfig.virtio"
+rsource "drivers/virtio/Kconfig.virtio"

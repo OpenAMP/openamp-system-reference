@@ -1,0 +1,4 @@
+zephyr_library()
+
+zephyr_library_sources_ifdef(CONFIG_I2C_VIRTIO_DEV		i2c_virtio_zephyr_dev.c)
+zephyr_library_sources_ifdef(CONFIG_I2C_VIRTIO_DEV		virtio_i2c_dev.c)

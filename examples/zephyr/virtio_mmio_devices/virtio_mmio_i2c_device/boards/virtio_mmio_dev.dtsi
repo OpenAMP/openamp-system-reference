@@ -1,0 +1,15 @@
+/{
+    soc {
+        virtio_mmio_dev: virtio_mmio_dev@10050000 {
+            compatible = "virtio-mmio-dev";
+            reg = <0x10050000 0x8000>;
+            status = "disabled";
+
+            i2c_virtio_dev: i2c_virtio_dev {
+                compatible = "virtio-i2c-dev";
+                status = "disabled";
+            };
+
+        };
+    };
+};
