@@ -1,0 +1,3 @@
+zephyr_library()
+
+zephyr_library_sources_ifdef(CONFIG_VIRTIO_MMIO_DEV		virtio_mmio_dev.c)

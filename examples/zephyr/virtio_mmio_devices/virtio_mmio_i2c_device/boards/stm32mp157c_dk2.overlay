@@ -1,0 +1,38 @@
+/*
+ * Copyright (c) 2023, STMICROLECTRONICS
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include "virtio_mmio_dev.dtsi"
+
+/ {
+	chosen {
+		zephyr,ipc = &mailbox;
+	};
+};
+
+&virtio_mmio_dev {
+	status = "okay";
+};
+
+&i2c_virtio_dev {
+	status = "okay";
+};
+
+&arduino_i2c {
+	status = "okay";
+	ssd1306_zephyr:ssd1306@3c {
+		compatible = "solomon,ssd1306fb";
+		reg = <0x3c>;
+		width = <128>;
+		height = <64>;
+		segment-offset = <0>;
+		page-offset = <0>;
+		display-offset = <0>;
+		multiplex-ratio = <63>;
+		segment-remap;
+		com-invdir;
+		prechargep = <0x22>;
+	};
+};
