@@ -1,0 +1,33 @@
+# Copyright (c) 2024 Wind River Systems, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  remotes:
+    - name: openamp
+      url-base: https://github.com/OpenAMP
+  defaults:
+    remote: openamp
+
+  self:
+    path: openamp-system-reference
+
+  projects:
+    - name: zephyr
+      repo-path: openamp-zephyr-staging
+      remote: openamp
+      revision: virtio-exp
+      import: true
+
+    # as we use the same names as in the zephyr manifest,
+    # our definitions eclipse their's
+    - name: libmetal
+      revision: main
+
+    - name: open-amp
+      revision: virtio-exp
+
+    # however, our version does not have the zephyr module glue
+    # so bring in our custom version that integrates both libraries
+    # as a single zephyr module
+    - name: openamp-zephyr-modules
+      revision: main
