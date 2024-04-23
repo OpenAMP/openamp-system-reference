@@ -1,0 +1,16 @@
+# Kconfig - I2C Slave VIRTIO driver
+
+# Copyright (c) 2023, STMICROLECTRONICS
+#
+# SPDX-License-Identifier: Apache-2.0
+
+if VIRTIO
+
+config I2C_VIRTIO_DEV
+	bool "I2C Slave VIRTIO driver"
+	select CONFIG_OPENAMP
+	default n
+	help
+	  Enable virtual I2C Slave VIRTIO driver
+
+endif # VIRTIO
