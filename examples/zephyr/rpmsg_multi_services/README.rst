@@ -225,8 +225,7 @@ Demo 3: dynamic creation/release of a rpmsg-tty device
 Principle
 ---------
 
-  This demo is based on the rpmsg_char restructuring series not yet upstreamed. This series
-  de-correlates the /dev/rpmsg_ctrl from the rpmsg_char device and then introduces 2 new rpmsg IOCtrls:
+  This demo is based on the rpmsg_ctrl IOCtrls:
 
 * RPMSG_CREATE_DEV_IOCTL : to create a local rpmsg device and to send a name service creation
   announcement to the remote processor
