@@ -1,13 +1,36 @@
+cmake_minimum_required (VERSION 3.0.2)
+if (POLICY CMP0048)
+  cmake_policy(SET CMP0048 NEW)
+endif()
+
+if (POLICY CMP0077)
+  cmake_policy(SET CMP0077 NEW)
+endif()
+
+set (APPS_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set (APPS_SHARE_DIR "${CMAKE_CURRENT_BINARY_DIR}/share")
+
+list (APPEND CMAKE_MODULE_PATH
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/platforms")
+
+include (syscheck)
+project (osr_legacy_apps C)
+
+include (CheckIncludeFiles)
+include (CheckCSourceCompiles)
+include (collect)
+include (options)
+include (depends)
+enable_testing ()
+
 collector_create (APP_COMMON_SOURCES "")
 collector_create (APP_LIB_DIRS "")
 collector_create (APP_INC_DIRS "")
 collector_create (APP_LIB_DEPS "")
 
 collector_create (APP_EXTRA_C_FLAGS "")
-set (APPS_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-
-set (APPS_SHARE_DIR "${CMAKE_CURRENT_BINARY_DIR}/share")
-
 collect (APP_INC_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 add_subdirectory (machine)
