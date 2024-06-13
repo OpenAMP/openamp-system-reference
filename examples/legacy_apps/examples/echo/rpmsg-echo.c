@@ -19,7 +19,6 @@
 #define SHUTDOWN_MSG	0xEF56A55A
 
 #define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-//#define LPRINTF(format, ...)
 #define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
 
 static struct rpmsg_endpoint lept;

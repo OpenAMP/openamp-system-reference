@@ -28,6 +28,7 @@ foreach (_app load_fw)
     add_executable (${_app}.out ${_sources})
     set_source_files_properties(${_sources} PROPERTIES COMPILE_FLAGS "${_cflags}")
 
+    target_compile_options (${_app}.out PRIVATE "-static")
     target_link_libraries(${_app}.out -Wl,-Map=${_app}.map -Wl,--gc-sections -T"${CMAKE_CURRENT_SOURCE_DIR}/lscript.ld" -Wl,--start-group ${OPENAMP_LIB}-static ${_deps} -Wl,--end-group)
 
     install (TARGETS ${_app}.out RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
