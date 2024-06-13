@@ -9,6 +9,13 @@ if (WITH_LIBMETAL_FIND)
   collect (PROJECT_LIB_DEPS "${LIBMETAL_LIB}")
 endif (WITH_LIBMETAL_FIND)
 
+if (WITH_OPENAMP_FIND)
+  find_package (open_amp REQUIRED)
+  collect (PROJECT_INC_DIRS "${OPENAMP_INCLUDE_DIR}")
+  collect (PROJECT_LIB_DIRS "${OPENAMP_LIB_DIR}")
+  collect (PROJECT_LIB_DEPS "${OPENAMP_LIB}")
+endif (WITH_OPENAMP_FIND)
+
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
   check_include_files (stdatomic.h HAVE_STDATOMIC_H)
   check_include_files (fcntl.h HAVE_FCNTL_H)

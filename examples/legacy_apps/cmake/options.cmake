@@ -1,18 +1,3 @@
-file(READ ${OPENAMP_ROOT_DIR}/VERSION ver)
-
-string(REGEX MATCH "VERSION_MAJOR = ([0-9]*)" _ ${ver})
-set(PROJECT_VERSION_MAJOR ${CMAKE_MATCH_1})
-
-string(REGEX MATCH "VERSION_MINOR = ([0-9]*)" _ ${ver})
-set(PROJECT_VERSION_MINOR ${CMAKE_MATCH_1})
-
-string(REGEX MATCH "VERSION_PATCH = ([0-9]*)" _ ${ver})
-set(PROJECT_VERSION_PATCH ${CMAKE_MATCH_1})
-
-set(PROJECT_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
-
-message(STATUS "open-amp version: ${PROJECT_VERSION} (${OPENAMP_ROOT_DIR})")
-
 if (NOT DEFINED CMAKE_BUILD_TYPE)
   set (CMAKE_BUILD_TYPE Debug)
 endif (NOT DEFINED CMAKE_BUILD_TYPE)
@@ -121,6 +106,7 @@ if (WITH_ZEPHYR)
 endif (WITH_ZEPHYR)
 
 option (WITH_LIBMETAL_FIND "Check Libmetal library can be found" ON)
+option (WITH_OPENAMP_FIND "Check libopen_amp library can be found" ON)
 
 if (DEFINED RPMSG_BUFFER_SIZE)
   add_definitions( -DRPMSG_BUFFER_SIZE=${RPMSG_BUFFER_SIZE} )
