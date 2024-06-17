@@ -237,26 +237,36 @@ Demo
 
 1. Prerequisite
 
-  Due to a limitation in the rpmsg protocol, the zephyr does not know the existence of the
-  /dev/ttyRPMG0 until the Linux sends it a first message. Creating a new channel before this first one
-  is well establish leads to bad endpoints association. To avoid this, just send a message on
-  /dev/ttyRPMSG0
+  * Due to a limitation in the rpmsg protocol, the zephyr does not know the existence of the
+    /dev/ttyRPMG0 until the Linux sends it a first message. Creating a new channel before this first one
+    is well establish leads to bad endpoints association. To avoid this, just send a message on
+    /dev/ttyRPMSG0
 
-  .. code-block:: console
+    .. code-block:: console
 
-    root@linuxshell: cat /dev/ttyRPMSG0 &
-    root@linuxshell: echo "Hello Zephyr" >/dev/ttyRPMSG0
-    TTY 0: Hello Zephyr
+      root@linuxshell: cat /dev/ttyRPMSG0 &
+      root@linuxshell: echo "Hello Zephyr" >/dev/ttyRPMSG0
+      TTY 0: Hello Zephyr
 
-  Download `rpmsg-utils <https://github.com/OpenAMP/openamp-system-reference/tree/main/examples/linux/rpmsg-utils>`_
-  tools relying on the /dev/rpmsg_ctrl, and compile it in an arm environment
-  using make instruction and install it on target.
+  * Check if the rpmsg-utils tools are installed on your platform.
 
-  optional: enable rpmsg bus trace to observe RPmsg in kernel trace:
+    .. code-block:: console
 
-  .. code-block:: console
+      root@linuxshell: rpmsg_ping
 
-    root@linuxshell: echo -n 'file virtio_rpmsg_bus.c +p' > /sys/kernel/debug/dynamic_debug/control
+
+  * If the rpmsg_ping application does not exist:
+
+    * Download `rpmsg-utils <https://github.com/OpenAMP/openamp-system-reference/tree/main/examples/linux/rpmsg-utils>`_
+      tools
+    * Cross-compile it and install it on the target device.
+
+
+  * optional: enable rpmsg bus trace to observe RPmsg in kernel trace:
+
+    .. code-block:: console
+
+      root@linuxshell: echo -n 'file virtio_rpmsg_bus.c +p' > /sys/kernel/debug/dynamic_debug/control
 
 2. create a new TTY channel
 
