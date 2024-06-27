@@ -225,6 +225,10 @@ int main(int argc, char *argv[])
 		printf("****\r\n");
 	}
 
+	ret = unbind_rpmsg_chrdev(rpmsg_dev);
+	if (ret < 0)
+		return ret;
+
 	send_shutdown(fd);
 	free(i_payload);
 	free(r_payload);

@@ -109,6 +109,33 @@ int bind_rpmsg_chrdev(const char *rpmsg_dev_name)
 	return 0;
 }
 
+int unbind_rpmsg_chrdev(const char *rpmsg_dev_name)
+{
+	char fpath[256];
+	char *rpmsg_chdrv = "rpmsg_chrdev";
+	int fd;
+	int ret;
+
+	/* unbind the rpmsg device to rpmsg char driver */
+	sprintf(fpath, "%s/drivers/%s/unbind", RPMSG_BUS_SYS, rpmsg_chdrv);
+	fd = open(fpath, O_WRONLY);
+	if (fd < 0) {
+		fprintf(stderr, "Failed to open %s, %s\n",
+			fpath, strerror(errno));
+		return -EINVAL;
+	}
+	printf("write %s to %s\n", rpmsg_dev_name, fpath);
+	ret = write(fd, rpmsg_dev_name, strlen(rpmsg_dev_name) + 1);
+	if (ret < 0) {
+		fprintf(stderr, "Failed to write %s to %s, %s\n",
+			rpmsg_dev_name, fpath, strerror(errno));
+		close(fd);
+		return -EINVAL;
+	}
+	close(fd);
+	return 0;
+}
+
 int get_rpmsg_chrdev_fd(const char *rpmsg_dev_name, char *rpmsg_ctrl_name)
 {
 	char dpath[2*NAME_MAX];
