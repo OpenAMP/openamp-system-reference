@@ -1,4 +1,7 @@
-/* Applies to all zynqmp boards to configure the IPC & memory for OpenAMP */
+/* Applies to all zynqmp boards to configure the IPC & memory for OpenAMP
+** This configuration is compatible with zephyr rpmsg and other modern uses of
+** rpmsg
+*/
 
 /dts-v1/;
 /plugin/;
