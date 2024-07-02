@@ -1,4 +1,14 @@
-/* Applies to all zynqmp boards to configure the IPC & memory for OpenAMP */
+/* Applies to all zynqmp boards to configure the IPC & memory for OpenAMP
+**
+** This configuration is compatible with old bare-metal apps built with
+** petalinux v2023 and before.
+**
+** It uses different IPC interrupt channels
+** It only supports lockstep mode
+**
+** Bare-metal apps that do not use rpmsg (or any other IPI) can use the normal
+** dtbs and thus can support lockstep and split mode.
+*/
 
 /dts-v1/;
 /plugin/;
@@ -58,40 +68,6 @@
 		};
 	};
 
-#if 0
-	zynqmp_ipi {
-		#address-cells = <2>;
-		#size-cells = <2>;
-		ranges;
-
-		ipi_mailbox_rpu0: mailbox@ff990040 {
-			reg = <0x00 0xff990040 0x00 0x20>,
-			      <0x00 0xff990060 0x00 0x20>,
-			      <0x00 0xff990200 0x00 0x20>,
-			      < 0x00 0xff990220 0x00 0x20>;
-			reg-names = "local_request_region",
-				    "local_response_region",
-				    "remote_request_region",
-				    "remote_response_region";
-			#mbox-cells = <0x01>;
-			xlnx,ipi-id = <0x01>;
-		};
-
-		ipi_mailbox_rpu1: mailbox@ff990080 {
-			reg = <0x00 0xff990420 0x00 0x20>,
-			      <0x00 0xff990440 0x00 0x20>,
-			      <0x00 0xff990260 0x00 0x20>,
-			      <0x00 0xff990280 0x00 0x20>;
-			reg-names = "local_request_region",
-				    "local_response_region",
-				    "remote_request_region",
-				    "remote_response_region";
-			#mbox-cells = <0x01>;
-			xlnx,ipi-id = <0x02>;
-		};
-	};
-#endif
-
 	remoteproc: remoteproc {
 		r5f-0 {
 			memory-region = <&rproc_0_fw_image>, <&rpu0vdev0vring0>,
@@ -99,14 +75,5 @@
 			mboxes = <&ipi_mailbox_rpu0 0>, <&ipi_mailbox_rpu0 1>;
 			mbox-names = "tx", "rx";
 		};
-
-#if 0
-		r5f-1 {
-			memory-region = <&rproc_1_fw_image>, <&rpu1vdev1vring0>,
-					<&rpu1vdev1vring1>, <&rpu1vdev1buffer>;
-			mboxes = <&ipi_mailbox_rpu1 0>, <&ipi_mailbox_rpu1 1>;
-			mbox-names = "tx", "rx";
-		};
-#endif
 	};
 };
