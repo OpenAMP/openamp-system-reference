@@ -346,6 +346,10 @@ int main(int argc, char *argv[])
 	/* Close proxy rpmsg device */
 	close(proxy->rpmsg_proxy_fd);
 
+	ret = unbind_rpmsg_chrdev(rpmsg_dev_name);
+	if (ret < 0)
+		return ret;
+
 	/* Wait for other end to cleanup
 	 * Otherwise, virtio_rpmsg_bus can post msg with no recipient
 	 * warning as it can receive NS destroy after the rpmsg char

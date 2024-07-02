@@ -196,6 +196,10 @@ int main(int argc, char *argv[])
 		printf("End of Matrix multiplication demo round %d\n", i);
 	}
 
+	ret = unbind_rpmsg_chrdev(rpmsg_dev);
+	if (ret < 0)
+		return ret;
+
 	send_shutdown(fd);
 	close(fd);
 	if (charfd >= 0)
