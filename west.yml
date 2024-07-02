@@ -22,10 +22,10 @@ manifest:
     # as we use the same names as in the zephyr manifest,
     # our definitions eclipse their's
     - name: libmetal
-      revision: main
+      revision: v2024.05.0
 
     - name: open-amp
-      revision: main
+      revision: v2024.05.1
 
     # however, our version does not have the zephyr module glue
     # so bring in our custom version that integrates both libraries
