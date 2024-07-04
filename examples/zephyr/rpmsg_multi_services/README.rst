@@ -22,8 +22,9 @@ the co-processor.
 
 Tested on board:
 
-* `Lstm32mp157C_dk2 <https://docs.zephyrproject.org/latest/boards/arm/stm32mp157c_dk2/doc/stm32mp157_dk2.html>`_
-* `Lstm32mp157F_dk2 <https://docs.zephyrproject.org/latest/boards/arm/stm32mp157c_dk2/doc/stm32mp157_dk2.html>`_
+* `stm32mp157c_dk2 <https://docs.zephyrproject.org/latest/boards/st/stm32mp157c_dk2/doc/stm32mp157_dk2.html>`_
+* stm32mp157f_dk2 (use stm32mp157c_dk2 for the zephyr build)
+* `kv260_r5        <https://docs.zephyrproject.org/latest/boards/amd/kv260_r5/doc/index.html>`_
 
 Building the application
 *************************
@@ -50,8 +51,18 @@ Enable:
   `rpmsg-utils <https://github.com/OpenAMP/openamp-system-reference/tree/main/examples/linux/rpmsg-utils>`_
   binaries
 
+**Note:** The Linux OS builds built by `openamp-ci-builds <https://github.com/OpenAMP/openamp-ci-builds>`_
+fulfill these requirements as do the `OpenAMP demo images <https://github.com/OpenAMP/openamp-demo/releases>`_
+and the `OpenAMP demo docker images <https://openamp.readthedocs.io/en/latest/demos/docker_images.html>`_.
+
 Running the sample
 *******************
+
+The demo1 script (
+for `stm32mp15x <https://github.com/OpenAMP/openamp-demo/blob/main/demos/demo-stm32mp157c-dk2/my-extra-stuff/home/root/demo1>`_
+or for `zynqmp <https://github.com/OpenAMP/openamp-demo/blob/main/demos/demo-stm32mp157c-dk2/my-extra-stuff/home/root/demo1>`_ )
+in the demo images run this demo. The section below can be used to run the demo manually or to
+better understand what is going on.
 
 Zephyr console
 ==============
@@ -79,7 +90,7 @@ Open a Linux shell (minicom, ssh, etc.)
 
 * Start the demo environment
 
-First copy the rpmsg_multi_services.elf file on the target rrottfs in /lib/firmware folder.
+First copy the rpmsg_multi_services.elf file on the target rootfs in /lib/firmware folder.
 Then start the firmware:
 
 .. code-block:: console
