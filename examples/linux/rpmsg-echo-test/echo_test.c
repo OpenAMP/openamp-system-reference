@@ -65,8 +65,9 @@ void print_help(void)
 {
 	extern char *__progname;
 
-	printf("\r\nusage: %s [option: -d, -n, -s, -e]\r\n", __progname);
+	printf("\r\nusage: %s [option: -d, -c, -n, -s, -e]\r\n", __progname);
 	printf("-d - rpmsg device name\r\n");
+	printf("-c - rpmsg control device name\r\n");
 	printf("-n - number of times payload will be sent\r\n");
 	printf("-s - source end point address\r\n");
 	printf("-e - destination end point address\r\n");
@@ -94,10 +95,15 @@ int main(int argc, char *argv[])
 	printf("\r\n Echo test start \r\n");
 	lookup_channel(rpmsg_dev, &eptinfo);
 
-	while ((opt = getopt(argc, argv, "d:n:s:e:")) != -1) {
+	while ((opt = getopt(argc, argv, "d:c:n:s:e:")) != -1) {
 		switch (opt) {
 		case 'd':
+			memset(rpmsg_dev, 0, sizeof(rpmsg_dev));
 			strncpy(rpmsg_dev, optarg, sizeof(rpmsg_dev));
+			break;
+		case 'c':
+			memset(rpmsg_ctrl_dev_name, 0, sizeof(rpmsg_ctrl_dev_name));
+			strncpy(rpmsg_ctrl_dev_name, optarg, sizeof(rpmsg_ctrl_dev_name));
 			break;
 		case 'n':
 			ntimes = strtol(optarg, NULL, 10);
