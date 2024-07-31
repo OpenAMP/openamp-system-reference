@@ -1,0 +1,19 @@
+# Copyright (c) 2022 STMicroelectronics
+# SPDX-License-Identifier: Apache-2.0
+
+manifest:
+  remotes:
+    - name: openamp
+      url-base: https://github.com/OpenAMP
+  defaults:
+    remote: openamp
+
+  self:
+    path: openamp-system-reference
+
+  projects:
+    - name: libmetal
+      revision: main
+
+    - name: open-amp
+      revision: main
