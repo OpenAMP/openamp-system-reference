@@ -66,7 +66,8 @@ char *get_rpmsg_ept_dev_name(const char *rpmsg_char_name,
 int bind_rpmsg_chrdev(const char *rpmsg_dev_name)
 {
 	char fpath[256];
-	char *rpmsg_chdrv = "rpmsg_chrdev";
+	const char *rpmsg_chdrv = "rpmsg_chrdev";
+	char drv_override[64] = {0};
 	int fd;
 	int ret;
 
@@ -74,12 +75,39 @@ int bind_rpmsg_chrdev(const char *rpmsg_dev_name)
 	sprintf(fpath, "%s/devices/%s/driver_override",
 		RPMSG_BUS_SYS, rpmsg_dev_name);
 	printf("open %s\n", fpath);
-	fd = open(fpath, O_WRONLY);
+	fd = open(fpath, O_RDWR);
 	if (fd < 0) {
 		fprintf(stderr, "Failed to open %s, %s\n",
 			fpath, strerror(errno));
 		return -EINVAL;
 	}
+
+	ret = read(fd, drv_override, sizeof(drv_override));
+	if (ret < 0) {
+		fprintf(stderr, "Failed to read %s (%s)\n",
+			fpath, strerror(errno));
+		close(fd);
+		return ret;
+	}
+
+	printf("current drv override = %s\n", drv_override);
+
+	/*
+	 * Check driver override. If "rpmsg_chrdev" string is
+	 * found, then don't attempt to bind. If null string is found,
+	 * then no driver is bound, and attempt to bind rpmsg char driver.
+	 * Any other case, fail binding driver, as device is busy.
+	 */
+	if (strncmp(drv_override, rpmsg_chdrv, strlen(rpmsg_chdrv)) == 0) {
+		close(fd);
+		return 0;
+	} else if (strncmp(drv_override, "(null)", strlen("(null)")) != 0) {
+		fprintf(stderr, "error: device %s is busy, drv bind=%s\n",
+		       rpmsg_dev_name, drv_override);
+		close(fd);
+		return -EBUSY;
+	}
+
 	ret = write(fd, rpmsg_chdrv, strlen(rpmsg_chdrv) + 1);
 	if (ret < 0) {
 		fprintf(stderr, "Failed to write %s to %s, %s\n",
