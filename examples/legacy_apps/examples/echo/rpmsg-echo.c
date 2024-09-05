@@ -12,17 +12,23 @@
 #include <openamp/open_amp.h>
 #include <openamp/version.h>
 #include <metal/alloc.h>
+#include <metal/log.h>
 #include <metal/version.h>
 #include "platform_info.h"
 #include "rpmsg-echo.h"
 
-#define SHUTDOWN_MSG	0xEF56A55A
+#define LPRINTF(fmt, ...) printf("%s():%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
+#define LPERROR(fmt, ...) LPRINTF("ERROR: " fmt, ##__VA_ARGS__)
 
-#define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
+#define U_BOOT_EPT 1035
+#define U_BOOT_RPMSG_CHANNEL "U-Boot-rpmsg"
+#define RPMSG_CLIENT_SAMPLE_CH "rpmsg-client-sample"
 
-static struct rpmsg_endpoint lept;
-static int shutdown_req = 0;
+static struct rpmsg_endpoint lept, uboot_ept, rpcs_ept;
+
+#ifdef USE_FREERTOS
+extern TaskHandle_t rpmsg_task;
+#endif /* USE_FREERTOS */
 
 /*-----------------------------------------------------------------------------*
  *  RPMSG endpoint callbacks
@@ -33,25 +39,21 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 	(void)priv;
 	(void)src;
 
-	/* On reception of a shutdown we signal the application to terminate */
-	if ((*(unsigned int *)data) == SHUTDOWN_MSG) {
-		LPRINTF("shutdown message is received.\r\n");
-		shutdown_req = 1;
-		return RPMSG_SUCCESS;
-	}
-
 	/* Send data back to host */
 	if (rpmsg_send(ept, data, len) < 0) {
-		LPERROR("rpmsg_send failed\r\n");
+		metal_err("rpmsg_send failed\r\n");
 	}
+#ifdef USE_FREERTOS
+	xTaskResumeFromISR(rpmsg_task);
+#endif /* USE_FREERTOS */
 	return RPMSG_SUCCESS;
 }
 
 static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
 {
 	(void)ept;
-	LPRINTF("unexpected Remote endpoint destroy\r\n");
-	shutdown_req = 1;
+	metal_info("ept %s, src=0x%x, dst=0x%x, destroyed by host\r\n",
+		ept->name, ept->addr, ept->dest_addr);
 }
 
 /*-----------------------------------------------------------------------------*
@@ -62,76 +64,49 @@ int app(struct rpmsg_device *rdev, void *priv)
 	int ret;
 
 	/* Initialize RPMSG framework */
-	LPRINTF("Try to create rpmsg endpoint.\r\n");
+	metal_info("Try to create rpmsg endpoints.\r\n");
 
+	/*
+	 * Initially U-Boot tx/rx over fix endpoint.
+	 * Initial implementation of rpmsg in U-boot is expecting fix endpoint
+	 * This will be changed in future when name-service support will be
+	 * added in U-Boot. Till that time maintain this fix endpoint channel.
+	 */
+	ret = rpmsg_create_ept(&uboot_ept, rdev, U_BOOT_RPMSG_CHANNEL,
+			       U_BOOT_EPT, U_BOOT_EPT,
+			       rpmsg_endpoint_cb,
+			       rpmsg_service_unbind);
+	if (ret) {
+		metal_err("Failed to create %s endpoint.\r\n", U_BOOT_RPMSG_CHANNEL);
+		return -1;
+	}
+
+	/*
+	 * create endpoint to communicate with rpmsg-client-sample driver
+	 * This channel communicate with rpmsg-client-sample driver in
+	 * linux kernel.
+	 */
+	ret = rpmsg_create_ept(&rpcs_ept, rdev, RPMSG_CLIENT_SAMPLE_CH,
+			       RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
+			       rpmsg_endpoint_cb,
+			       rpmsg_service_unbind);
+	if (ret) {
+		metal_err("Failed to create %s endpoint.\r\n", RPMSG_CLIENT_SAMPLE_CH);
+		return -1;
+	}
+
+	/* create endpoint to communicate with echo_test app */
 	ret = rpmsg_create_ept(&lept, rdev, RPMSG_SERVICE_NAME,
 			       RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
 			       rpmsg_endpoint_cb,
 			       rpmsg_service_unbind);
 	if (ret) {
-		LPERROR("Failed to create endpoint.\r\n");
+		metal_err("Failed to create endpoint.\r\n");
 		return -1;
 	}
 
-	LPRINTF("Successfully created rpmsg endpoint.\r\n");
-
-	LPRINTF("RPMsg device TX buffer size: %#x\r\n", rpmsg_get_tx_buffer_size(&lept));
-	LPRINTF("RPMsg device RX buffer size: %#x\r\n", rpmsg_get_rx_buffer_size(&lept));
-
-	while(1) {
-		platform_poll(priv);
-		/* we got a shutdown request, exit */
-		if (shutdown_req) {
-			break;
-		}
-	}
-	rpmsg_destroy_ept(&lept);
-
-	return 0;
-}
-
-/*-----------------------------------------------------------------------------*
- *  Application entry point
- *-----------------------------------------------------------------------------*/
-int main(int argc, char *argv[])
-{
-	void *platform;
-	struct rpmsg_device *rpdev;
-	int ret;
-
-	LPRINTF("openamp lib version: %s (", openamp_version());
-	LPRINTF("Major: %d, ", openamp_version_major());
-	LPRINTF("Minor: %d, ", openamp_version_minor());
-	LPRINTF("Patch: %d)\r\n", openamp_version_patch());
-
-	LPRINTF("libmetal lib version: %s (", metal_ver());
-	LPRINTF("Major: %d, ", metal_ver_major());
-	LPRINTF("Minor: %d, ", metal_ver_minor());
-	LPRINTF("Patch: %d)\r\n", metal_ver_patch());
-
-	LPRINTF("Starting application...\r\n");
-
-	/* Initialize platform */
-	ret = platform_init(argc, argv, &platform);
-	if (ret) {
-		LPERROR("Failed to initialize platform.\r\n");
-		ret = -1;
-	} else {
-		rpdev = platform_create_rpmsg_vdev(platform, 0,
-						   VIRTIO_DEV_DEVICE,
-						   NULL, NULL);
-		if (!rpdev) {
-			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			ret = -1;
-		} else {
-			app(rpdev, platform);
-			platform_release_rpmsg_vdev(rpdev, platform);
-			ret = 0;
-		}
-	}
-
-	LPRINTF("Stopping application...\r\n");
-	platform_cleanup(platform);
+	metal_info("Successfully created rpmsg endpoint.\r\n");
+	ret = platform_poll_on_vdev_reset(rdev, priv);
 
 	return ret;
 }

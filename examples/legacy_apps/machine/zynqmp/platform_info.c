@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2014, Mentor Graphics Corporation
  * All rights reserved.
- * Copyright (c) 2017 Xilinx, Inc.
+ * Copyright (c) 2017-2022 Xilinx, Inc., All rights reserved.
+ * Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -31,62 +32,6 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include "platform_info.h"
-
-/* RPU remote CPU Index. We only talk to one CPU in the example. We set the CPU index to 0. */
-#define RPU_CPU_ID          0
-
-#ifdef VERSAL_NET
-#ifndef IPI_CHN_BITMASK
-#define IPI_CHN_BITMASK	    0x08
-#endif /* !IPI_CHN_BITMASK */
-#ifndef IPI_DEV_NAME
-#define IPI_DEV_NAME	    "eb360000.ipi"
-#endif /* !IPI_DEV_NAME */
-#elif defined(versal)
-#ifndef IPI_CHN_BITMASK
-#define IPI_CHN_BITMASK     0x08 /* IPI channel bit mask for IPI  from/to RPU0 */
-#endif /* !IPI_CHN_BITMASK */
-#ifndef IPI_DEV_NAME
-#define IPI_DEV_NAME        "ff360000.ipi" /* IPI device name */
-#endif /* !IPI_DEV_NAME */
-#else
-#ifndef IPI_CHN_BITMASK
-#define IPI_CHN_BITMASK	    0x00000100
-#endif /* !IPI_CHN_BITMASK */
-#ifndef IPI_DEV_NAME
-#define IPI_DEV_NAME	    "ff340000.ipi"
-#endif /* !IPI_DEV_NAME */
-#endif /* versal */
-
-/* device bus name. "platform" bus  is used in Linux kernel for generic devices	*/
-#define DEV_BUS_NAME        "platform"
-
-/*
- * libmetal devices names used in the examples.
- * They are platform devices, you find them in Linux sysfs
- * sys/bus/platform/devices
- */
-#ifndef SHM_DEV_NAME
-#define SHM_DEV_NAME        "3ed20000.shm" /* shared device name */
-#endif /* SHM_DEV_NAME */
-#ifndef RSC_MEM_PA
-#define RSC_MEM_PA          0x3ED20000UL
-#endif /* !RSC_MEM_PA */
-#ifndef RSC_MEM_SIZE
-#define RSC_MEM_SIZE        0x2000UL
-#endif /* !RSC_MEM_SIZE */
-#ifndef VRING_MEM_PA
-#define VRING_MEM_PA        0x3ED40000UL
-#endif /* !VRING_MEM_PA */
-#ifndef VRING_MEM_SIZE
-#define VRING_MEM_SIZE      0x8000UL
-#endif /* !VRING_MEM_SIZE */
-#ifndef SHARED_BUF_PA
-#define SHARED_BUF_PA       0x3ED48000UL
-#endif /* !SHARED_BUF_PA */
-#ifndef SHARED_BUF_SIZE
-#define SHARED_BUF_SIZE     0x40000UL
-#endif /* !SHARED_BUF_SIZE */
 
 struct remoteproc_priv rproc_priv = {
 	.shm_name = SHM_DEV_NAME,
@@ -239,6 +184,45 @@ err2:
 err1:
 	metal_free_memory(rpmsg_vdev);
 	return NULL;
+}
+
+int platform_poll_on_vdev_reset(struct rpmsg_device *rpdev, void *priv)
+{
+	struct rpmsg_virtio_device *rvdev;
+	struct remoteproc *rproc = priv;
+	struct remoteproc_priv *prproc;
+	unsigned int flags;
+
+	if (!priv || !rpdev)
+		return -EINVAL;
+
+	prproc = rproc->priv;
+	if (!prproc)
+		return -EINVAL;
+
+	rvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
+
+	/**
+	 * Check virtio status after every interrupt. In case of stop or
+	 * detach, virtio device status will be reset by remote
+	 * processor. In that case, break loop and destroy rvdev
+	 */
+	while (rpmsg_virtio_get_status(rvdev)) {
+#ifdef RPMSG_NO_IPI
+		(void)flags;
+		if (metal_io_read32(prproc->shm_poll_io, 0))
+			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+#else
+		flags = metal_irq_save_disable();
+		if (!(atomic_flag_test_and_set(&prproc->ipi_nokick))) {
+			metal_irq_restore_enable(flags);
+			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+		}
+		_rproc_wait();
+		metal_irq_restore_enable(flags);
+#endif /* RPMSG_NO_IPI */
+	}
+	return 0;
 }
 
 int platform_poll(void *priv)

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <metal/log.h>
 #include <openamp/open_amp.h>
 #include "matrix_multiply.h"
 #include "platform_info.h"
@@ -21,9 +22,8 @@
 
 #define SHUTDOWN_MSG	0xEF56A55A
 
-#define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-//#define LPRINTF(format, ...)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
+#define LPRINTF(fmt, ...) printf("%s():%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
+#define LPERROR(fmt, ...) LPRINTF("ERROR: " fmt, ##__VA_ARGS__)
 
 typedef struct _matrix {
 	unsigned int size;
@@ -33,6 +33,10 @@ typedef struct _matrix {
 /* Local variables */
 static struct rpmsg_endpoint lept;
 static int shutdown_req = 0;
+
+#ifdef USE_FREERTOS
+extern TaskHandle_t rpmsg_task;
+#endif /* USE_FREERTOS */
 
 /*-----------------------------------------------------------------------------*
  *  Calculate the Matrix
@@ -67,7 +71,7 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 	(void)src;
 
 	if ((*(unsigned int *)data) == SHUTDOWN_MSG) {
-		LPRINTF("shutdown message is received.\r\n");
+		metal_info("shutdown message is received.\r\n");
 		shutdown_req = 1;
 		return RPMSG_SUCCESS;
 	}
@@ -78,15 +82,18 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 
 	/* Send the result of matrix multiplication back to host. */
 	if (rpmsg_send(ept, &matrix_result, sizeof(matrix)) < 0) {
-		LPERROR("rpmsg_send failed\r\n");
+		metal_err("rpmsg_send failed\r\n");
 	}
+#ifdef USE_FREERTOS
+	xTaskResumeFromISR(rpmsg_task);
+#endif /* USE_FREERTOS */
 	return RPMSG_SUCCESS;
 }
 
 static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
 {
 	(void)ept;
-	LPERROR("Endpoint is destroyed\r\n");
+	metal_err("Endpoint is destroyed\r\n");
 	shutdown_req = 1;
 }
 
@@ -102,55 +109,12 @@ int app(struct rpmsg_device *rdev, void *priv)
 			       rpmsg_endpoint_cb,
 			       rpmsg_service_unbind);
 	if (ret) {
-		LPERROR("Failed to create endpoint.\r\n");
+		metal_err("Failed to create endpoint.\r\n");
 		return -1;
 	}
 
-	LPRINTF("Waiting for events...\r\n");
-	while(1) {
-		platform_poll(priv);
-		/* we got a shutdown request, exit */
-		if (shutdown_req) {
-			break;
-		}
-	}
-	rpmsg_destroy_ept(&lept);
-
-	return 0;
-}
-
-/*-----------------------------------------------------------------------------*
- *  Application entry point
- *-----------------------------------------------------------------------------*/
-int main(int argc, char *argv[])
-{
-	void *platform;
-	struct rpmsg_device *rpdev;
-	int ret;
-
-	LPRINTF("Starting application...\r\n");
-
-	/* Initialize platform */
-	ret = platform_init(argc, argv, &platform);
-	if (ret) {
-		LPERROR("Failed to initialize platform.\r\n");
-		ret = -1;
-	} else {
-		rpdev = platform_create_rpmsg_vdev(platform, 0,
-						   VIRTIO_DEV_DEVICE,
-						   NULL, NULL);
-		if (!rpdev) {
-			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			ret = -1;
-		} else {
-			app(rpdev, platform);
-			platform_release_rpmsg_vdev(rpdev, platform);
-			ret = 0;
-		}
-	}
-
-	LPRINTF("Stopping application...\r\n");
-	platform_cleanup(platform);
+	metal_info("Waiting for events...\r\n");
+	ret = platform_poll_on_vdev_reset(rdev, priv);
 
 	return ret;
 }

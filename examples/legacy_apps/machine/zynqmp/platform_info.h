@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2016 Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2016-2022 Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -15,8 +16,6 @@
 #include <openamp/remoteproc.h>
 #include <openamp/virtio.h>
 #include <openamp/rpmsg.h>
-
-#include "platform_info_common.h"
 
 #if defined __cplusplus
 extern "C" {
@@ -46,12 +45,163 @@ struct remoteproc_priv {
 
 };
 
+#ifdef _AMD_GENERATED_
+/*
+ * @file   amd_platform_info.h
+ * @brief  Generated header that contains OpenAMP IPC information.
+ *
+ *         Namely interrupt and shared memory information. If values are
+ *	   provided via generated header, then include thus. These values
+ *	   are to describe interrupt and shared memory information that
+ *	   describes one end of an OpenAMP IPC connection. This application
+ *	   is for target AMD APUs for ZynqMP, Versal and Versal-Net SoC's
+ *	   for Linux. The file 'amd_platform_info.h' is generated via
+ *	   Yocto-Decoupling flow for AMD APU Linux targets. The channel
+ *	   information is defined in the OpenAMP YAML channel description.
+ *	   The generated symbols can be changed by editing the OpenAMP YAML
+ *	   channel description.
+ */
+#include "amd_platform_info.h"
+#else
+
 #ifdef RPMSG_NO_IPI
+
 #ifndef POLL_DEV_NAME
 #define POLL_DEV_NAME        "3ee40000.poll" /* shared device name */
 #endif /* !POLL_DEV_NAME */
+
 #define POLL_STOP 0x1U
+
 #endif /* RPMSG_NO_IPI */
+
+#ifdef VERSAL_NET
+
+#ifndef IPI_CHN_BITMASK
+#define IPI_CHN_BITMASK	    0x08
+#endif /* !IPI_CHN_BITMASK */
+
+#ifndef IPI_DEV_NAME
+#define IPI_DEV_NAME	    "eb360000.ipi"
+#endif /* !IPI_DEV_NAME */
+
+#elif defined(versal)
+#ifndef IPI_CHN_BITMASK
+#define IPI_CHN_BITMASK     0x08 /* IPI channel bit mask from/to RPU0 */
+#endif /* !IPI_CHN_BITMASK */
+
+#ifndef IPI_DEV_NAME
+#define IPI_DEV_NAME        "ff360000.ipi" /* IPI device name */
+#endif /* !IPI_DEV_NAME */
+
+#else
+
+#ifndef IPI_CHN_BITMASK
+#define IPI_CHN_BITMASK	    0x00000100
+#endif /* !IPI_CHN_BITMASK */
+
+#ifndef IPI_DEV_NAME
+#define IPI_DEV_NAME	    "ff340000.ipi"
+#endif /* !IPI_DEV_NAME */
+
+#endif /* versal */
+
+/* Device bus name. The "platform" bus is used in Linux kernel for generic
+ * devices.
+ */
+#define DEV_BUS_NAME        "platform"
+
+/* libmetal devices names used in the examples.
+ * They are platform devices, you find them in Linux sysfs
+ * sys/bus/platform/devices
+ */
+#ifndef SHM_DEV_NAME
+#define SHM_DEV_NAME        "3ed20000.shm" /* shared device name */
+#endif /* SHM_DEV_NAME */
+
+#ifndef RSC_MEM_PA
+#define RSC_MEM_PA          0x3ED20000UL
+#endif /* !RSC_MEM_PA */
+
+#ifndef RSC_MEM_SIZE
+#define RSC_MEM_SIZE        0x2000UL
+#endif /* !RSC_MEM_SIZE */
+
+#ifndef VRING_MEM_PA
+#define VRING_MEM_PA        0x3ED40000UL
+#endif /* !VRING_MEM_PA */
+
+#ifndef VRING_MEM_SIZE
+#define VRING_MEM_SIZE      0x8000UL
+#endif /* !VRING_MEM_SIZE */
+
+#ifndef SHARED_BUF_PA
+#define SHARED_BUF_PA       0x3ED48000UL
+#endif /* !SHARED_BUF_PA */
+
+#ifndef SHARED_BUF_SIZE
+#define SHARED_BUF_SIZE     0x40000UL
+#endif /* !SHARED_BUF_SIZE */
+
+#endif /* _AMD_GENERATED_ */
+
+
+/**
+ * platform_init - initialize the platform
+ *
+ * It will initialize the platform.
+ *
+ * @argc: number of arguments
+ * @argv: array of the input arguments
+ * @platform: pointer to store the platform data pointer
+ *
+ * return 0 for success or negative value for failure
+ */
+int platform_init(int argc, char *argv[], void **platform);
+
+/**
+ * platform_create_rpmsg_vdev - create rpmsg vdev
+ *
+ * It will create rpmsg virtio device, and returns the rpmsg virtio
+ * device pointer.
+ *
+ * @platform: pointer to the private data
+ * @vdev_index: index of the virtio device, there can more than one vdev
+ *              on the platform.
+ * @role: virtio driver or virtio device of the vdev
+ * @rst_cb: virtio device reset callback
+ * @ns_bind_cb: rpmsg name service bind callback
+ *
+ * return pointer to the rpmsg virtio device
+ */
+struct rpmsg_device *
+platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
+			   unsigned int role,
+			   void (*rst_cb)(struct virtio_device *vdev),
+			   rpmsg_ns_bind_cb ns_bind_cb);
+
+/**
+ * platform_poll - platform poll function
+ *
+ * @platform: pointer to the platform
+ *
+ * return negative value for errors, otherwise 0.
+ */
+int platform_poll(void *platform);
+int platform_poll_on_vdev_reset(struct rpmsg_device *rpdev, void *priv);
+
+/**
+ * platform_release_rpmsg_vdev - release rpmsg virtio device
+ *
+ * @rpdev: pointer to the rpmsg device
+ */
+void platform_release_rpmsg_vdev(struct rpmsg_device *rpdev, void *platform);
+
+/**
+ * platform_cleanup - clean up the platform resource
+ *
+ * @platform: pointer to the platform
+ */
+void platform_cleanup(void *platform);
 
 #if defined __cplusplus
 }
