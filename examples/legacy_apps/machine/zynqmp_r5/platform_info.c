@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2014, Mentor Graphics Corporation
  * All rights reserved.
- * Copyright (c) 2017 Xilinx, Inc.
+ * Copyright (c) 2021-2022 Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -28,37 +29,24 @@
 #include "platform_info.h"
 #include "rsc_table.h"
 
+#ifdef DEBUG_INFO
+#include "debug_info.h"
+#endif /* DEBUG_INFO */
+
 #define KICK_DEV_NAME         "poll_dev"
 #define KICK_BUS_NAME         "generic"
-
-/* Cortex R5 memory attributes */
-#define DEVICE_SHARED		0x00000001U /* device, shareable */
-#define DEVICE_NONSHARED	0x00000010U /* device, non shareable */
-#define NORM_NSHARED_NCACHE	0x00000008U /* Non cacheable  non shareable */
-#define NORM_SHARED_NCACHE	0x0000000CU /* Non cacheable shareable */
-#define	PRIV_RW_USER_RW		(0x00000003U<<8U) /* Full Access */
-
-#ifndef SHARED_MEM_PA
-#if XPAR_CPU_ID == 0
-#define SHARED_MEM_PA  0x3ED40000UL
-#else
-#define SHARED_MEM_PA  0x3EF40000UL
-#endif /* XPAR_CPU_ID */
-#endif /* !SHARED_MEM_PA */
-
-#ifndef SHARED_MEM_SIZE
-#define SHARED_MEM_SIZE 0x100000UL
-#endif /* !SHARED_MEM_SIZE */
-
-#ifndef SHARED_BUF_OFFSET
-#define SHARED_BUF_OFFSET 0x8000UL
-#endif /* !SHARED_BUF_OFFSET */
 
 #ifndef RPMSG_NO_IPI
 #define _rproc_wait() asm volatile("wfi")
 #endif /* !RPMSG_NO_IPI */
 
-/* Polling information used by remoteproc operations. */
+#ifdef USE_FREERTOS
+extern TaskHandle_t rpmsg_task;
+#endif /* USE_FREERTOS */
+
+/* Polling information used by remoteproc operations.
+ */
+
 static metal_phys_addr_t poll_phys_addr = POLL_BASE_ADDR;
 struct metal_device kick_device = {
 	.name = "poll_dev",
@@ -115,6 +103,7 @@ platform_create_proc(int proc_index, int rsc_index)
 
 	(void) proc_index;
 	rsc_table = get_resource_table(rsc_index, &rsc_size);
+	metal_info("rsc_table, rsc_size = %#x, %#x\r\n", rsc_table, rsc_size);
 
 	/* Register IPI device */
 	if (metal_register_generic_device(&kick_device))
@@ -124,6 +113,10 @@ platform_create_proc(int proc_index, int rsc_index)
 	if (!remoteproc_init(&rproc_inst, &zynqmp_r5_a53_proc_ops, &rproc_priv))
 		return NULL;
 
+	metal_dbg("poll{name,bus,chn_mask} = %s,%s,%#x\r\n",
+		rproc_priv.kick_dev_name,
+		rproc_priv.kick_dev_bus_name,
+		IPI_CHN_BITMASK);
 	/*
 	 * Mmap shared memories
 	 * Or shall we constraint that they will be set as carved out
@@ -145,11 +138,11 @@ platform_create_proc(int proc_index, int rsc_index)
 	/* parse resource table to remoteproc */
 	ret = remoteproc_set_rsc_table(&rproc_inst, rsc_table, rsc_size);
 	if (ret) {
-		xil_printf("Failed to initialize remoteproc\r\n");
+		metal_err("Failed to initialize remoteproc\r\n");
 		remoteproc_remove(&rproc_inst);
 		return NULL;
 	}
-	xil_printf("Initialize remoteproc successfully.\r\n");
+	metal_info("Initialize remoteproc successfully.\r\n");
 
 	return &rproc_inst;
 }
@@ -160,6 +153,7 @@ int platform_init(int argc, char *argv[], void **platform)
 	unsigned long rsc_id = 0;
 	struct remoteproc *rproc;
 
+	/* metal_log setup is in init_system */
 	if (!platform) {
 		xil_printf("Failed to initialize platform,"
 			   "NULL pointer to store platform data.\r\n");
@@ -176,9 +170,14 @@ int platform_init(int argc, char *argv[], void **platform)
 		rsc_id = strtoul(argv[2], NULL, 0);
 	}
 
+#ifdef DEBUG_INFO
+	debug_info();
+#endif /* DEBUG_INFO */
+
+	metal_info("platform_create_proc()\r\n");
 	rproc = platform_create_proc(proc_id, rsc_id);
 	if (!rproc) {
-		xil_printf("Failed to create remoteproc device.\r\n");
+		metal_err("Failed to create remoteproc device.\r\n");
 		return -EINVAL;
 	}
 	*platform = rproc;
@@ -207,35 +206,122 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 	shbuf = metal_io_phys_to_virt(shbuf_io,
 				      SHARED_MEM_PA + SHARED_BUF_OFFSET);
 
-	xil_printf("creating remoteproc virtio\r\n");
+	metal_info("creating remoteproc virtio rproc %p\r\n", rproc);
 	/* TODO: can we have a wrapper for the following two functions? */
 	vdev = remoteproc_create_virtio(rproc, vdev_index, role, rst_cb);
 	if (!vdev) {
-		xil_printf("failed remoteproc_create_virtio\r\n");
+		metal_err("failed remoteproc_create_virtio\r\n");
 		goto err1;
 	}
 
-	xil_printf("initializing rpmsg shared buffer pool\r\n");
-	/* Only RPMsg virtio driver needs to initialize the shared buffers pool */
+	metal_info("initializing rpmsg shared buffer pool\r\n");
+	/* Only RPMsg virtio master needs to initialize the shared buffers pool */
 	rpmsg_virtio_init_shm_pool(&shpool, shbuf,
 				   (SHARED_MEM_SIZE - SHARED_BUF_OFFSET));
 
-	xil_printf("initializing rpmsg vdev\r\n");
+	metal_info("initializing rpmsg vdev\r\n");
 	/* RPMsg virtio device can set shared buffers pool argument to NULL */
 	ret =  rpmsg_init_vdev(rpmsg_vdev, vdev, ns_bind_cb,
 			       shbuf_io,
 			       &shpool);
 	if (ret) {
-		xil_printf("failed rpmsg_init_vdev\r\n");
+		metal_err("failed rpmsg_init_vdev\r\n");
 		goto err2;
 	}
-	xil_printf("initializing rpmsg vdev\r\n");
 	return rpmsg_virtio_get_rpmsg_device(rpmsg_vdev);
 err2:
 	remoteproc_remove_virtio(rproc, vdev);
 err1:
 	metal_free_memory(rpmsg_vdev);
 	return NULL;
+}
+
+int platform_poll_on_vdev_reset(struct rpmsg_device *rpdev, void *priv)
+{
+	struct rpmsg_virtio_device *rvdev;
+	struct remoteproc *rproc = priv;
+	struct remoteproc_priv *prproc;
+	unsigned int flags;
+
+	if (!priv || !rpdev)
+		return -EINVAL;
+
+	prproc = rproc->priv;
+	if (!prproc)
+		return -EINVAL;
+
+	rvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
+
+	/**
+	 * Check virtio status after every interrupt. In case of stop or
+	 * detach, virtio device status will be reset by remote
+	 * processor. In that case, break loop and destroy rvdev
+	 */
+	while (rpmsg_virtio_get_status(rvdev)) {
+#ifdef RPMSG_NO_IPI
+		(void)flags;
+		if (metal_io_read32(prproc->kick_io, 0))
+			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+#else /* !RPMSG_NO_IPI */
+		flags = metal_irq_save_disable();
+		if (!(atomic_flag_test_and_set(&prproc->ipi_nokick))) {
+			metal_irq_restore_enable(flags);
+			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+		}
+		_rproc_wait();
+		metal_irq_restore_enable(flags);
+#endif /* RPMSG_NO_IPI */
+	}
+	return 0;
+}
+
+int platform_poll_for_rpc(void *arg)
+{
+	struct rproc_plat_info *data = arg;
+	struct rpmsg_device *rpdev = data->rpdev;
+	struct remoteproc *rproc = data->rproc;
+	struct rpmsg_virtio_device *rvdev;
+	struct remoteproc_priv *prproc;
+	unsigned int flags;
+	int ret;
+
+	if (!rpdev)
+		return -EINVAL;
+
+	prproc = rproc->priv;
+	if (!prproc)
+		return -EINVAL;
+
+	rvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
+
+	/**
+	 * Check virtio status after every interrupt. In case of stop or
+	 * detach, virtio device status will be reset by remote
+	 * processor. In that case, break loop and destroy rvdev
+	 */
+	while (rpmsg_virtio_get_status(rvdev)) {
+#ifdef RPMSG_NO_IPI
+		(void)flags;
+		if (metal_io_read32(prproc->kick_io, 0))
+			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+#else /* !RPMSG_NO_IPI */
+		flags = metal_irq_save_disable();
+		if (!(atomic_flag_test_and_set(&prproc->ipi_nokick))) {
+			metal_irq_restore_enable(flags);
+			ret = remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+			if (ret)
+				return ret;
+			break;
+		}
+#ifdef USE_FREERTOS
+	vTaskSuspend(rpmsg_task);
+#else
+		_rproc_wait();
+#endif /* USE_FREERTOS */
+		metal_irq_restore_enable(flags);
+#endif /* RPMSG_NO_IPI */
+	}
+	return 0;
 }
 
 int platform_poll(void *priv)

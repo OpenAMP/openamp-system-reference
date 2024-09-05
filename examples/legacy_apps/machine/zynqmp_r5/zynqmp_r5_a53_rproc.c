@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2014, Mentor Graphics Corporation
  * All rights reserved.
- * Copyright (c) 2017 Xilinx, Inc.
+ * Copyright (c) 2021 Xilinx, Inc.
+ * Copyright (C) 2022 - 2024 Advanced Micro Devices, Inc.  All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -34,6 +35,10 @@
 #define IPI_IER_OFFSET           0x00000018    /* IPI interrupt enable register offset */
 #define IPI_IDR_OFFSET           0x0000001C    /* IPI interrupt disable register offset */
 
+#ifdef USE_FREERTOS
+extern TaskHandle_t rpmsg_task;
+#endif /* USE_FREERTOS */
+
 static int zynqmp_r5_a53_proc_irq_handler(int vect_id, void *data)
 {
 	struct remoteproc *rproc = data;
@@ -50,6 +55,9 @@ static int zynqmp_r5_a53_proc_irq_handler(int vect_id, void *data)
 		atomic_flag_clear(&prproc->ipi_nokick);
 		metal_io_write32(prproc->kick_io, IPI_ISR_OFFSET,
 				 prproc->ipi_chn_mask);
+#ifdef USE_FREERTOS
+		xTaskResumeFromISR(rpmsg_task);
+#endif /* USE_FREERTOS */
 		return METAL_IRQ_HANDLED;
 	}
 	return METAL_IRQ_NOT_HANDLED;
@@ -65,16 +73,18 @@ zynqmp_r5_a53_proc_init(struct remoteproc *rproc,
 	unsigned int irq_vect;
 	int ret;
 
-	(void)ops;
-	if (!rproc || !prproc)
+	if (!rproc || !prproc || !ops)
 		return NULL;
 	ret = metal_device_open(prproc->kick_dev_bus_name,
 				prproc->kick_dev_name,
 				&kick_dev);
+	metal_dbg("metal_device_open(%s, %s, %p)\r\n", prproc->kick_dev_bus_name,
+		prproc->kick_dev_name, kick_dev);
 	if (ret) {
-		xil_printf("failed to open polling device: %d.\r\n", ret);
+		metal_err("failed to open polling device: %d.\r\n", ret);
 		return NULL;
 	}
+	rproc->priv = prproc;
 	prproc->kick_dev = kick_dev;
 	prproc->kick_io = metal_device_io_region(kick_dev, 0);
 	if (!prproc->kick_io)
@@ -91,9 +101,11 @@ zynqmp_r5_a53_proc_init(struct remoteproc *rproc,
 	(void)irq_vect;
 	metal_io_write32(prproc->kick_io, 0, !POLL_STOP);
 #endif /* !RPMSG_NO_IPI */
+	rproc->ops = ops;
 
 	return rproc;
 err1:
+	metal_err("err1\r\n");
 	metal_device_close(kick_dev);
 	return NULL;
 }
@@ -131,6 +143,7 @@ zynqmp_r5_a53_proc_mmap(struct remoteproc *rproc, metal_phys_addr_t *pa,
 
 	lpa = *pa;
 	lda = *da;
+	metal_dbg("lpa,lda= %p,%p\r\n", lpa, lda);
 
 	if (lpa == METAL_BAD_PHYS && lda == METAL_BAD_PHYS)
 		return NULL;
@@ -142,9 +155,11 @@ zynqmp_r5_a53_proc_mmap(struct remoteproc *rproc, metal_phys_addr_t *pa,
 	if (!attribute)
 		attribute = NORM_SHARED_NCACHE | PRIV_RW_USER_RW;
 	mem = metal_allocate_memory(sizeof(*mem));
+	metal_dbg("mem= %p\r\n", mem);
 	if (!mem)
 		return NULL;
 	tmpio = metal_allocate_memory(sizeof(*tmpio));
+	metal_dbg("tmpio= %p\r\n", tmpio);
 	if (!tmpio) {
 		metal_free_memory(mem);
 		return NULL;

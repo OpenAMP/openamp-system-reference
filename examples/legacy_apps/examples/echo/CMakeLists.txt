@@ -13,6 +13,11 @@ link_directories (${_list} ${_app_list})
 get_property (_linker_opt GLOBAL PROPERTY APP_LINKER_OPT)
 collector_list (_deps PROJECT_LIB_DEPS)
 
+# Enable user to pass in extra linker flags
+if (DEFINED DEMO_LINK_FLAGS)
+  set (_deps "${_deps} ${DEMO_LINK_FLAGS}")
+endif(DEFINED DEMO_LINK_FLAGS)
+
 set (OPENAMP_LIB open_amp)
 
 foreach (_app rpmsg-echo-ping rpmsg-echo)
@@ -21,6 +26,11 @@ foreach (_app rpmsg-echo-ping rpmsg-echo)
     list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/rpmsg-ping.c")
   elseif (${_app} STREQUAL "rpmsg-echo")
     list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/rpmsg-echo.c")
+    if (${PROJECT_SYSTEM} STREQUAL "linux")
+      list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/generic/main.c")
+    else()
+      list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+    endif(${PROJECT_SYSTEM} STREQUAL "linux")
   endif (${_app} STREQUAL "rpmsg-echo-ping")
 
   if (WITH_SHARED_LIB)
