@@ -157,7 +157,7 @@ int app(struct rpmsg_device *rdev, void *priv)
 					LPERROR("Failed to get payload...\r\n");
 					break;
 				}
-				if (tx_msg == buff_list[MAX_NB_TX_BUFF]) {
+				if (tx_msg == buff_list[MAX_NB_TX_BUFF - 1]) {
 					LPERROR("error: got the lost buffer\r\n");
 					break;
 				}
