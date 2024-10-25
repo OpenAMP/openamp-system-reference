@@ -29,6 +29,7 @@ foreach (_app ${app_list})
 
   if (WITH_SHARED_LIB)
     add_executable (${_app}-shared ${_sources})
+    target_compile_options (${_app}-shared PRIVATE "-fPIC")
     target_link_libraries (${_app}-shared -shared ${OPENAMP_LIB} ${_deps})
     install (TARGETS ${_app}-shared RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif (WITH_SHARED_LIB)
