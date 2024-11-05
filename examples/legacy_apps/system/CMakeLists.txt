@@ -1,3 +1,3 @@
 if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/CMakeLists.txt")
-  add_subdirectory (${PROJECT_SYSTEM})
+  add_subdirectory (${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM})
 endif (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/CMakeLists.txt")

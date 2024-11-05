@@ -20,6 +20,12 @@ if (DEFINED DEMO_LINK_FLAGS)
   set (_deps "${_deps} ${DEMO_LINK_FLAGS}")
 endif(DEFINED DEMO_LINK_FLAGS)
 
+if ("${PROJECT_VENDOR}" STREQUAL "xlnx")
+  include (${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/vitis.cmake)
+  vitis_app_config()
+  return()
+endif()
+
 set (OPENAMP_LIB open_amp)
 
 if (${PROJECT_SYSTEM} STREQUAL "linux")

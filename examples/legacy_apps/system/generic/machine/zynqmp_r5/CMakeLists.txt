@@ -1,3 +1,1 @@
-include(CheckSymbolExists)
-
-collect (APP_COMMON_SOURCES gic_init.c)
+collect (APP_COMMON_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/gic_init.c)
