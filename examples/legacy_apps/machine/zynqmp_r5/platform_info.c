@@ -40,9 +40,9 @@
 #define _rproc_wait() asm volatile("wfi")
 #endif /* !RPMSG_NO_IPI */
 
-#ifdef USE_FREERTOS
+#ifdef FREERTOS_BSP
 extern TaskHandle_t rpmsg_task;
-#endif /* USE_FREERTOS */
+#endif /* FREERTOS_BSP */
 
 /* Polling information used by remoteproc operations.
  */
@@ -313,11 +313,11 @@ int platform_poll_for_rpc(void *arg)
 				return ret;
 			break;
 		}
-#ifdef USE_FREERTOS
+#ifdef FREERTOS_BSP
 	vTaskSuspend(rpmsg_task);
 #else
 		_rproc_wait();
-#endif /* USE_FREERTOS */
+#endif /* FREERTOS_BSP */
 		metal_irq_restore_enable(flags);
 #endif /* RPMSG_NO_IPI */
 	}

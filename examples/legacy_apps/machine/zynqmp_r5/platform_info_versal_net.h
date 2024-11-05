@@ -64,11 +64,11 @@
 #define	IPI_BUFFER_BASEADDR	0xEB3F0000U
 
 #ifndef IPI_IRQ_VECT_ID
-#ifdef USE_FREERTOS
+#ifdef FREERTOS_BSP
 #define IPI_IRQ_VECT_ID    (IPI_VECT_ID_IPI1 - 32U)
 #else /* Default is baremetal */
 #define	IPI_IRQ_VECT_ID     IPI_VECT_ID_IPI1
-#endif /* USE_FREERTOS */
+#endif /* FREERTOS_BSP */
 #endif /* !IPI_IRQ_VECT_ID */
 
 #ifndef POLL_BASE_ADDR

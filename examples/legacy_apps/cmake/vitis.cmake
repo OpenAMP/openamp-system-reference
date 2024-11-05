@@ -19,8 +19,10 @@ else()
   return()
 endif()
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "FreeRTOS")
-  add_definitions(-DUSE_FREERTOS)
+# Ensure that for Compile step that the _AMD_GENERATED_ symbol is present
+# for app build if it was provided in CMake configure tooling
+if (_AMD_GENERATED_)
+  add_definitions(-D_AMD_GENERATED_)
 endif()
 
 set_property (GLOBAL PROPERTY HAS_SYSTEM_DT ON)
