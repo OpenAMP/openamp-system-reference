@@ -197,6 +197,7 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 	struct metal_io_region *shbuf_io;
 	int ret;
 
+	restore_initial_rsc_table();
 	rpmsg_vdev = metal_allocate_memory(sizeof(*rpmsg_vdev));
 	if (!rpmsg_vdev)
 		return NULL;

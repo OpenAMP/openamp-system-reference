@@ -18,6 +18,7 @@
 #include <metal/sys.h>
 #include <metal/irq.h>
 #include "platform_info.h"
+#include "rsc_table.h"
 
 /*
  * A circular buffer for libmetal log. Need locks if ported to MT world.
@@ -78,6 +79,12 @@ int init_system(void)
 {
 	int ret;
 	struct metal_init_params metal_param = METAL_INIT_DEFAULTS;
+
+	/*
+	 * Ensure resource table resource is set up before any attempts
+	 * are made to cache the table.
+	 */
+	get_resource_table(0, &ret);
 
 	circ.c_buf = get_rsc_trace_info(&circ.c_len);
 	if (circ.c_buf && circ.c_len){
