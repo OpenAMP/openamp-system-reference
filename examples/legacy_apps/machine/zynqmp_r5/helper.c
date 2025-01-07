@@ -75,6 +75,12 @@ int init_system(void)
 	int ret;
 	const struct metal_init_params metal_param = METAL_INIT_DEFAULTS;
 
+	/*
+	 * Ensure resource table resource is set up before any attempts
+	 * are made to cache the table.
+	 */
+	get_resource_table(0, &ret);
+
 	circ.c_buf = get_rsc_trace_info(&circ.c_len);
 	if (circ.c_buf && circ.c_len) {
 		metal_param.log_handler = rsc_trace_logger;
@@ -101,6 +107,7 @@ int init_system(void)
 void cleanup_system(void)
 {
 	metal_finish();
+	free_resource_table();
 
 	Xil_DCacheDisable();
 	Xil_ICacheDisable();
