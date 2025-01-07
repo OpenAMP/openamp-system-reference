@@ -37,6 +37,8 @@ struct remote_resource_table {
 }__attribute__((packed, aligned(0x100)));
 
 void *get_resource_table (int rsc_id, int *len);
+void free_resource_table (void);
+void restore_initial_rsc_table (void);
 
 #if defined __cplusplus
 }
