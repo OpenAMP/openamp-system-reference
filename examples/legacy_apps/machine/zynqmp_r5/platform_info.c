@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2014, Mentor Graphics Corporation
  * All rights reserved.
- * Copyright (c) 2017 Xilinx, Inc.
+ * Copyright (c) 2017 - 2021 Xilinx, Inc.
+ * Copyright (c) 2022 - 2025 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -37,22 +38,6 @@
 #define NORM_NSHARED_NCACHE	0x00000008U /* Non cacheable  non shareable */
 #define NORM_SHARED_NCACHE	0x0000000CU /* Non cacheable shareable */
 #define	PRIV_RW_USER_RW		(0x00000003U<<8U) /* Full Access */
-
-#ifndef SHARED_MEM_PA
-#if XPAR_CPU_ID == 0
-#define SHARED_MEM_PA  0x3ED40000UL
-#else
-#define SHARED_MEM_PA  0x3EF40000UL
-#endif /* XPAR_CPU_ID */
-#endif /* !SHARED_MEM_PA */
-
-#ifndef SHARED_MEM_SIZE
-#define SHARED_MEM_SIZE 0x100000UL
-#endif /* !SHARED_MEM_SIZE */
-
-#ifndef SHARED_BUF_OFFSET
-#define SHARED_BUF_OFFSET 0x8000UL
-#endif /* !SHARED_BUF_OFFSET */
 
 #ifndef RPMSG_NO_IPI
 #define _rproc_wait() asm volatile("wfi")
