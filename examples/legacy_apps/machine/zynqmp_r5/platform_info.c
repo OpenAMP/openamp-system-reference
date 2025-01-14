@@ -32,13 +32,6 @@
 #define KICK_DEV_NAME         "poll_dev"
 #define KICK_BUS_NAME         "generic"
 
-/* Cortex R5 memory attributes */
-#define DEVICE_SHARED		0x00000001U /* device, shareable */
-#define DEVICE_NONSHARED	0x00000010U /* device, non shareable */
-#define NORM_NSHARED_NCACHE	0x00000008U /* Non cacheable  non shareable */
-#define NORM_SHARED_NCACHE	0x0000000CU /* Non cacheable shareable */
-#define	PRIV_RW_USER_RW		(0x00000003U<<8U) /* Full Access */
-
 #ifndef RPMSG_NO_IPI
 #define _rproc_wait() asm volatile("wfi")
 #endif /* !RPMSG_NO_IPI */

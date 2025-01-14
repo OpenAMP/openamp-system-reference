@@ -18,6 +18,10 @@
 
 #include "xparameters.h"
 
+#ifdef SDT                                                                     
+#include "bspconfig.h" /* This provides SOC symbols. */                        
+#endif
+
 #if defined __cplusplus
 extern "C" {
 #endif
@@ -46,38 +50,14 @@ extern "C" {
  */
 #include "amd_platform_info.h"
 #else
-
-/* Interrupt vectors */
-#ifdef versal
-
-#ifndef IPI_IRQ_VECT_ID
-#define IPI_IRQ_VECT_ID     63
-#endif /* !IPI_IRQ_VECT_ID */
-
-#ifndef POLL_BASE_ADDR
-#define POLL_BASE_ADDR       0xFF340000 /* IPI base address*/
-#endif /* !POLL_BASE_ADDR */
-
-#ifndef IPI_CHN_BITMASK
-#define IPI_CHN_BITMASK     0x0000020 /* IPI channel bit mask for IPI from/to
-					   APU */
-#endif /* !IPI_CHN_BITMASK */
-
-#else
-
-#ifndef IPI_IRQ_VECT_ID
-#define IPI_IRQ_VECT_ID     XPAR_XIPIPSU_0_INT_ID
-#endif /* !IPI_IRQ_VECT_ID */
-
-#ifndef POLL_BASE_ADDR
-#define POLL_BASE_ADDR      XPAR_XIPIPSU_0_BASE_ADDRESS
-#endif /* !POLL_BASE_ADDR */
-
-#ifndef IPI_CHN_BITMASK
-#define IPI_CHN_BITMASK     0x01000000
-#endif /* !IPI_CHN_BITMASK */
-
-#endif /* versal */
+#ifdef VERSAL_NET                                                              
+#include "platform_info_versal_net.h"                                          
+#elif defined(versal)                                                          
+#include "platform_info_versal.h"                                              
+#elif defined(PLATFORM_ZYNQMP)                                                 
+#include "platform_info_zynqmp.h"
+#error "unknown platform" 
+#endif
 
 #ifdef RPMSG_NO_IPI
 #undef POLL_BASE_ADDR
