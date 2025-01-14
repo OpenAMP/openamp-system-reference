@@ -18,8 +18,8 @@
 
 #define SHUTDOWN_MSG	0xEF56A55A
 
-#define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
+#define LPRINTF(format, ...) metal_info("INFO: " format, ##__VA_ARGS__)
+#define LPERROR(format, ...) metal_err("ERROR: " format, ##__VA_ARGS__)
 
 static struct rpmsg_endpoint lept;
 static int shutdown_req = 0;
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	ret = platform_init(argc, argv, &platform);
 	if (ret) {
 		LPERROR("Failed to initialize platform.\r\n");
-		ML_ERR("Server reboot is required to recover\r\n");
+		LPERROR("Server reboot is required to recover\r\n");
 		platform_cleanup(platform);
 		/*
 		 * If main function is returned in baremetal firmware,
@@ -125,8 +125,8 @@ int main(int argc, char *argv[])
 						   VIRTIO_DEV_DEVICE,
 						   NULL, NULL);
 		if (!rpdev) {
-			ML_ERR("Failed to create rpmsg virtio device.\r\n");
-			ML_ERR("Server reboot is required to recover\r\n");
+			LPERROR("Failed to create rpmsg virtio device.\r\n");
+			LPERROR("Server reboot is required to recover\r\n");
 			platform_cleanup(platform);
 
 			/*
