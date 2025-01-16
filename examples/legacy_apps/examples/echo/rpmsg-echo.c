@@ -18,8 +18,8 @@
 
 #define SHUTDOWN_MSG	0xEF56A55A
 
-#define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
+#define LPRINTF(format, ...) metal_info("INFO: " format, ##__VA_ARGS__)
+#define LPERROR(format, ...) metal_err("ERROR: " format, ##__VA_ARGS__)
 
 static struct rpmsg_endpoint lept;
 static int shutdown_req = 0;
@@ -78,16 +78,7 @@ int app(struct rpmsg_device *rdev, void *priv)
 	LPRINTF("RPMsg device TX buffer size: %#x\r\n", rpmsg_get_tx_buffer_size(&lept));
 	LPRINTF("RPMsg device RX buffer size: %#x\r\n", rpmsg_get_rx_buffer_size(&lept));
 
-	while(1) {
-		platform_poll(priv);
-		/* we got a shutdown request, exit */
-		if (shutdown_req) {
-			break;
-		}
-	}
-	rpmsg_destroy_ept(&lept);
-
-	return 0;
+	return platform_poll_on_vdev_reset(rdev, priv);
 }
 
 /*-----------------------------------------------------------------------------*
@@ -115,23 +106,43 @@ int main(int argc, char *argv[])
 	ret = platform_init(argc, argv, &platform);
 	if (ret) {
 		LPERROR("Failed to initialize platform.\r\n");
-		ret = -1;
-	} else {
+		LPERROR("Server reboot is required to recover\r\n");
+		platform_cleanup(platform);
+		/*
+		 * If main function is returned in baremetal firmware,
+		 * Server behavior is undefined. It's better to wait in
+		 * an infinite loop instead
+		 */
+		while (1);
+	}
+
+	/*
+	 * If host detach from remoteproc device, then destroy current rpmsg
+	 * device and create new one.
+	 */
+	while (1) {
 		rpdev = platform_create_rpmsg_vdev(platform, 0,
 						   VIRTIO_DEV_DEVICE,
 						   NULL, NULL);
 		if (!rpdev) {
 			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			ret = -1;
-		} else {
-			app(rpdev, platform);
-			platform_release_rpmsg_vdev(rpdev, platform);
-			ret = 0;
+			LPERROR("Server reboot is required to recover\r\n");
+			platform_cleanup(platform);
+
+			/*
+			 * If main function is returned in baremetal firmware,
+			 * Server behavior is undefined. It's better to wait in
+			 * an infinite loop instead
+			 */
+			while (1);
 		}
+
+		app(rpdev, platform);
+		platform_release_rpmsg_vdev(rpdev, platform);
 	}
 
 	LPRINTF("Stopping application...\r\n");
-	platform_cleanup(platform);
 
-	return ret;
+	/* Never reach here. */
+	return -EINVAL;
 }

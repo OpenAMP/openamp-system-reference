@@ -15,6 +15,11 @@ if (NOT _linker_opt)
 endif (NOT _linker_opt)
 collector_list (_deps PROJECT_LIB_DEPS)
 
+# Enable user to pass in extra linker flags
+if (DEFINED DEMO_LINK_FLAGS)
+  set (_deps "${_deps} ${DEMO_LINK_FLAGS}")
+endif(DEFINED DEMO_LINK_FLAGS)
+
 set (OPENAMP_LIB open_amp)
 
 if (${PROJECT_SYSTEM} STREQUAL "linux")

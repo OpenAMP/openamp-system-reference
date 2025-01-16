@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Texas Instruments, Inc.
+ * Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -57,6 +58,7 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
  * return negative value for errors, otherwise 0.
  */
 int platform_poll(void *platform);
+int platform_poll_on_vdev_reset(struct rpmsg_device *rpdev, void *priv);
 
 /**
  * platform_release_rpmsg_vdev - release rpmsg virtio device
