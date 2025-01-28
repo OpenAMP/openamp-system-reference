@@ -42,12 +42,21 @@ SECTIONS
    *(.boot)
 } > psv_r5_0_atcm_MEM_0
 
-.resource_table 0x3ed00000 : {
+/*
+ * This section must be at the start of Shared memory (here DDR)
+ * between APU and RPU. This is special shared memory to store firmware
+ * text/data.
+ */
+.resource_table_metadata : {
+	KEEP(*(.resource_table_metadata))
+} > axi_noc_DDR_LOW_0
+
+.resource_table : {
 . = ALIGN(4);
 *(.resource_table)
 } > axi_noc_DDR_LOW_0
 
-.text 0x3ed00000 + 0x100 : {
+.text : {
    *(.text)
    *(.text.*)
    *(.gnu.linkonce.t.*)
