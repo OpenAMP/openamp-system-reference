@@ -37,6 +37,14 @@ struct remote_resource_table {
 	struct fw_rsc_trace rsc_trace;
 }__attribute__((packed, aligned(0x100)));
 
+struct remote_resource_table_metadata {
+	const int version;
+	const u32 magic_num;
+	const u32 comp_magic_num;
+	const u32 rsc_tbl_size;
+	const uintptr_t rsc_tbl;
+}__attribute__((packed));
+
 void *get_resource_table (int rsc_id, int *len);
 void restore_initial_rsc_table (void);
 

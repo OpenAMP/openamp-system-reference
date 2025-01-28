@@ -38,6 +38,15 @@ SECTIONS
    *(.bootdata)
 } > psx_r52_atcm_MEM_0
 
+/*
+ * This section must be at the start of Shared memory (here DDR)
+ * between APU and RPU. This is special shared memory to store firmware
+ * text/data.
+ */
+.resource_table_metadata : {
+	KEEP(*(.resource_table_metadata))
+} > psx_r52_ddr_0_MEM_0
+
 .resource_table _rsc_table : {
 . = ALIGN(4);
 *(.resource_table)

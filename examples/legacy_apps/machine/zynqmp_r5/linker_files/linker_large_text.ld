@@ -39,6 +39,15 @@ SECTIONS
    *(.boot)
 } > psu_r5_tcm_ram_0_S_AXI_BASEADDR
 
+/*
+ * This section must be at the start of Shared memory (here DDR)
+ * between APU and RPU. This is special shared memory to store firmware
+ * text/data.
+ */
+.resource_table_metadata : {
+	KEEP(*(.resource_table_metadata))
+} > psu_ddr_S_AXI_BASEADDR
+
 .text : {
    *(.text)
    *(.text.*)

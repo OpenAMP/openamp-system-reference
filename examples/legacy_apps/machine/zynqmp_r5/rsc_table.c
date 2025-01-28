@@ -19,6 +19,10 @@
 /* Place resource table in special ELF section */
 #define __section_t(S)          __attribute__((__section__(#S)))
 #define __resource              __section_t(.resource_table)
+#define __resource_metadata     __section_t(.resource_table_metadata)
+
+#define RSC_TBL_XLNX_MAGIC	((uint32_t)'x' << 24 | (uint32_t)'a' << 16 | \
+				 (uint32_t)'m' << 8 | (uint32_t)'p')
 
 #define RPMSG_VDEV_DFEATURES        (1 << VIRTIO_RPMSG_F_NS)
 
@@ -63,6 +67,14 @@ struct remote_resource_table __resource resources = {
 		.reserved =	0,
 		.name =		"r5_trace",
 	},
+};
+
+struct remote_resource_table_metadata __resource_metadata resources_metadata = {
+	.version = 1,
+	.magic_num = RSC_TBL_XLNX_MAGIC,
+	.comp_magic_num = (~RSC_TBL_XLNX_MAGIC),
+	.rsc_tbl_size = sizeof(resources),
+	.rsc_tbl = (uintptr_t)&resources
 };
 
 char *get_rsc_trace_info(unsigned int *len)
