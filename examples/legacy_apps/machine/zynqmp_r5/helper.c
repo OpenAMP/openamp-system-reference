@@ -79,6 +79,8 @@ int init_system(void)
 	int ret;
 	struct metal_init_params metal_param = METAL_INIT_DEFAULTS;
 
+	restore_initial_rsc_table();
+
 	circ.c_buf = get_rsc_trace_info(&circ.c_len);
 	if (circ.c_buf && circ.c_len){
 		metal_param.log_handler = rsc_trace_logger;
