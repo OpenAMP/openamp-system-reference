@@ -37,16 +37,16 @@ SECTIONS
  * between APU and RPU. This is special shared memory to store firmware
  * text/data.
  */
-.resource_table_metadata : {
+.resource_table_metadata @RSC_TABLE@ : {
 	KEEP(*(.resource_table_metadata))
 } > @DDR@
 
-.resource_table @RSC_TABLE@ : {
+.resource_table @RSC_TABLE@ + 0x100 : {
 . = ALIGN(4);
 *(.resource_table)
 } > @DDR@
 
-.text : {
+.text @RSC_TABLE@ + 0x200 : {
    *(.text)
    *(.text.*)
    *(.gnu.linkonce.t.*)
