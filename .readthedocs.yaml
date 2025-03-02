@@ -9,8 +9,8 @@ build:
     - libhugetlbfs-dev
     - libsysfs-dev
   # here it would be nice to tell them that the conf.py will be in openamp-docs/conf.py
-  # sphinx:
-  #   configuration: openamp-docs/conf.py
+  sphinx:
+    configuration: openamp-docs/conf.py
   # HOWEVER, if we say this they check right after they do checkout and it does not exist yet
   # As of now they find it well enough right before the build stage
   jobs:
