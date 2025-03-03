@@ -20,7 +20,7 @@ else()
 endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "FreeRTOS")
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_FREERTOS" CACHE INTERNAL "" FORCE)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DUSE_FREERTOS")
 endif()
 
 # Ensure that for Compile step that the _AMD_GENERATED_ symbol is present
