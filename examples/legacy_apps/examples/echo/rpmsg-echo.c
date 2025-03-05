@@ -26,9 +26,9 @@
 
 static struct rpmsg_endpoint lept, uboot_ept, rpcs_ept;
 
-#ifdef USE_FREERTOS
+#ifdef FREERTOS_BSP
 extern TaskHandle_t rpmsg_task;
-#endif /* USE_FREERTOS */
+#endif /* FREERTOS_BSP */
 
 /*-----------------------------------------------------------------------------*
  *  RPMSG endpoint callbacks
@@ -43,9 +43,9 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 	if (rpmsg_send(ept, data, len) < 0) {
 		metal_err("rpmsg_send failed\r\n");
 	}
-#ifdef USE_FREERTOS
+#ifdef FREERTOS_BSP
 	xTaskResumeFromISR(rpmsg_task);
-#endif /* USE_FREERTOS */
+#endif /* FREERTOS_BSP */
 	return RPMSG_SUCCESS;
 }
 

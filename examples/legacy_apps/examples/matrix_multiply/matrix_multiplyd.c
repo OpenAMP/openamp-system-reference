@@ -34,9 +34,9 @@ typedef struct _matrix {
 static struct rpmsg_endpoint lept;
 static int shutdown_req = 0;
 
-#ifdef USE_FREERTOS
+#ifdef FREERTOS_BSP
 extern TaskHandle_t rpmsg_task;
-#endif /* USE_FREERTOS */
+#endif /* FREERTOS_BSP */
 
 /*-----------------------------------------------------------------------------*
  *  Calculate the Matrix
@@ -84,9 +84,9 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 	if (rpmsg_send(ept, &matrix_result, sizeof(matrix)) < 0) {
 		metal_err("rpmsg_send failed\r\n");
 	}
-#ifdef USE_FREERTOS
+#ifdef FREERTOS_BSP
 	xTaskResumeFromISR(rpmsg_task);
-#endif /* USE_FREERTOS */
+#endif /* FREERTOS_BSP */
 	return RPMSG_SUCCESS;
 }
 
