@@ -31,10 +31,13 @@ endif()
 
 set_property (GLOBAL PROPERTY HAS_SYSTEM_DT ON)
 
+check_symbol_exists(VERSAL_AIEPG2 "bspconfig.h" IS_VERSALGEN2)
 check_symbol_exists(VERSAL_NET "bspconfig.h" IS_VERSAL_NET)
 check_symbol_exists(VERSAL "bspconfig.h" IS_VERSAL)
 
-if (IS_VERSAL_NET)
+if (IS_VERSALGEN2)
+  set_property(GLOBAL PROPERTY SOC "VERSALGEN2")
+elseif (IS_VERSAL_NET)
   set_property(GLOBAL PROPERTY SOC "VERSAL_NET")
 elseif(IS_VERSAL)
   set_property(GLOBAL PROPERTY SOC "VERSAL")

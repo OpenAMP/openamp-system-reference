@@ -27,10 +27,10 @@ get_property (HAS_SYSTEM_DT GLOBAL PROPERTY HAS_SYSTEM_DT)
 get_property (LINKER_METADATA_FILE GLOBAL PROPERTY LINKER_METADATA_FILE)
 get_property (SOC GLOBAL PROPERTY SOC)
 
-set (SOCS ZYNQMP VERSAL VERSAL_NET)
-set (STATIC_LINKERS linker_sdt.ld linker_sdt.ld linker_sdt_versal_net.ld)
-set (LOPPER_CFG_LINKERS lscript_r5.ld.in lscript_versal_r5.ld.in lscript_versal_net_r5.ld.in)
-set (PLAT_SRCS platform_info_zynqmp.c platform_info_versal.c platform_info_versal_net.c)
+set (SOCS ZYNQMP VERSAL VERSAL_NET VERSALGEN2)
+set (STATIC_LINKERS linker_sdt.ld linker_sdt.ld linker_sdt_versal_net.ld linker_sdt_versal_net.ld)
+set (LOPPER_CFG_LINKERS lscript_r5.ld.in lscript_versal_r5.ld.in lscript_versal_net_r5.ld.in lscript_versal_gen2_r52.ld.in)
+set (PLAT_SRCS platform_info_zynqmp.c platform_info_versal.c platform_info_versal_net.c platform_info_versal_net.c)
 
 list(FIND SOCS "${SOC}" soc_index)
 
