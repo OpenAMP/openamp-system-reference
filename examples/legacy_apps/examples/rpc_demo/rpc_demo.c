@@ -28,9 +28,8 @@
 #define REDEF_O_APPEND  0002000
 #define REDEF_O_ACCMODE 0000003
 
-#define LPRINTF(format, ...) xil_printf(format, ##__VA_ARGS__)
-//#define LPRINTF(format, ...)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
+#define LPRINTF(format, ...) metal_info("INFO: " format, ##__VA_ARGS__)
+#define LPERROR(format, ...) metal_err("ERROR: " format, ##__VA_ARGS__)
 
 static void rpmsg_rpc_shutdown(struct rpmsg_rpc_data *rpc)
 {

@@ -21,9 +21,8 @@
 
 #define SHUTDOWN_MSG	0xEF56A55A
 
-#define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-//#define LPRINTF(format, ...)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
+#define LPRINTF(format, ...) metal_info("INFO: " format, ##__VA_ARGS__)
+#define LPERROR(format, ...) metal_err("ERROR: " format, ##__VA_ARGS__)
 
 typedef struct _matrix {
 	unsigned int size;
