@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2014, Mentor Graphics Corporation
  * All rights reserved.
- * Copyright (c) 2017 Xilinx, Inc.
+ * Copyright (c) 2017 - 2021 Xilinx, Inc.
+ * Copyright (c) 2022 - 2025 Advanced Micro Devices, Inc. All Rights Reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -30,29 +31,6 @@
 
 #define KICK_DEV_NAME         "poll_dev"
 #define KICK_BUS_NAME         "generic"
-
-/* Cortex R5 memory attributes */
-#define DEVICE_SHARED		0x00000001U /* device, shareable */
-#define DEVICE_NONSHARED	0x00000010U /* device, non shareable */
-#define NORM_NSHARED_NCACHE	0x00000008U /* Non cacheable  non shareable */
-#define NORM_SHARED_NCACHE	0x0000000CU /* Non cacheable shareable */
-#define	PRIV_RW_USER_RW		(0x00000003U<<8U) /* Full Access */
-
-#ifndef SHARED_MEM_PA
-#if XPAR_CPU_ID == 0
-#define SHARED_MEM_PA  0x3ED40000UL
-#else
-#define SHARED_MEM_PA  0x3EF40000UL
-#endif /* XPAR_CPU_ID */
-#endif /* !SHARED_MEM_PA */
-
-#ifndef SHARED_MEM_SIZE
-#define SHARED_MEM_SIZE 0x100000UL
-#endif /* !SHARED_MEM_SIZE */
-
-#ifndef SHARED_BUF_OFFSET
-#define SHARED_BUF_OFFSET 0x8000UL
-#endif /* !SHARED_BUF_OFFSET */
 
 #ifndef RPMSG_NO_IPI
 #define _rproc_wait() asm volatile("wfi")
@@ -235,6 +213,45 @@ err2:
 err1:
 	metal_free_memory(rpmsg_vdev);
 	return NULL;
+}
+
+int platform_poll_on_vdev_reset(struct rpmsg_device *rpdev, void *priv)
+{
+       struct rpmsg_virtio_device *rvdev;
+       struct remoteproc *rproc = priv;
+       struct remoteproc_priv *prproc;
+       unsigned int flags;
+
+       if (!priv || !rpdev)
+               return -EINVAL;
+
+       prproc = rproc->priv;
+       if (!prproc)
+               return -EINVAL;
+
+       rvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
+
+       /**
+        * Check virtio status after every interrupt. In case of stop or
+        * detach, virtio device status will be reset by remote
+        * processor. In that case, break loop and destroy rvdev
+        */
+       while (rpmsg_virtio_get_status(rvdev)) {
+#ifdef RPMSG_NO_IPI
+               (void)flags;
+               if (metal_io_read32(prproc->kick_io, 0))
+                       remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+#else /* !RPMSG_NO_IPI */
+               flags = metal_irq_save_disable();
+               if (!(atomic_flag_test_and_set(&prproc->ipi_nokick))) {
+                       metal_irq_restore_enable(flags);
+                       remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+               }
+               _rproc_wait();
+               metal_irq_restore_enable(flags);
+#endif /* RPMSG_NO_IPI */
+       }
+       return 0;
 }
 
 int platform_poll(void *priv)
