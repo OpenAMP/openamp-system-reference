@@ -154,8 +154,10 @@ static int zynq_a9_proc_notify(struct remoteproc *rproc, uint32_t id)
 	return 0;
 }
 
-/* processor operations from r5 to a53. It defines
- * notification operation and remote processor managementi operations. */
+/*
+ * processor operations from r5 to a53. It defines
+ * notification operation and remote processor management operations.
+ */
 const struct remoteproc_ops zynq_a9_proc_ops = {
 	.init = zynq_a9_proc_init,
 	.remove = zynq_a9_proc_remove,

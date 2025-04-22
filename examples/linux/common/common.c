@@ -25,8 +25,8 @@ int app_rpmsg_create_ept(int rpfd, struct rpmsg_endpoint_info *eptinfo)
 }
 
 char *get_rpmsg_ept_dev_name(const char *rpmsg_char_name,
-                             const char *ept_name,
-                             char *ept_dev_name)
+			     const char *ept_name,
+			     char *ept_dev_name)
 {
 	char sys_rpmsg_ept_name_path[64];
 	char svc_name[64];

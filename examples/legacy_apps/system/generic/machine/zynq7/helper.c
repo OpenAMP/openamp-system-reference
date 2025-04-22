@@ -51,7 +51,8 @@ static int app_gic_initialize(void)
 			(Xil_ExceptionHandler)XScuGic_InterruptHandler,
 			&xInterruptController);
 
-	/* Disable the interrupt before enabling exception to avoid interrupts
+	/*
+	 * Disable the interrupt before enabling exception to avoid interrupts
 	 * received before exception is enabled.
 	 */
 	XScuGic_Disable(&xInterruptController, SGI_NOTIFICATION);

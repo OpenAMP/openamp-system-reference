@@ -84,7 +84,7 @@ static struct remoteproc *platform_create_proc(int proc_index, int rsc_index)
 		remoteproc_remove(&rproc_inst);
 		return NULL;
 	}
-    /* dbg("%d:%s rsc_table= %p\r\n", __LINE__, __func__, rsc_table); */
+	/* dbg("%d:%s rsc_table= %p\r\n", __LINE__, __func__, rsc_table); */
 	xil_printf("Initialize remoteproc successfully.\r\n");
 
 	return &rproc_inst;

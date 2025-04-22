@@ -100,10 +100,11 @@ static void *rpu_rproc_mmap(struct remoteproc *rproc,
 		return NULL;
 	}
 
-        /* This code only runs on the R5, which has a flat memory
-         * space. Therefore, we use the same value for the physical
-         * and virtual addresses we pass in to metal_io_init().
-         */
+	/*
+	 * This code only runs on the R5, which has a flat memory
+	 * space. Therefore, we use the same value for the physical
+	 * and virtual addresses we pass in to metal_io_init().
+	 */
 	metal_io_init(*io, (void *)mem->pa, &mem->pa, size,
 		      sizeof(metal_phys_addr_t)<<3, attribute, NULL);
 	remoteproc_init_mem(mem, NULL, lpa, lda, size, *io);
@@ -189,10 +190,10 @@ static int rpu_rproc_shutdown(struct remoteproc *rproc)
 }
 
 const struct remoteproc_ops zynqmp_rpu_rproc_ops = {
-    .init = rpu_rproc_init,
-    .remove = rpu_rproc_remove,
-    .start = rpu_rproc_start,
-    .stop = rpu_rproc_stop,
-    .shutdown = rpu_rproc_shutdown,
-    .mmap = rpu_rproc_mmap,
+	.init = rpu_rproc_init,
+	.remove = rpu_rproc_remove,
+	.start = rpu_rproc_start,
+	.stop = rpu_rproc_stop,
+	.shutdown = rpu_rproc_shutdown,
+	.mmap = rpu_rproc_mmap,
 };

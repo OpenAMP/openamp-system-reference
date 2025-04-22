@@ -87,7 +87,8 @@ static void *apu_rproc_mmap(struct remoteproc *rproc,
 		return NULL;
 	}
 
-	/* This code only runs on the R5, which has a flat memory
+	/*
+	 * This code only runs on the R5, which has a flat memory
 	 * space. Therefore, we use the same value for the physical
 	 * and virtual addresses we pass in to metal_io_init().
 	 */
@@ -112,7 +113,7 @@ static int apu_rproc_start(struct remoteproc *rproc)
 		LPRINTF("%s: Failed to start APU 0x%x, ret=0x%x\n\r",
 			__func__, priv->cpu_id, ret);
 		return -1;
-	} 
+	}
 	return 0;
 }
 
@@ -164,10 +165,10 @@ static int apu_rproc_shutdown(struct remoteproc *rproc)
 }
 
 const struct remoteproc_ops zynqmp_apu_rproc_ops = {
-    .init = apu_rproc_init,
-    .remove = apu_rproc_remove,
-    .start = apu_rproc_start,
-    .stop = apu_rproc_stop,
-    .shutdown = apu_rproc_shutdown,
-    .mmap = apu_rproc_mmap,
+	.init = apu_rproc_init,
+	.remove = apu_rproc_remove,
+	.start = apu_rproc_start,
+	.stop = apu_rproc_stop,
+	.shutdown = apu_rproc_shutdown,
+	.mmap = apu_rproc_mmap,
 };

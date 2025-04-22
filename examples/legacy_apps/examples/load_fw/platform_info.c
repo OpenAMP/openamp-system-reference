@@ -31,7 +31,7 @@ static struct remoteproc * platform_create_proc(unsigned int cpu_id)
 }
 
 static void app_log_handler(enum metal_log_level level,
-                   const char *format, ...)
+			    const char *format, ...)
 {
 	char msg[1024];
 	va_list args;
@@ -60,25 +60,25 @@ static XIpiPsu IpiInst;
 
 static XStatus IpiConfigure(XIpiPsu *const IpiInstPtr)
 {
-    XStatus Status;
-    XIpiPsu_Config *IpiCfgPtr;
+	XStatus Status;
+	XIpiPsu_Config *IpiCfgPtr;
 
-    /* Look Up the config data */
-    IpiCfgPtr = XIpiPsu_LookupConfig(XPAR_XIPIPSU_0_DEVICE_ID);
-    if (NULL == IpiCfgPtr) {
-        Status = XST_FAILURE;
-        LPERROR("%s ERROR in getting CfgPtr\n", __func__);
-        return Status;
-    }
+	/* Look Up the config data */
+	IpiCfgPtr = XIpiPsu_LookupConfig(XPAR_XIPIPSU_0_DEVICE_ID);
+	if (NULL == IpiCfgPtr) {
+		Status = XST_FAILURE;
+		LPERROR("%s ERROR in getting CfgPtr\n", __func__);
+		return Status;
+	}
 
-    /* Init with the Cfg Data */
-    Status = XIpiPsu_CfgInitialize(IpiInstPtr, IpiCfgPtr,
-                       IpiCfgPtr->BaseAddress);
-    if (XST_SUCCESS != Status) {
-        LPERROR("%s ERROR #%d in configuring IPI\n", __func__, Status);
-        return Status;
-    }
-    return Status;
+	/* Init with the Cfg Data */
+	Status = XIpiPsu_CfgInitialize(IpiInstPtr, IpiCfgPtr,
+			IpiCfgPtr->BaseAddress);
+	if (XST_SUCCESS != Status) {
+		LPERROR("%s ERROR #%d in configuring IPI\n", __func__, Status);
+		return Status;
+	}
+	return Status;
 }
 
 struct remoteproc * app_init(unsigned int cpu_id){

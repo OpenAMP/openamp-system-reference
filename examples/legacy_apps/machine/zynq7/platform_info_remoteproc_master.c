@@ -13,7 +13,7 @@
  * DESCRIPTION
  *
  *       This file implements APIs to get platform specific
- *       information for OpenAMP. 
+ *       information for OpenAMP.
  *
  **************************************************************************/
 
@@ -21,8 +21,10 @@
 #include <openamp/hil.h>
 #include <openamp/firmware.h>
 
-/* Reference implementation that show cases platform_get_cpu_info and 
- platform_get_for_firmware API implementation for Bare metal environment */
+/*
+ * Reference implementation that show cases platform_get_cpu_info and
+ * platform_get_for_firmware API implementation for Bare metal environment
+ */
 
 extern struct hil_platform_ops zynq_a9_proc_ops;
 
@@ -72,61 +74,62 @@ extern struct hil_platform_ops zynq_a9_proc_ops;
  *   Host node, however in baremetal host and linux remote case the linux
  *   rpmsg bus driver behaves as host so the rpmsg driver on linux side still needs
  *   channel info. This information is not required by the hosts for baremetal
- *   remotes. 
- *
+ *   remotes.
  */
-struct hil_proc proc_table []=
+struct hil_proc proc_table[]=
 {
-    {
-        /* CPU ID of remote */
-        REMOTE_CPU_ID,
+	{
+		/* CPU ID of remote */
+		REMOTE_CPU_ID,
 
-        /* Shared memory info - Last field is not used currently */
-        {
-            SHM_ADDR, SHM_SIZE, 0x00
-        },
+		/* Shared memory info - Last field is not used currently */
+		{
+			SHM_ADDR, SHM_SIZE, 0x00
+		},
 
-        /* VirtIO device info */
-        {
-            0, 0, 0,
-            {
-                {
-                    /* Provide vring interrupts info here. Other fields are obtained
-                     * from the rsc table so leave them empty.
-                     */
-                    NULL, NULL, 0, 0,
-                    {
-                        VRING0_IPI_VECT,0x1006,1
-                    }
-                },
-                {
-                    NULL, NULL, 0, 0,
-                    {
-                        VRING1_IPI_VECT,0x1006,1
-                    }
-                }
-            }
-        },
+		/* VirtIO device info */
+		{
+			0, 0, 0,
+			{
+				{
+				/*
+				 * Provide vring interrupts info here. Other fields are obtained
+				 * from the rsc table so leave them empty.
+				 */
+					NULL, NULL, 0, 0,
+					{
+						VRING0_IPI_VECT,0x1006,1
+					}
+				},
+				{
+					NULL, NULL, 0, 0,
+					{
+						VRING1_IPI_VECT,0x1006,1
+					}
+				}
+			}
+		},
 
-        /* Number of RPMSG channels */
-        1,
+		/* Number of RPMSG channels */
+		1,
 
-        /* RPMSG channel info - Only channel name is expected currently */
-        {
-            {"rpmsg-openamp-demo-channel"}
-        },
+		/* RPMSG channel info - Only channel name is expected currently */
+		{
+			{"rpmsg-openamp-demo-channel"}
+		},
 
-        /* HIL platform ops table. */
-        &zynq_a9_proc_ops,
+		/* HIL platform ops table. */
+		&zynq_a9_proc_ops,
 
-        /* Next three fields are for future use only */
-        0,
-        0,
-        NULL
-    }
+		/* Next three fields are for future use only */
+		0,
+		0,
+		NULL
+	}
 };
 
-/* Start and end addresses of firmware image for remotes. These are defined in the
+/*
+ * Start and end addresses of firmware image for remotes. These are defined in the
  * object files that are obtained by converting the remote ELF Image into object
  * files. These symbols are not used for remotes.
  */

@@ -13,7 +13,7 @@
  *
  * DESCRIPTION
  *
- *       This file define Xilinx ZynqMP R5 to A53 platform specific 
+ *       This file define Xilinx ZynqMP R5 to A53 platform specific
  *       remoteproc implementation.
  *
  **************************************************************************/
@@ -179,8 +179,10 @@ static int zynqmp_r5_a53_proc_notify(struct remoteproc *rproc, uint32_t id)
 	return 0;
 }
 
-/* processor operations from r5 to a53. It defines
- * notification operation and remote processor managementi operations. */
+/*
+ * processor operations from r5 to a53. It defines
+ * notification operation and remote processor management operations.
+ */
 const struct remoteproc_ops zynqmp_r5_a53_proc_ops = {
 	.init = zynqmp_r5_a53_proc_init,
 	.remove = zynqmp_r5_a53_proc_remove,
