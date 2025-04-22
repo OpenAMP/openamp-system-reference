@@ -42,8 +42,10 @@
 
 #define _rproc_wait() asm volatile("wfi")
 
-/* processor operations for hil_proc for A9. It defines
- * notification operation and remote processor management. */
+/*
+ * processor operations for hil_proc for A9. It defines
+ * notification operation and remote processor management.
+ */
 extern const struct remoteproc_ops zynq_a9_proc_ops;
 static metal_phys_addr_t scugic_phys_addr = SCUGIC_DIST_BASE;
 struct metal_device scugic_device = {
@@ -198,16 +200,12 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 
 	xil_printf("initializing rpmsg vdev\r\n");
 	if (role == VIRTIO_DEV_DRIVER) {
-		/* Only RPMsg virtio driver needs to initialize the
-		 * shared buffers pool
-		 */
+		/* Only RPMsg virtio driver needs to initialize the shared buffers pool */
 		rpmsg_virtio_init_shm_pool(&shpool, shbuf,
 					   (SHARED_MEM_SIZE -
 					    SHARED_BUF_OFFSET));
 
-		/* RPMsg virtio device can set shared buffers pool
-		 * argument to NULL
-		 */
+		/* RPMsg virtio device can set shared buffers pool argument to NULL */
 		ret =  rpmsg_init_vdev(rpmsg_vdev, vdev, ns_bind_cb,
 				       shbuf_io, &shpool);
 	} else {

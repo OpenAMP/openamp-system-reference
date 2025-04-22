@@ -229,8 +229,10 @@ static int zynqmp_linux_r5_proc_notify(struct remoteproc *rproc, uint32_t id)
 	return 0;
 }
 
-/* processor operations from r5 to a53. It defines
- * notification operation and remote processor managementi operations. */
+/*
+ * processor operations from r5 to a53. It defines
+ * notification operation and remote processor managementi operations.
+ */
 const struct remoteproc_ops zynqmp_linux_r5_proc_ops = {
 	.init = zynqmp_linux_r5_proc_init,
 	.remove = zynqmp_linux_r5_proc_remove,

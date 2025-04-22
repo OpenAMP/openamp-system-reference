@@ -58,8 +58,7 @@
 #define _rproc_wait() asm volatile("wfi")
 #endif /* !RPMSG_NO_IPI */
 
-/* Polling information used by remoteproc operations.
- */
+/* Polling information used by remoteproc operations. */
 static metal_phys_addr_t poll_phys_addr = POLL_BASE_ADDR;
 struct metal_device kick_device = {
 	.name = "poll_dev",
@@ -97,8 +96,10 @@ static struct remoteproc rproc_inst;
 extern int init_system(void);
 extern void cleanup_system(void);
 
-/* processor operations from r5 to a53. It defines
- * notification operation and remote processor managementi operations. */
+/*
+ * processor operations from r5 to a53. It defines
+ * notification operation and remote processor management operations.
+ */
 extern const struct remoteproc_ops zynqmp_r5_a53_proc_ops;
 
 /* RPMsg virtio shared buffer pool */

@@ -213,8 +213,7 @@ static int event_open(const char *descr)
 	}
 
 	if (!is_sk_unix_server(descr)) {
-		/* UNIX client.  Retry to connect a few times to give the peer
-		 *  a chance to setup.  */
+		/* UNIX client. Retry to connect a few times to give the peer a chance to setup. */
 		for (i = 0; i < 100 && fd == -1; i++) {
 			fd = sk_unix_client(descr);
 			if (fd == -1)
@@ -363,8 +362,10 @@ static int linux_proc_notify(struct remoteproc *rproc, uint32_t id)
 	return 0;
 }
 
-/* processor operations from r5 to a53. It defines
- * notification operation and remote processor managementi operations. */
+/*
+ * processor operations from r5 to a53. It defines
+ * notification operation and remote processor management operations.
+ */
 static const struct remoteproc_ops linux_proc_ops = {
 	.init = linux_proc_init,
 	.remove = linux_proc_remove,

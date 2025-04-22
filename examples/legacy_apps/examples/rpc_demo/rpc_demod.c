@@ -247,7 +247,8 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 		return RPMSG_SUCCESS;
 	}
 
-	/* In case the shared memory is device memory
+	/*
+	 * In case the shared memory is device memory
 	 * E.g. For now, we only use UIO device memory in Linux.
 	 */
 	if (len > RPC_BUFF_SIZE)

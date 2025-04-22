@@ -81,8 +81,7 @@ int handle_read(struct _sys_rpc *rpc)
 	char *buff = proxy->rpc_response->sys_call_args.data;
 
 	if (rpc->sys_call_args.int_field1 == 0)
-		/* Perform read from fd for large size since this is a
-		STD/I request */
+		/* Perform read from fd for large size since this is a STD/I request */
 		bytes_read = read(rpc->sys_call_args.int_field1, buff, 512);
 	else
 		/* Perform read from fd */
@@ -309,9 +308,9 @@ int main(int argc, char *argv[])
 
 	/* RPC service starts */
 	printf("\r\nHost>RPC service started !!\r\n");
-	/* Send init message to remote.
-	 * This is required otherwise, remote doesn't know the host
-	 * RPMsg endpoint
+	/*
+	 * Send init message to remote.
+	 * This is required otherwise, remote doesn't know the host RPMsg endpoint
 	 */
 	ret = write(proxy->rpmsg_proxy_fd, RPMG_INIT_MSG,
 		    sizeof(RPMG_INIT_MSG));

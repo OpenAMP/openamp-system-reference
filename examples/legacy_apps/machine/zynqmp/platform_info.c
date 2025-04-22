@@ -32,10 +32,9 @@
 #include <sys/un.h>
 #include "platform_info.h"
 
-#define RPU_CPU_ID          0 /* RPU remote CPU Index. We only talk to
-			       * one CPU in the example. We set the CPU
-			       * index to 0.
-			       */
+/* RPU remote CPU Index. We only talk to one CPU in the example. We set the CPU index to 0. */
+#define RPU_CPU_ID          0
+
 #ifdef VERSAL_NET
 #ifndef IPI_CHN_BITMASK
 #define IPI_CHN_BITMASK	    0x08
@@ -45,8 +44,7 @@
 #endif /* !IPI_DEV_NAME */
 #elif defined(versal)
 #ifndef IPI_CHN_BITMASK
-#define IPI_CHN_BITMASK     0x08 /* IPI channel bit mask for IPI
-					* from/to RPU0 */
+#define IPI_CHN_BITMASK     0x08 /* IPI channel bit mask for IPI  from/to RPU0 */
 #endif /* !IPI_CHN_BITMASK */
 #ifndef IPI_DEV_NAME
 #define IPI_DEV_NAME        "ff360000.ipi" /* IPI device name */
@@ -59,12 +57,15 @@
 #define IPI_DEV_NAME	    "ff340000.ipi"
 #endif /* !IPI_DEV_NAME */
 #endif /* versal */
-#define DEV_BUS_NAME        "platform" /* device bus name. "platform" bus
-                                        * is used in Linux kernel for generic
-					* devices */
-/* libmetal devices names used in the examples.
+
+/* device bus name. "platform" bus  is used in Linux kernel for generic devices	*/
+#define DEV_BUS_NAME        "platform"
+
+/*
+ * libmetal devices names used in the examples.
  * They are platform devices, you find them in Linux sysfs
- * sys/bus/platform/devices */
+ * sys/bus/platform/devices
+ */
 #ifndef SHM_DEV_NAME
 #define SHM_DEV_NAME        "3ed20000.shm" /* shared device name */
 #endif /* SHM_DEV_NAME */
@@ -110,8 +111,10 @@ extern void cleanup_system(void);
 #define _rproc_wait() metal_cpu_yield()
 
 
-/* processor operations from r5 to a53. It defines
- * notification operation and remote processor managementi operations. */
+/*
+ * processor operations from r5 to a53. It defines
+ * notification operation and remote processor management operations.
+ */
 extern const struct remoteproc_ops zynqmp_linux_r5_proc_ops;
 
 /* RPMsg virtio shared buffer pool */
