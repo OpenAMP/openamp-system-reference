@@ -285,6 +285,7 @@ void platform_release_rpmsg_vdev(struct rpmsg_device *rpdev, void *platform)
 
 	rpmsg_deinit_vdev(rpvdev);
 	remoteproc_remove_virtio(rproc, vdev);
+	metal_free_memory(rpvdev);
 }
 
 void platform_cleanup(void *platform)
