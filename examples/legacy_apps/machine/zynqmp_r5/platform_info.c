@@ -275,13 +275,15 @@ int platform_poll(void *priv)
 void platform_release_rpmsg_vdev(struct rpmsg_device *rpdev, void *platform)
 {
 	struct rpmsg_virtio_device *rpvdev;
+	struct virtio_device *vdev;
 	struct remoteproc *rproc;
 
 	rpvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
 	rproc = platform;
+	vdev = rpvdev->vdev;
 
 	rpmsg_deinit_vdev(rpvdev);
-	remoteproc_remove_virtio(rproc, rpvdev->vdev);
+	remoteproc_remove_virtio(rproc, vdev);
 }
 
 void platform_cleanup(void *platform)
