@@ -91,14 +91,14 @@
 	};
 
 	remoteproc: remoteproc {
-		r5f-0 {
+		r5f@0 {
 			memory-region = <&rproc_0_fw_image>, <&rpu0vdev0vring0>,
 					<&rpu0vdev0vring1>, <&rpu0vdev0buffer>;
 			mboxes = <&ipi_mailbox_rpu0 0>, <&ipi_mailbox_rpu0 1>;
 			mbox-names = "tx", "rx";
 		};
 
-		r5f-1 {
+		r5f@1 {
 			memory-region = <&rproc_1_fw_image>, <&rpu1vdev0vring0>,
 					<&rpu1vdev0vring1>, <&rpu1vdev0buffer>;
 			mboxes = <&ipi_mailbox_rpu1 0>, <&ipi_mailbox_rpu1 1>;
