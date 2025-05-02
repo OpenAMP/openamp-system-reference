@@ -58,7 +58,7 @@
 		};
 	};
 
-	zynqmp_ipi {
+	zynqmp-ipi {
 		#address-cells = <2>;
 		#size-cells = <2>;
 		ranges;
@@ -67,7 +67,7 @@
 			reg = <0x00 0xff990040 0x00 0x20>,
 			      <0x00 0xff990060 0x00 0x20>,
 			      <0x00 0xff990200 0x00 0x20>,
-			      < 0x00 0xff990220 0x00 0x20>;
+			      <0x00 0xff990220 0x00 0x20>;
 			reg-names = "local_request_region",
 				    "local_response_region",
 				    "remote_request_region",
@@ -91,6 +91,7 @@
 	};
 
 	remoteproc: remoteproc {
+		status = "okay";
 		r5f@0 {
 			memory-region = <&rproc_0_fw_image>, <&rpu0vdev0vring0>,
 					<&rpu0vdev0vring1>, <&rpu0vdev0buffer>;
@@ -104,5 +105,9 @@
 			mboxes = <&ipi_mailbox_rpu1 0>, <&ipi_mailbox_rpu1 1>;
 			mbox-names = "tx", "rx";
 		};
+	};
+
+	remoteproc-split {
+		status = "disabled";
 	};
 };
