@@ -68,7 +68,7 @@
 		};
 	};
 
-	remoteproc: remoteproc {
+	remoteproc@ffe00000 {
 		r5f@0 {
 			memory-region = <&rproc_0_fw_image>, <&rpu0vdev0vring0>,
 					<&rpu0vdev0vring1>, <&rpu0vdev0buffer>;
