@@ -3,7 +3,10 @@
 /dts-v1/;
 /plugin/;
 
-&remoteproc {
-	xlnx,cluster-mode = <0>;
+&rproc_lockstep {
+	status = "okay";
 };
 
+&rproc_split {
+	status = "disabled";
+};

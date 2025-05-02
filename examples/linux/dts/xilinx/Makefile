@@ -5,7 +5,7 @@ DTBS += kv260-openamp-lockstep.dtb kv260-openamp-split.dtb
 DTBS += zynqmp-smk-k26-revA.dtb zynqmp-zcu102-rev1.0.dtb
 DTBS += zcu102-xilinx-bm-lockstep.dtb kv260-xilinx-bm-lockstep.dtb
 
-DTBOS := zynqmp-split.dtbo zcu102-openamp.dtbo zynqmp-openamp.dtbo
+DTBOS := zynqmp-lockstep.dtbo zcu102-openamp.dtbo zynqmp-openamp.dtbo
 DTBOS += zynqmp-sck-kv-g-revB.dtbo xilinx-openamp-for-v6.x.dtbo
 
 # any file to test we have a valid kernel source dir
@@ -66,25 +66,25 @@ zynqmp-sck-kv-g-revB.dtso: $(XILINX_DTS_DIR)/zynqmp-sck-kv-g-revB.dtso
 zcu102-openamp-lockstep.dtb: \
 	zynqmp-zcu102-rev1.0.dtb \
 	zynqmp-openamp.dtbo \
-	zcu102-openamp.dtbo
+	zcu102-openamp.dtbo \
+	zynqmp-lockstep.dtbo
 	fdtoverlay -o $@ -i $(filter-out .linux-src-check,$^)
 
 zcu102-openamp-split.dtb: \
 	zynqmp-zcu102-rev1.0.dtb \
 	zynqmp-openamp.dtbo \
-	zcu102-openamp.dtbo \
-	zynqmp-split.dtbo
+	zcu102-openamp.dtbo
 	fdtoverlay -o $@ -i $(filter-out .linux-src-check,$^)
 
 kv260-openamp-lockstep.dtb: \
 	zynqmp-smk-k26-revA.dtb zynqmp-sck-kv-g-revB.dtbo \
-	zynqmp-openamp.dtbo
+	zynqmp-openamp.dtbo \
+	zynqmp-lockstep.dtbo
 	fdtoverlay -o $@ -i $(filter-out .linux-src-check,$^)
 
 kv260-openamp-split.dtb: \
 	zynqmp-smk-k26-revA.dtb zynqmp-sck-kv-g-revB.dtbo \
-	zynqmp-openamp.dtbo \
-	zynqmp-split.dtbo
+	zynqmp-openamp.dtbo
 	fdtoverlay -o $@ -i $(filter-out .linux-src-check,$^)
 
 zcu102-xilinx-bm-lockstep.dtb: \
