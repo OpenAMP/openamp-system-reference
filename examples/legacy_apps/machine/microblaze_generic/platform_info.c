@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2020 Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2020-2022 Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -177,6 +178,30 @@ err1:
 	return NULL;
 }
 
+int platform_poll_on_vdev_reset(struct rpmsg_device *rpdev, void *priv)
+{
+	struct rpmsg_virtio_device *rvdev;
+	struct remoteproc *rproc = priv;
+
+	rvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
+
+	/**
+	 * Check virtio status after every interrupt. In case of stop or
+	 * detach, virtio device status will be reset by remote
+	 * processor. In that case, break loop and destroy rvdev
+	 */
+	while (rpmsg_virtio_get_status(rvdev)) {
+		char *done_polling = (char *)POLL_SHM_LOCATION;
+
+		if (*done_polling)
+			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+	}
+
+	ML_INFO("rpmsg virtio device status\n");
+
+	return 0;
+}
+
 int platform_poll(void *priv)
 {
 	struct remoteproc *rproc = priv;
@@ -188,8 +213,8 @@ int platform_poll(void *priv)
 			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
 			break;
 		}
-
 	}
+
 	return 0;
 }
 

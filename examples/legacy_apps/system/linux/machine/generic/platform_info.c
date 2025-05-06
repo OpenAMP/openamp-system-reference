@@ -1,7 +1,8 @@
 /*
  * Copyright (c) 2014, Mentor Graphics Corporation
  * All rights reserved.
- * Copyright (c) 2016 Xilinx, Inc.
+ * Copyright (c) 2020-2022 Xilinx, Inc. All rights reserved.
+ * Copyright (c) 2022-2023 Advanced Micro Devices, Inc. All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -125,20 +126,6 @@ static void linux_proc_block_set(struct metal_io_region *io,
 	return;
 }
 
-static metal_phys_addr_t linux_proc_offset_to_phys(struct metal_io_region *io,
-						   unsigned long offset)
-{
-	/* offset and phys are the same here */
-	return (offset < metal_io_region_size(io) ? offset : METAL_BAD_OFFSET);
-}
-
-static unsigned long linux_proc_phys_to_offset(struct metal_io_region *io,
-					       metal_phys_addr_t phys)
-{
-	/* offset and phys are the same here */
-	return (phys < metal_io_region_size(io) ? phys : METAL_BAD_PHYS);
-}
-
 static struct metal_io_ops linux_proc_io_ops = {
 	.write = NULL,
 	.read = NULL,
@@ -146,8 +133,6 @@ static struct metal_io_ops linux_proc_io_ops = {
 	.block_write = linux_proc_block_write,
 	.block_set = linux_proc_block_set,
 	.close = NULL,
-	.offset_to_phys = linux_proc_offset_to_phys,
-	.phys_to_offset = linux_proc_phys_to_offset,
 };
 
 static int sk_unix_client(const char *descr)
@@ -243,13 +228,13 @@ linux_proc_init(struct remoteproc *rproc,
 {
 	struct remoteproc_priv *prproc = arg;
 	struct metal_io_region *io;
+	struct remoteproc_mem *shm;
 	struct vring_ipi_info *ipi;
 	int ret;
 
-	(void)ops;
 	if (!rproc || !prproc)
 		return NULL;
-
+	rproc->priv = prproc;
 	/* Create shared memory io */
 	ret = metal_shmem_open(prproc->shm_file, prproc->shm_size, &io);
 	if (ret) {
@@ -258,12 +243,13 @@ linux_proc_init(struct remoteproc *rproc,
 		return NULL;
 	}
 	prproc->shm_old_io = io;
-
-	metal_io_init(&prproc->shm_new_io, io->virt, NULL,
-		      prproc->shm_size, -1, 0, &linux_proc_io_ops);
-
-	remoteproc_init_mem(&prproc->shm, NULL, 0, 0,
-			    prproc->shm_size, &prproc->shm_new_io);
+	shm = &prproc->shm;
+	shm->pa = 0;
+	shm->da = 0;
+	shm->size = prproc->shm_size;
+	metal_io_init(&prproc->shm_new_io, io->virt, &shm->pa,
+		      shm->size, -1, 0, &linux_proc_io_ops);
+	shm->io = &prproc->shm_new_io;
 
 	/* Open IPI */
 	ipi = &prproc->ipi;
@@ -281,6 +267,7 @@ linux_proc_init(struct remoteproc *rproc,
 	}
 	metal_irq_register(ipi->fd, linux_proc_irq_handler, ipi);
 	metal_irq_enable(ipi->fd);
+	rproc->ops = ops;
 	return rproc;
 
 err:
@@ -292,6 +279,7 @@ static void linux_proc_remove(struct remoteproc *rproc)
 {
 	struct remoteproc_priv *prproc;
 	struct vring_ipi_info *ipi;
+	struct metal_io_region *io;
 
 	if (!rproc)
 		return;
@@ -306,8 +294,9 @@ static void linux_proc_remove(struct remoteproc *rproc)
 	}
 
 	/* Close shared memory */
-	if (prproc->shm_old_io) {
-		metal_io_finish(prproc->shm_old_io);
+	io = prproc->shm_old_io;
+	if (io && io->ops.close) {
+		io->ops.close(io);
 		prproc->shm_old_io = NULL;
 	}
 }
@@ -342,7 +331,7 @@ linux_proc_mmap(struct remoteproc *rproc, metal_phys_addr_t *pa,
 	if (va) {
 		if (io)
 			*io = mem->io;
-		remoteproc_add_mem(rproc, mem);
+		metal_list_add_tail(&rproc->mems, &mem->node);
 	}
 	return va;
 }
@@ -396,7 +385,8 @@ static int platform_device_setup_resource_table(const char *shm_file,
 	}
 	rsc_shm = metal_io_virt(io, rsc_pa);
 	memcpy(rsc_shm, rsc_table, rsc_size);
-	metal_io_finish(io);
+	io->ops.close(io);
+	free(io);
 	return 0;
 }
 
@@ -474,6 +464,7 @@ int platform_init(int argc, char *argv[], void **platform)
 		fprintf(stderr, "Failed to create remoteproc device.\r\n");
 		return -EINVAL;
 	}
+
 	*platform = rproc;
 	return 0;
 }
@@ -527,6 +518,39 @@ err2:
 err1:
 	metal_free_memory(rpmsg_vdev);
 	return NULL;
+}
+
+int platform_poll_on_vdev_reset(struct rpmsg_device *rpdev, void *priv)
+{
+	struct rpmsg_virtio_device *rvdev;
+	struct remoteproc *rproc = priv;
+	struct remoteproc_priv *prproc;
+	struct vring_ipi_info *ipi;
+	unsigned int flags;
+
+	if (!priv || !rpdev)
+		return -EINVAL;
+
+	prproc = rproc->priv;
+	if (!prproc)
+		return -EINVAL;
+
+	rvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
+	ipi = &prproc->ipi;
+
+	/**
+	 * Check virtio status after every interrupt. In case of stop or
+	 * detach, virtio device status will be reset by remote
+	 * processor. In that case, break loop and destroy rvdev
+	 */
+	while (rpmsg_virtio_get_status(rvdev)) {
+		flags = metal_irq_save_disable();
+		if (!(atomic_flag_test_and_set(&ipi->sync)))
+			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+		_rproc_wait();
+		metal_irq_restore_enable(flags);
+	}
+	return 0;
 }
 
 int platform_poll(void *priv)

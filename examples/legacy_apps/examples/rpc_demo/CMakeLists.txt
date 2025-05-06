@@ -15,6 +15,17 @@ if (NOT _linker_opt)
 endif (NOT _linker_opt)
 collector_list (_deps PROJECT_LIB_DEPS)
 
+# Enable user to pass in extra linker flags
+if (DEFINED DEMO_LINK_FLAGS)
+  set (_deps "${_deps} ${DEMO_LINK_FLAGS}")
+endif(DEFINED DEMO_LINK_FLAGS)
+
+if ("${PROJECT_VENDOR}" STREQUAL "xlnx")
+  include (${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/vitis.cmake)
+  vitis_app_config()
+  return()
+endif()
+
 set (OPENAMP_LIB open_amp)
 
 if (${PROJECT_SYSTEM} STREQUAL "linux")
@@ -26,6 +37,13 @@ endif (${PROJECT_SYSTEM} STREQUAL "linux")
 foreach (_app ${app_list})
   collector_list (_sources APP_COMMON_SOURCES)
   list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/${_app}.c")
+  if (${_app} STREQUAL rpc_demo)
+    if (${PROJECT_SYSTEM} STREQUAL "linux")
+        list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/generic/main.c")
+    else()
+      list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+    endif(${PROJECT_SYSTEM} STREQUAL "linux")
+  endif(${_app} STREQUAL rpc_demo)
 
   if (WITH_SHARED_LIB)
     add_executable (${_app}-shared ${_sources})

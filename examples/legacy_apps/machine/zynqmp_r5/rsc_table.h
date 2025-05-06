@@ -2,7 +2,7 @@
  * Copyright (c) 2014, Mentor Graphics Corporation
  * All rights reserved.
  *
- * Copyright (C) 2015 Xilinx, Inc.  All rights reserved.
+ * Copyright (C) 2021 Xilinx, Inc.  All rights reserved.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -34,9 +34,19 @@ struct remote_resource_table {
 	struct fw_rsc_vdev rpmsg_vdev;
 	struct fw_rsc_vdev_vring rpmsg_vring0;
 	struct fw_rsc_vdev_vring rpmsg_vring1;
+	struct fw_rsc_trace rsc_trace;
 }__attribute__((packed, aligned(0x100)));
 
+struct remote_resource_table_metadata {
+	const int version;
+	const u32 magic_num;
+	const u32 comp_magic_num;
+	const u32 rsc_tbl_size;
+	const uintptr_t rsc_tbl;
+}__attribute__((packed));
+
 void *get_resource_table (int rsc_id, int *len);
+void restore_initial_rsc_table (void);
 
 #if defined __cplusplus
 }
