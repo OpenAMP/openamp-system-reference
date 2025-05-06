@@ -43,13 +43,6 @@ static void rpmsg_listen_task(void *unused_arg)
 		LPERROR("Failed to initialize platform.\r\n");
 		metal_err("RPU reboot is required to recover\r\n");
 		platform_cleanup(platform);
-		/*
-		 * If main function is returned in baremetal firmware,
-		 * RPU behavior is undefined. It's better to wait in
-		 * an infinite loop instead
-		 */
-		while (1)
-			;
 	}
 
 	/*
@@ -64,14 +57,6 @@ static void rpmsg_listen_task(void *unused_arg)
 			metal_err("Failed to create rpmsg virtio device.\r\n");
 			metal_err("RPU reboot is required to recover\r\n");
 			platform_cleanup(platform);
-
-			/*
-			 * If main function is returned in baremetal firmware,
-			 * RPU behavior is undefined. It's better to wait in
-			 * an infinite loop instead
-			 */
-			while (1)
-				;
 		}
 
 		app(rpdev, platform);

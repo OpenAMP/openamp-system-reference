@@ -203,6 +203,18 @@ void platform_release_rpmsg_vdev(struct rpmsg_device *rpdev, void *platform);
  */
 void platform_cleanup(void *platform);
 
+/**
+ * system_shutdown - routine to run after demo for system shutdown.
+ *
+ * @arg: integer value that can be used in the future in the routine.
+ */
+inline int system_shutdown(int arg)
+{
+   (void)arg;
+   return;
+}
+
+
 #if defined __cplusplus
 }
 #endif

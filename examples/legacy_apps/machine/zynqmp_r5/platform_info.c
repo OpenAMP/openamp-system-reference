@@ -382,4 +382,5 @@ void platform_cleanup(void *platform)
 	if (rproc)
 		remoteproc_remove(rproc);
 	cleanup_system();
+   system_shutdown(NULL);
 }
