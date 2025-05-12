@@ -1,7 +1,5 @@
 include(CheckSymbolExists)
 
-collect (APP_COMMON_SOURCES helper.c)
-
 # If not provided, add default value for resource table
 if(NOT DEFINED ${RSC_TABLE})
   set(RSC_TABLE 0x3ed20000 CACHE STRING "")
@@ -32,6 +30,8 @@ if(PM_FOUND)
   endif(VERSION_2_PM_CLIENT)
 endif(PM_FOUND)
 
+# libmetal_xlnx_extention is BSP implementation of libmetal interfaces
+collect(PROJECT_LIB_DEPS metal_xlnx_extention)
 collect(PROJECT_LIB_DEPS xil)
 collect(PROJECT_LIB_DEPS c)
 collect(PROJECT_LIB_DEPS m)

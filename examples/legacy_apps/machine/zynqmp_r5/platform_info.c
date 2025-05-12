@@ -58,6 +58,11 @@
 #define _rproc_wait() asm volatile("wfi")
 #endif /* !RPMSG_NO_IPI */
 
+extern void system_metal_logger(enum metal_log_level level,
+				const char *format, ...);
+extern int metal_machine_init(void);
+extern int metal_machine_finish(void);
+
 /* Polling information used by remoteproc operations. */
 static metal_phys_addr_t poll_phys_addr = POLL_BASE_ADDR;
 struct metal_device kick_device = {
@@ -159,14 +164,17 @@ int platform_init(int argc, char *argv[], void **platform)
 	unsigned long proc_id = 0;
 	unsigned long rsc_id = 0;
 	struct remoteproc *rproc;
+	struct metal_init_params metal_param = {
+		.log_handler = system_metal_logger,
+		.log_level = METAL_LOG_INFO,
+	};
+	int ret;
 
 	if (!platform) {
 		xil_printf("Failed to initialize platform,"
 			   "NULL pointer to store platform data.\r\n");
 		return -EINVAL;
 	}
-	/* Initialize HW system components */
-	init_system();
 
 	if (argc >= 2) {
 		proc_id = strtoul(argv[1], NULL, 0);
@@ -174,6 +182,26 @@ int platform_init(int argc, char *argv[], void **platform)
 
 	if (argc >= 3) {
 		rsc_id = strtoul(argv[2], NULL, 0);
+	}
+
+	ret = metal_init(&metal_param);
+	if (ret < 0) {
+		metal_err("failed to init libmetal err %d\n", ret);
+		return ret;
+	}
+
+	ret = metal_register_generic_device(&kick_device);
+	if (ret < 0) {
+		metal_err("failed to register generic dev %s\n",
+			  kick_device.name);
+		return ret;
+	}
+
+	/* Init BSP */
+	ret = metal_machine_init();
+	if (ret = 0) {
+		metal_err("failed to init platform BSP err, %d\n", ret);
+		return ret;
 	}
 
 	rproc = platform_create_proc(proc_id, rsc_id);
@@ -295,5 +323,7 @@ void platform_cleanup(void *platform)
 
 	if (rproc)
 		remoteproc_remove(rproc);
-	cleanup_system();
+
+	metal_machine_finish();
+	metal_finish();
 }
