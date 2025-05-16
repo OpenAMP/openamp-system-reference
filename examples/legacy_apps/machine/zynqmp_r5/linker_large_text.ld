@@ -1,7 +1,7 @@
 /******************************************************************************
 *
 * Copyright (c) 2015 Xilinx, Inc.  All rights reserved.
-* Copyright (C) 2022, Advanced Micro Devices, Inc.
+* Copyright (C) 2022-2025, Advanced Micro Devices, Inc.
 * SPDX-License-Identifier: BSD-3-Clause
 ******************************************************************************/
 
@@ -51,7 +51,7 @@ SECTIONS
    *(.vfp11_veneer)
    *(.ARM.extab)
    *(.gnu.linkonce.armextab.*)
-} > psu_r5_tcm_ram_1_S_AXI_BASEADDR
+} > psu_ddr_S_AXI_BASEADDR
 
 .init : {
    KEEP (*(.init))
