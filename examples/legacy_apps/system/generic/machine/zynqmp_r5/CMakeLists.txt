@@ -1,7 +1,5 @@
 include(CheckSymbolExists)
 
-collect (APP_COMMON_SOURCES helper.c)
-
 find_path(XIL_INCLUDE_DIR NAMES xparameters.h PATHS ${CMAKE_FIND_ROOT_PATH})
 collect (PROJECT_INC_DIRS "${XIL_INCLUDE_DIR}")
 
