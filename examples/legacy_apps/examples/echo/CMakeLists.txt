@@ -21,6 +21,10 @@ foreach (_app rpmsg-echo-ping rpmsg-echo)
     list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/rpmsg-ping.c")
   elseif (${_app} STREQUAL "rpmsg-echo")
     list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/rpmsg-echo.c")
+    # Allow non-Linux builds if the main is provided for the OpenAMP Remote.
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+      list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+    endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
   endif (${_app} STREQUAL "rpmsg-echo-ping")
 
   if (WITH_SHARED_LIB)
