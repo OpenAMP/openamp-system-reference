@@ -26,6 +26,12 @@ endif (${PROJECT_SYSTEM} STREQUAL "linux")
 foreach (_app ${app_list})
   collector_list (_sources APP_COMMON_SOURCES)
   list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/${_app}.c")
+  if (${_app} STREQUAL rpc_demo)
+    # Allow non-Linux builds if the main is provided for OpenAMP Remote.
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+      list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+    endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+  endif(${_app} STREQUAL rpc_demo)
 
   if (WITH_SHARED_LIB)
     add_executable (${_app}-shared ${_sources})

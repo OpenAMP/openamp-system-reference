@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2025 Advanced Micro Devices, Inc. All rights reserved.
+ *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
@@ -57,7 +59,7 @@ static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
 /*-----------------------------------------------------------------------------*
  *  Application
  *-----------------------------------------------------------------------------*/
-int app(struct rpmsg_device *rdev, void *priv)
+int rpmsg_echo_app(struct rpmsg_device *rdev, void *priv)
 {
 	int ret;
 
@@ -93,7 +95,7 @@ int app(struct rpmsg_device *rdev, void *priv)
 /*-----------------------------------------------------------------------------*
  *  Application entry point
  *-----------------------------------------------------------------------------*/
-int main(int argc, char *argv[])
+int __attribute__((weak)) main(int argc, char *argv[])
 {
 	void *platform;
 	struct rpmsg_device *rpdev;
@@ -124,7 +126,7 @@ int main(int argc, char *argv[])
 			LPERROR("Failed to create rpmsg virtio device.\r\n");
 			ret = -1;
 		} else {
-			app(rpdev, platform);
+			rpmsg_echo_app(rpdev, platform);
 			platform_release_rpmsg_vdev(rpdev, platform);
 			ret = 0;
 		}
