@@ -16,7 +16,14 @@ set (OPENAMP_LIB open_amp)
 foreach (_app matrix_multiply matrix_multiplyd)
   collector_list (_sources APP_COMMON_SOURCES)
   list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/${_app}.c")
-  
+
+  if (${_app} STREQUAL matrix_multiplyd)
+    # Allow non-Linux builds if the main is provided for OpenAMP Remote.
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+      list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+    endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/main.c")
+  endif(${_app} STREQUAL matrix_multiplyd)
+
   if (WITH_SHARED_LIB)
     add_executable (${_app}-shared ${_sources})
     target_compile_options (${_app}-shared PRIVATE "-fPIC")
