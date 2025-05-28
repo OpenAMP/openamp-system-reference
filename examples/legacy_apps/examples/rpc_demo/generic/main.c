@@ -12,6 +12,7 @@
  */
 
 #include <fcntl.h>
+#include "main.h"
 #include <openamp/open_amp.h>
 #include <openamp/rpmsg_retarget.h>
 #include "platform_info.h"
@@ -24,6 +25,18 @@
 
 #define LPRINTF(format, ...) metal_info(format, ##__VA_ARGS__)
 #define LPERROR(format, ...) metal_err("ERROR: " format, ##__VA_ARGS__)
+
+void rpmsg_app_suspend(void *data)
+{
+	(void)data;
+	_rproc_wait();
+}
+
+void rpmsg_app_resume(void *data)
+{
+	(void)data;
+	return;
+}
 
 /*-----------------------------------------------------------------------------*
  *  Application entry point

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include "main.h"
 #include "matrix_multiply.h"
 #include <metal/alloc.h>
 #include <metal/log.h>
@@ -15,6 +16,18 @@
 
 #define LPRINTF(fmt, ...) metal_info("%s():%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
 #define LPERROR(fmt, ...) metal_err("ERROR: " fmt, ##__VA_ARGS__)
+
+void rpmsg_app_suspend(void *data)
+{
+	(void)data;
+	_rproc_wait();
+}
+
+void rpmsg_app_resume(void *data)
+{
+	(void)data;
+	return;
+}
 
 /*-----------------------------------------------------------------------------*
  *  Application entry point
