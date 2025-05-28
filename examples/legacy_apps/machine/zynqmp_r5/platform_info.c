@@ -18,6 +18,7 @@
  *
  **************************************************************************/
 
+#include "main.h"
 #include <metal/atomic.h>
 #include <metal/assert.h>
 #include <metal/device.h>
@@ -266,7 +267,7 @@ int platform_poll(void *priv)
 				return ret;
 			break;
 		}
-		_rproc_wait();
+		rpmsg_app_suspend(NULL);
 		metal_irq_restore_enable(flags);
 #endif /* RPMSG_NO_IPI */
 	}

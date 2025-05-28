@@ -18,6 +18,7 @@
  *
  **************************************************************************/
 
+#include "main.h"
 #include <metal/atomic.h>
 #include <metal/assert.h>
 #include <metal/device.h>
@@ -50,6 +51,7 @@ static int zynqmp_r5_a53_proc_irq_handler(int vect_id, void *data)
 		atomic_flag_clear(&prproc->ipi_nokick);
 		metal_io_write32(prproc->kick_io, IPI_ISR_OFFSET,
 				 prproc->ipi_chn_mask);
+		rpmsg_app_resume(NULL);
 		return METAL_IRQ_HANDLED;
 	}
 	return METAL_IRQ_NOT_HANDLED;
