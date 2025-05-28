@@ -13,6 +13,7 @@
 
 #include <fcntl.h>
 #include "FreeRTOS.h"
+#include "main.h"
 #include <openamp/open_amp.h>
 #include <openamp/rpmsg_retarget.h>
 #include "platform_info.h"
@@ -28,6 +29,18 @@
 #define LPERROR(format, ...) metal_err("ERROR: " format, ##__VA_ARGS__)
 
 TaskHandle_t rpmsg_task;
+
+void rpmsg_app_suspend(void *data)
+{
+	(void)data;
+	vTaskSuspend(rpmsg_task);
+}
+
+void rpmsg_app_resume(void *data)
+{
+	(void)data;
+	xTaskResumeFromISR(rpmsg_task);
+}
 
 /* RPMsg Task */
 static void rpmsg_listen_task(void *unused_arg)

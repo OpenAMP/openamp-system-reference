@@ -5,6 +5,7 @@
  */
 
 #include "FreeRTOS.h"
+#include "main.h"
 #include "matrix_multiply.h"
 #include <metal/alloc.h>
 #include <metal/log.h>
@@ -19,6 +20,18 @@
 #define LPERROR(fmt, ...) metal_err("ERROR: " fmt, ##__VA_ARGS__)
 
 TaskHandle_t rpmsg_task;
+
+void rpmsg_app_suspend(void *data)
+{
+	(void)data;
+	vTaskSuspend(rpmsg_task);
+}
+
+void rpmsg_app_resume(void *data)
+{
+	(void)data;
+	xTaskResumeFromISR(rpmsg_task);
+}
 
 /* RPMsg Task */
 static void rpmsg_listen_task(void *unused_arg)
