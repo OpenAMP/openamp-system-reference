@@ -108,9 +108,6 @@ static struct remoteproc rproc_inst;
 extern int init_system(void);
 extern void cleanup_system(void);
 
-#define _rproc_wait() metal_cpu_yield()
-
-
 /*
  * processor operations from r5 to a53. It defines
  * notification operation and remote processor management operations.
@@ -269,7 +266,7 @@ int platform_poll(void *priv)
 				return ret;
 			break;
 		}
-		_rproc_wait();
+		system_suspend();
 		metal_irq_restore_enable(flags);
 #endif /* RPMSG_NO_IPI */
 	}

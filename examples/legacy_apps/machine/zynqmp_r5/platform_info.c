@@ -27,6 +27,7 @@
 #include <errno.h>
 #include "platform_info.h"
 #include "rsc_table.h"
+#include "suspend.h"
 
 #define KICK_DEV_NAME         "poll_dev"
 #define KICK_BUS_NAME         "generic"
@@ -54,8 +55,6 @@
 #define SHARED_BUF_OFFSET 0x8000UL
 #endif /* !SHARED_BUF_OFFSET */
 
-#ifndef RPMSG_NO_IPI
-#define _rproc_wait() asm volatile("wfi")
 #endif /* !RPMSG_NO_IPI */
 
 /* Polling information used by remoteproc operations. */
@@ -152,6 +151,13 @@ platform_create_proc(int proc_index, int rsc_index)
 	xil_printf("Initialize remoteproc successfully.\r\n");
 
 	return &rproc_inst;
+}
+
+void system_generic_suspend(void)
+{
+#ifndef RPMSG_NO_IPI
+	asm volatile("wfi")
+#endif /* RPMSG_NO_IPI */
 }
 
 int platform_init(int argc, char *argv[], void **platform)
@@ -266,7 +272,7 @@ int platform_poll(void *priv)
 				return ret;
 			break;
 		}
-		_rproc_wait();
+		system_suspend(NULL);
 		metal_irq_restore_enable(flags);
 #endif /* RPMSG_NO_IPI */
 	}

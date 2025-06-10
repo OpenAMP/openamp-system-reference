@@ -45,8 +45,6 @@
 #define SHARED_BUF_PA   0x10000UL
 #define SHARED_BUF_SIZE 0x40000UL
 
-#define _rproc_wait() metal_cpu_yield()
-
 struct vring_ipi_info {
 	/* Socket file path */
 	const char *path;
@@ -545,7 +543,7 @@ int platform_poll(void *priv)
 			remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
 			break;
 		}
-		_rproc_wait();
+		system_suspend();
 		metal_irq_restore_enable(flags);
 	}
 	return 0;
