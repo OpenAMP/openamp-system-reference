@@ -25,6 +25,8 @@
 #include <metal/utilities.h>
 #include <openamp/rpmsg_virtio.h>
 #include "platform_info.h"
+#include "suspend.h"
+
 #ifndef RPMSG_NO_IPI
 /* IPI REGs OFFSET */
 #define IPI_TRIG_OFFSET          0x00000000    /* IPI trigger register offset */
@@ -50,6 +52,7 @@ static int zynqmp_r5_a53_proc_irq_handler(int vect_id, void *data)
 		atomic_flag_clear(&prproc->ipi_nokick);
 		metal_io_write32(prproc->kick_io, IPI_ISR_OFFSET,
 				 prproc->ipi_chn_mask);
+		system_resume(NULL);
 		return METAL_IRQ_HANDLED;
 	}
 	return METAL_IRQ_NOT_HANDLED;
