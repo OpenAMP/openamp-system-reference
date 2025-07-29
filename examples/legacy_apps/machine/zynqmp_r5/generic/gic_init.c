@@ -21,7 +21,7 @@
 static XScuGic xInterruptController;
 
 /* Interrupt Controller setup */
-static int app_gic_initialize(void)
+int app_gic_initialize(void)
 {
 	uint32_t status;
 	XScuGic_Config *int_ctrl_config; /* interrupt controller configuration params */

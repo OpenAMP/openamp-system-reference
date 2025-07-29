@@ -5,6 +5,7 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
+#include "FreeRTOS.h"
 #include "task.h"
 
 extern TaskHandle_t rpmsg_task;
@@ -16,6 +17,5 @@ void system_suspend(void)
 
 void system_resume(void)
 {
-         (void)data;
          xTaskResumeFromISR(rpmsg_task);
 }
