@@ -37,7 +37,6 @@
 #define DEVICE_NONSHARED	0x00000010U /* device, non shareable */
 #define NORM_NSHARED_NCACHE	0x00000008U /* Non cacheable  non shareable */
 #define NORM_SHARED_NCACHE	0x0000000CU /* Non cacheable shareable */
-#define	PRIV_RW_USER_RW		(0x00000003U<<8U) /* Full Access */
 
 #ifndef SHARED_MEM_PA
 #if XPAR_CPU_ID == 0
@@ -54,8 +53,6 @@
 #ifndef SHARED_BUF_OFFSET
 #define SHARED_BUF_OFFSET 0x8000UL
 #endif /* !SHARED_BUF_OFFSET */
-
-#endif /* !RPMSG_NO_IPI */
 
 /* Polling information used by remoteproc operations. */
 static metal_phys_addr_t poll_phys_addr = POLL_BASE_ADDR;
@@ -151,13 +148,6 @@ platform_create_proc(int proc_index, int rsc_index)
 	xil_printf("Initialize remoteproc successfully.\r\n");
 
 	return &rproc_inst;
-}
-
-void system_generic_suspend(void)
-{
-#ifndef RPMSG_NO_IPI
-	asm volatile("wfi")
-#endif /* RPMSG_NO_IPI */
 }
 
 int platform_init(int argc, char *argv[], void **platform)
@@ -274,7 +264,7 @@ int platform_poll(void *priv)
 				return ret;
 			break;
 		}
-		system_suspend(NULL);
+		system_suspend();
 		metal_irq_restore_enable(flags);
 #endif /* RPMSG_NO_IPI */
 	}

@@ -38,9 +38,9 @@ struct remote_resource_table {
 
 struct remote_resource_table_metadata {
 	const int version;
-	const u32 magic_num;
-	const u32 comp_magic_num;
-	const u32 rsc_tbl_size;
+	const uint32_t magic_num;
+	const uint32_t comp_magic_num;
+	const uint32_t rsc_tbl_size;
 	const uintptr_t rsc_tbl;
 }__attribute__((packed));
 

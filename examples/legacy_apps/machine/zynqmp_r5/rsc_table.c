@@ -41,14 +41,6 @@
 
 static struct remote_resource_table *initial_resources;
 
-struct remote_resource_table_metadata __resource_metadata resources_metadata = {
-	.version = 1,
-	.magic_num = RSC_TBL_XLNX_MAGIC,
-	.comp_magic_num = (~RSC_TBL_XLNX_MAGIC),
-	.rsc_tbl_size = sizeof(resources),
-	.rsc_tbl = (uintptr_t)&resources
-};
-
 struct remote_resource_table __resource resources = {
 	/* Version */
 	1,
@@ -72,6 +64,14 @@ struct remote_resource_table __resource resources = {
 	/* Vring rsc entry - part of vdev rsc entry */
 	{RING_TX, VRING_ALIGN, VRING_SIZE, 1, 0},
 	{RING_RX, VRING_ALIGN, VRING_SIZE, 2, 0},
+};
+
+struct remote_resource_table_metadata __resource_metadata resources_metadata = {
+	.version = 1,
+	.magic_num = RSC_TBL_XLNX_MAGIC,
+	.comp_magic_num = (~RSC_TBL_XLNX_MAGIC),
+	.rsc_tbl_size = sizeof(resources),
+	.rsc_tbl = (uintptr_t)&resources
 };
 
 void *get_resource_table (int rsc_id, int *len)

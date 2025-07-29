@@ -1,3 +1,5 @@
+include(CheckSymbolExists)
+
 collect (APP_COMMON_SOURCES platform_info.c)
 collect (APP_COMMON_SOURCES rsc_table.c)
 collect (APP_COMMON_SOURCES zynqmp_r5_a53_rproc.c)
@@ -10,13 +12,13 @@ endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/gic_init.c")
 
 # If not provided, add default value for resource table
 if(NOT DEFINED ${RSC_TABLE})
-  set(RSC_TABLE 0x3ed20000 CACHE STRING "")
+  set(RSC_TABLE 0x3ed00000 CACHE STRING "")
 endif(NOT DEFINED ${RSC_TABLE})
 
 set (_linker_script "${CMAKE_CURRENT_SOURCE_DIR}/linker_remote.ld")
-set_property (GLOBAL PROPERTY APP_LINKER_OPT "-Wl,--defsym,_rsc_table=${RSC_TABLE} -T\"${_linker_script}\"")
+set_property (GLOBAL PROPERTY APP_LINKER_OPT "-Wl,--defsym,RSC_TABLE=${RSC_TABLE} -T\"${_linker_script}\"")
 set (_linker_large_text_script "${CMAKE_CURRENT_SOURCE_DIR}/linker_large_text.ld")
-set_property (GLOBAL PROPERTY APP_LINKER_LARGE_TEXT_OPT "-Wl,--defsym,_rsc_table=${RSC_TABLE} -T\"${_linker_large_text_script}\"")
+set_property (GLOBAL PROPERTY APP_LINKER_LARGE_TEXT_OPT "-Wl,--defsym,RSC_TABLE=${RSC_TABLE} -T\"${_linker_large_text_script}\"")
 
 find_path(XIL_INCLUDE_DIR NAMES xparameters.h PATHS ${CMAKE_FIND_ROOT_PATH})
 collect (PROJECT_INC_DIRS "${XIL_INCLUDE_DIR}")
@@ -39,6 +41,7 @@ if(PM_FOUND)
 endif(PM_FOUND)
 
 collect(PROJECT_LIB_DEPS xil)
+collect(PROJECT_LIB_DEPS xilstandalone)
 collect(PROJECT_LIB_DEPS c)
 collect(PROJECT_LIB_DEPS m)
 find_library(XILMEM_LIB NAMES xilmem PATHS ${CMAKE_FIND_ROOT_PATH})

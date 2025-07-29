@@ -18,10 +18,10 @@ void __attribute__((weak)) system_generic_resume(void)
 
 void system_suspend(void)
 {
-        rpmsg_generic_suspend();
+        system_generic_suspend();
 }
 
 void system_resume(void)
 {
-        rpmsg_generic_resume();
+        system_generic_resume();
 }
