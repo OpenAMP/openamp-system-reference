@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/un.h>
 #include "rsc_table.h"
+#include "suspend.h"
 
 #define IPI_CHAN_NUMS 2
 #define IPI_CHAN_SEND 0
