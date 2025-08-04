@@ -79,7 +79,7 @@ static struct rpmsg_virtio_shm_pool shpool;
 static struct metal_io_region *rsc_io;
 static struct rpmsg_virtio_device rvdev;
 
-static struct fw_resource_table *rsc_table;
+static void *rsc_table;
 static struct rpmsg_device *rpdev;
 
 static char rx_cs_msg[20];  /* should receive "Hello world!" */
