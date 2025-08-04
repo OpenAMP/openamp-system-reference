@@ -16,7 +16,7 @@ manifest:
   projects:
     - name: zephyr
       remote: zephyr
-      revision: v4.1.0
+      revision: v4.2.0
       import: true
 
     # as we use the same names as in the zephyr manifest,
