@@ -1,0 +1,6 @@
+set (LIBMETAL_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+include (CheckIncludeFiles)
+include (CheckCSourceCompiles)
+include (${LIBMETAL_ROOT_DIR}/../legacy_apps/cmake/options.cmake)
+include (${LIBMETAL_ROOT_DIR}/../legacy_apps/cmake/collect.cmake)
+add_subdirectory (amp_demo_remote_example)
