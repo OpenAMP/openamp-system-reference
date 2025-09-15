@@ -51,7 +51,7 @@ extern "C" {
 #endif /* !IPI_IRQ_VECT_ID */
 
 #ifndef POLL_BASE_ADDR
-#define POLL_BASE_ADDR      0xFF33100
+#define POLL_BASE_ADDR      0xFF310000
 #endif /* !POLL_BASE_ADDR */
 
 #ifndef IPI_CHN_BITMASK

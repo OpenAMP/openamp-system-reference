@@ -19,14 +19,17 @@
 #include "xscugic.h"
 
 /* Interrupt Controller setup */
-int app_gic_initialize(void)
+int system_interrupt_register(int int_num, void (*intr_handler)(void *),
+			      void *data)
 {
+	long ret;
+
 	/*
 	 * Register the ISR with the interrupt controller instance
 	 * initialized by porting layer.
 	 */
-	xPortInstallInterruptHandler(IPI_IRQ_VECT_ID,
-				     (Xil_ExceptionHandler)metal_xlnx_irq_isr,
-				     (void *)IPI_IRQ_VECT_ID);
-	return 0;
+	ret = xPortInstallInterruptHandler(int_num,
+					   intr_handler,
+					   data);
+	return (int)ret;
 }
