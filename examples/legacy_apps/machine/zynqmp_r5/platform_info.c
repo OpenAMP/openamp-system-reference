@@ -18,16 +18,26 @@
  *
  **************************************************************************/
 
+#include <errno.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include <metal/atomic.h>
 #include <metal/assert.h>
 #include <metal/device.h>
 #include <metal/irq.h>
+#include <metal/irq_controller.h>
+#include <metal/sys.h>
 #include <metal/utilities.h>
 #include <openamp/rpmsg_virtio.h>
-#include <errno.h>
+
 #include "platform_info.h"
 #include "rsc_table.h"
 #include "suspend.h"
+#include "xparameters.h"
+#include "xscugic.h"
+#include "xil_exception.h"
+#include "xil_printf.h"
+#include "xil_cache.h"
 
 #define KICK_DEV_NAME         "poll_dev"
 #define KICK_BUS_NAME         "generic"
@@ -88,18 +98,37 @@ static struct remoteproc_priv rproc_priv = {
 
 static struct remoteproc rproc_inst;
 
-/* External functions */
-extern int init_system(void);
-extern void cleanup_system(void);
-
 /*
  * processor operations from r5 to a53. It defines
  * notification operation and remote processor management operations.
  */
 extern const struct remoteproc_ops zynqmp_r5_a53_proc_ops;
 
+/**
+ * Definition of the interrupt controller will be provided by
+ * libmetal_xlnx_extension.a module
+ **/
+extern struct metal_irq_controller xlnx_irq_cntr;
+
+int system_interrupt_register(int int_num, void (*intr_handler)(void *),
+			      void *data);
 /* RPMsg virtio shared buffer pool */
 static struct rpmsg_virtio_shm_pool shpool;
+
+static void xlnx_irq_isr(void *arg)
+{
+	int vector;
+
+	vector = (int)arg;
+
+	if (vector >= xlnx_irq_cntr.irq_num || vector < 0) {
+		metal_err("%s, irq %d out of range, max = %d\n",
+			  __func__, vector, xlnx_irq_cntr.irq_num);
+		return;
+	}
+
+	(void)metal_irq_handle(&xlnx_irq_cntr.irqs[vector], (int)vector);
+}
 
 static struct remoteproc *
 platform_create_proc(int proc_index, int rsc_index)
@@ -141,7 +170,7 @@ platform_create_proc(int proc_index, int rsc_index)
 	/* parse resource table to remoteproc */
 	ret = remoteproc_set_rsc_table(&rproc_inst, rsc_table, rsc_size);
 	if (ret) {
-		xil_printf("Failed to initialize remoteproc\r\n");
+		xil_printf("Failed to initialize remoteproc\n");
 		remoteproc_remove(&rproc_inst);
 		return NULL;
 	}
@@ -150,19 +179,65 @@ platform_create_proc(int proc_index, int rsc_index)
 	return &rproc_inst;
 }
 
+static int xlnx_machine_init(void)
+{
+	int ret;
+
+	if (!kick_device.irq_info) {
+		metal_err("invalid kick dev, irq info not available\n");
+		return -EINVAL;
+	}
+
+	ret = system_interrupt_register((int)kick_device.irq_info,
+					xlnx_irq_isr,
+					(void *)kick_device.irq_info);
+	if (ret) {
+		metal_err("sys intr %d registration failed %d\n",
+			  (int)kick_device.irq_info, ret);
+		return ret;
+	}
+
+	/* Register Xilinx IRQ controller with libmetal */
+	ret = metal_irq_register_controller(&xlnx_irq_cntr);
+	if (ret < 0) {
+		metal_err("irq controller registration with libmetal failed.\n");
+		return ret;
+	}
+
+	return ret;
+}
+
+static void xlnx_machine_cleanup(void)
+{
+	metal_finish();
+	free_resource_table();
+
+	Xil_DCacheDisable();
+	Xil_ICacheDisable();
+	Xil_DCacheInvalidate();
+	Xil_ICacheInvalidate();
+}
+
 int platform_init(int argc, char *argv[], void **platform)
 {
+	struct metal_init_params init_param = METAL_INIT_DEFAULTS;
 	unsigned long proc_id = 0;
 	unsigned long rsc_id = 0;
 	struct remoteproc *rproc;
+	int len = 0;
+	int ret;
 
-	if (!platform) {
-		xil_printf("Failed to initialize platform,"
-			   "NULL pointer to store platform data.\r\n");
+	/*
+	 * Ensure resource table resource is set up before any attempts
+	 * are made to cache the table.
+	 */
+	get_resource_table(0, &len);
+
+	/* Low level abstraction layer for openamp initialization */
+	metal_init(&init_param);
+
+	if (!platform)
 		return -EINVAL;
-	}
-	/* Initialize HW system components */
-	init_system();
 
 	if (argc >= 2) {
 		proc_id = strtoul(argv[1], NULL, 0);
@@ -172,12 +247,21 @@ int platform_init(int argc, char *argv[], void **platform)
 		rsc_id = strtoul(argv[2], NULL, 0);
 	}
 
+	/* Initialize HW machine components */
+	ret = xlnx_machine_init();
+	if (ret < 0) {
+		metal_err("failed to init machine err %d\n", ret);
+		return ret;
+	}
+
 	rproc = platform_create_proc(proc_id, rsc_id);
 	if (!rproc) {
 		xil_printf("Failed to create remoteproc device.\r\n");
 		return -EINVAL;
 	}
+
 	*platform = rproc;
+
 	return 0;
 }
 
@@ -215,8 +299,7 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 
 	xil_printf("initializing rpmsg shared buffer pool\r\n");
 	/* Only RPMsg virtio driver needs to initialize the shared buffers pool */
-	rpmsg_virtio_init_shm_pool(&shpool, shbuf,
-				   (SHARED_MEM_SIZE - SHARED_BUF_OFFSET));
+	rpmsg_virtio_init_shm_pool(&shpool, shbuf, SHARED_MEM_SIZE);
 
 	xil_printf("initializing rpmsg vdev\r\n");
 	/* RPMsg virtio device can set shared buffers pool argument to NULL */
@@ -227,7 +310,9 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 		xil_printf("failed rpmsg_init_vdev\r\n");
 		goto err2;
 	}
+
 	xil_printf("initializing rpmsg vdev\r\n");
+
 	return rpmsg_virtio_get_rpmsg_device(rpmsg_vdev);
 err2:
 	remoteproc_remove_virtio(rproc, vdev);
@@ -293,5 +378,6 @@ void platform_cleanup(void *platform)
 
 	if (rproc)
 		remoteproc_remove(rproc);
-	cleanup_system();
+
+	xlnx_machine_cleanup();
 }
