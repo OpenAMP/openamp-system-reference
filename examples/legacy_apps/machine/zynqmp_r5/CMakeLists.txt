@@ -1,5 +1,9 @@
 include(CheckSymbolExists)
 
+if (${PROJECT_SYSTEM} STREQUAL "freertos")
+  add_definitions(-DFREERTOS_BSP)
+endif()
+
 collect (APP_COMMON_SOURCES platform_info.c)
 collect (APP_COMMON_SOURCES rsc_table.c)
 collect (APP_COMMON_SOURCES zynqmp_r5_a53_rproc.c)
@@ -25,6 +29,7 @@ collect (PROJECT_INC_DIRS "${XIL_INCLUDE_DIR}")
 find_library(LIBXIL_LIB NAMES xil PATHS ${CMAKE_FIND_ROOT_PATH})
 get_filename_component(LIBXIL_LIB_DIR ${LIBXIL_LIB} DIRECTORY)
 collect(PROJECT_LIB_DIRS ${LIBXIL_LIB_DIR})
+collect(PROJECT_LIB_DIRS ${CMAKE_LIBRARY_PATH})
 
 # check PM API for certain headers and set client version based
 CHECK_SYMBOL_EXISTS(XPAR_XILPM_ENABLED "xparameters.h" PM_FOUND)
