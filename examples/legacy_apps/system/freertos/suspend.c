@@ -8,14 +8,14 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
-extern TaskHandle_t rpmsg_task;
-
 void system_suspend(void)
 {
-         vTaskSuspend(rpmsg_task);
+	TaskHandle_t current_task = xTaskGetCurrentTaskHandle();
+	vTaskSuspend(current_task);
 }
 
 void system_resume(void)
 {
-         xTaskResumeFromISR(rpmsg_task);
+	TaskHandle_t current_task = xTaskGetCurrentTaskHandle();
+	xTaskResumeFromISR(current_task);
 }
