@@ -1,5 +1,8 @@
 set (CMAKE_SYSTEM_NAME      "Generic" CACHE STRING "")
 
+string (TOLOWER "generic"  PROJECT_SYSTEM)
+string (TOUPPER "generic"  PROJECT_SYSTEM_UPPER)
+
 set (CMAKE_C_COMPILER   "${CROSS_PREFIX}gcc")
 set (CMAKE_CXX_COMPILER "${CROSS_PREFIX}g++")
 # _exit is in the BSP rather than in libgcc, leaving this out

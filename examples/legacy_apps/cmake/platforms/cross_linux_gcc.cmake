@@ -1,4 +1,8 @@
 set (CMAKE_SYSTEM_NAME      "Linux")
+
+string (TOLOWER "linux"  PROJECT_SYSTEM)
+string (TOUPPER "linux"  PROJECT_SYSTEM_UPPER)
+
 set (CMAKE_C_COMPILER       "${CROSS_PREFIX}gcc")
 set (CMAKE_CXX_COMPILER     "${CROSS_PREFIX}g++")
 

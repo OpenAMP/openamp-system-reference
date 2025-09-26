@@ -1,6 +1,7 @@
-set (CMAKE_SYSTEM_NAME      "freertos" CACHE STRING "")
-string (TOLOWER "freertos"                PROJECT_SYSTEM)
-string (TOUPPER "freertos"                PROJECT_SYSTEM_UPPER)
+set (CMAKE_SYSTEM_NAME      "Generic" CACHE STRING "")
+
+string (TOLOWER "freertos"  PROJECT_SYSTEM)
+string (TOUPPER "freertos"  PROJECT_SYSTEM_UPPER)
 
 set (CMAKE_C_COMPILER   "${CROSS_PREFIX}gcc")
 set (CMAKE_CXX_COMPILER "${CROSS_PREFIX}g++")
