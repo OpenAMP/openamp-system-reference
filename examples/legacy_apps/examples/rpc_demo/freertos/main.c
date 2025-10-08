@@ -40,7 +40,7 @@ static void rpmsg_listen_task(void *unused_arg)
 	LPRINTF("Starting application...\r\n");
 
 	/* Initialize platform */
-	if (platform_init(NULL, NULL, &platform)) {
+	if (platform_init(0, NULL, &platform)) {
 		LPERROR("Failed to initialize platform.\r\n");
 	} else {
 		rpdev = platform_create_rpmsg_vdev(platform, 0,
@@ -49,7 +49,7 @@ static void rpmsg_listen_task(void *unused_arg)
 		if (!rpdev) {
 			LPERROR("Failed to create rpmsg virtio device.\r\n");
 		} else {
-			rpc_remote_app(rpdev, platform);
+			rpmsg_rpc_app(rpdev, platform);
 			platform_release_rpmsg_vdev(rpdev, platform);
 		}
 	}
