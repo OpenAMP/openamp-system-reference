@@ -61,26 +61,6 @@ struct msg_hdr_s {
 };
 
 /**
- * @brief wait_for_notified() - Loop until notified bit in channel is set.
- *
- * @param[in] notified - pointer to the notified variable
- */
-static inline void wait_for_notified(atomic_flag *notified)
-{
-	unsigned int flags;
-
-	do {
-		flags = metal_irq_save_disable();
-		if (!atomic_flag_test_and_set(notified)) {
-			metal_irq_restore_enable(flags);
-			break;
-		}
-		metal_cpu_yield();
-		metal_irq_restore_enable(flags);
-	} while (1);
-}
-
-/**
  * @brief dump_buffer() - print hex value of each byte in the buffer
  *
  * @param[in] buf - pointer to the buffer
