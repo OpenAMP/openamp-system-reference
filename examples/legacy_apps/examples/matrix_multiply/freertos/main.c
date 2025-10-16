@@ -51,7 +51,7 @@ static void rpmsg_listen_task(void *unused_arg)
 		if (!rpdev) {
 			LPERROR("Failed to create rpmsg virtio device.\r\n");
 		} else {
-			matrix_remote_app(rpdev, platform);
+			rpmsg_matrix_app(rpdev, platform);
 			platform_release_rpmsg_vdev(rpdev, platform);
 		}
 	}
