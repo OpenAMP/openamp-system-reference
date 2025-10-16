@@ -48,6 +48,25 @@
 #define NORM_NSHARED_NCACHE	0x00000008U /* Non cacheable  non shareable */
 #define NORM_SHARED_NCACHE	0x0000000CU /* Non cacheable shareable */
 
+#ifdef _AMD_GENERATED_
+/*
+ * @file   amd_platform_info.h
+ * @file   platform_info.c
+ * @brief  Generated header that contains OpenAMP IPC information.
+ *
+ *         Namely interrupt and shared memory information. If values are
+ *	   provided via generated header, then include thus. These values
+ *	   are to describe interrupt and shared memory information that
+ *	   describes one end of an OpenAMP IPC connection. This application
+ *	   is for target AMD RPUs. The file 'amd_platform_info.h'
+ *	   is generated via Vitis NG or Yocto-SHEL flow for
+ *	   AMD RPU targets. The channel information is defined in the
+ *	   OpenAMP YAML channel description. The generated symbols can be
+ *	   changed by editing the OpenAMP YAML channel description.
+ */
+#include "amd_platform_info.h"
+#else
+
 /* Interrupt vectors */
 #ifdef versal
 
@@ -95,6 +114,8 @@
 #ifndef SHARED_BUF_OFFSET
 #define SHARED_BUF_OFFSET 0x8000UL
 #endif /* !SHARED_BUF_OFFSET */
+
+#endif /* _AMD_GENERATED_ */
 
 /* Possible to control metal log build time */
 #ifndef XLNX_METAL_LOG_LEVEL
