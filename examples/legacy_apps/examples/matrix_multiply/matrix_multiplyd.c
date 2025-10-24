@@ -108,6 +108,10 @@ int rpmsg_matrix_app(struct rpmsg_device *rdev, void *priv)
 		return -1;
 	}
 
+	metal_log(METAL_LOG_NOTICE,
+		  "created rpmsg channel %s, src=0x%x, dst=0x%x\r\n",
+		   RPMSG_SERVICE_NAME, lept.addr, lept.dest_addr);
+
 	LPRINTF("Waiting for events...\r\n");
 	while(1) {
 		platform_poll(priv);

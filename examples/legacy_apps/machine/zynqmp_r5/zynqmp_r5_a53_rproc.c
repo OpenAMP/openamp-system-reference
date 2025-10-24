@@ -75,7 +75,7 @@ zynqmp_r5_a53_proc_init(struct remoteproc *rproc,
 				prproc->kick_dev_name,
 				&kick_dev);
 	if (ret) {
-		xil_printf("failed to open polling device: %d.\r\n", ret);
+		metal_err("failed to open polling device: %d.\r\n", ret);
 		return NULL;
 	}
 	prproc->kick_dev = kick_dev;

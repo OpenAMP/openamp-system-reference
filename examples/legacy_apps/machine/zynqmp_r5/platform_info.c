@@ -96,6 +96,19 @@
 #define SHARED_BUF_OFFSET 0x8000UL
 #endif /* !SHARED_BUF_OFFSET */
 
+/* Possible to control metal log build time */
+#ifndef XLNX_METAL_LOG_LEVEL
+#define XLNX_METAL_LOG_LEVEL METAL_LOG_INFO
+#endif
+
+void xlnx_log_handler(enum metal_log_level level, const char *format, ...);
+
+#define XLNX_PLATFORM_METAL_INIT_PARAMS \
+{ \
+	.log_handler = xlnx_log_handler, \
+	.log_level = XLNX_METAL_LOG_LEVEL, \
+}
+
 /* Polling information used by remoteproc operations. */
 static metal_phys_addr_t poll_phys_addr = POLL_BASE_ADDR;
 struct metal_device kick_device = {
@@ -205,18 +218,22 @@ platform_create_proc(int proc_index, int rsc_index)
 	/* parse resource table to remoteproc */
 	ret = remoteproc_set_rsc_table(&rproc_inst, rsc_table, rsc_size);
 	if (ret) {
-		xil_printf("Failed to initialize remoteproc\n");
+		metal_err("Failed to initialize remoteproc\n");
 		remoteproc_remove(&rproc_inst);
 		return NULL;
 	}
-	xil_printf("Initialize remoteproc successfully.\r\n");
+	metal_dbg("Initialize remoteproc successfully.\r\n");
 
 	return &rproc_inst;
 }
 
 static int xlnx_machine_init(void)
 {
+
+	struct metal_init_params metal_param = XLNX_PLATFORM_METAL_INIT_PARAMS;
 	int ret;
+
+	metal_init(&metal_param);
 
 	if (!kick_device.irq_info) {
 		metal_err("invalid kick dev, irq info not available\n");
@@ -259,9 +276,23 @@ static void xlnx_machine_cleanup(void)
 	Xil_ICacheInvalidate();
 }
 
+void xlnx_log_handler(enum metal_log_level level, const char *format, ...)
+{
+	char msg[1024];
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf(msg, sizeof(msg), format, args);
+	va_end(args);
+
+	if (level > metal_get_log_level())
+		return;
+
+	xil_printf("RPU%d: %s", XPAR_CPU_ID, msg);
+}
+
 int platform_init(int argc, char *argv[], void **platform)
 {
-	struct metal_init_params init_param = METAL_INIT_DEFAULTS;
 	unsigned long proc_id = 0;
 	unsigned long rsc_id = 0;
 	struct remoteproc *rproc;
@@ -273,9 +304,6 @@ int platform_init(int argc, char *argv[], void **platform)
 	 * are made to cache the table.
 	 */
 	get_resource_table(0, &len);
-
-	/* Low level abstraction layer for openamp initialization */
-	metal_init(&init_param);
 
 	if (!platform)
 		return -EINVAL;
@@ -297,12 +325,13 @@ int platform_init(int argc, char *argv[], void **platform)
 
 	rproc = platform_create_proc(proc_id, rsc_id);
 	if (!rproc) {
-		xil_printf("Failed to create remoteproc device.\r\n");
+		metal_err("Failed to create remoteproc device.\r\n");
 		return -EINVAL;
 	}
 
 	*platform = rproc;
 
+	metal_dbg("platform init success\n");
 	return 0;
 }
 
@@ -330,29 +359,29 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 	shbuf = metal_io_phys_to_virt(shbuf_io,
 				      SHARED_MEM_PA + SHARED_BUF_OFFSET);
 
-	xil_printf("creating remoteproc virtio\r\n");
+	metal_dbg("creating remoteproc virtio\r\n");
 	/* TODO: can we have a wrapper for the following two functions? */
 	vdev = remoteproc_create_virtio(rproc, vdev_index, role, rst_cb);
 	if (!vdev) {
-		xil_printf("failed remoteproc_create_virtio\r\n");
+		metal_err("failed remoteproc_create_virtio\r\n");
 		goto err1;
 	}
 
-	xil_printf("initializing rpmsg shared buffer pool\r\n");
+	metal_dbg("initializing rpmsg shared buffer pool\r\n");
 	/* Only RPMsg virtio driver needs to initialize the shared buffers pool */
 	rpmsg_virtio_init_shm_pool(&shpool, shbuf, SHARED_MEM_SIZE);
 
-	xil_printf("initializing rpmsg vdev\r\n");
+	metal_dbg("initializing rpmsg vdev\r\n");
 	/* RPMsg virtio device can set shared buffers pool argument to NULL */
 	ret =  rpmsg_init_vdev(rpmsg_vdev, vdev, ns_bind_cb,
 			       shbuf_io,
 			       &shpool);
 	if (ret) {
-		xil_printf("failed rpmsg_init_vdev\r\n");
+		metal_err("failed rpmsg_init_vdev\r\n");
 		goto err2;
 	}
 
-	xil_printf("initializing rpmsg vdev\r\n");
+	metal_dbg("initializing rpmsg vdev\r\n");
 
 	return rpmsg_virtio_get_rpmsg_device(rpmsg_vdev);
 err2:

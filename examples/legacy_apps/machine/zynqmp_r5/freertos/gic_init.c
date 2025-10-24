@@ -44,7 +44,7 @@ int system_interrupt_register(int int_num, void (*intr_handler)(void *),
 		return -EINVAL;
 	}
 
-	metal_info("sys interrupt %d config success\n", int_num);
+	metal_dbg("sys interrupt %d config success\n", int_num);
 
 	return 0;
 }

@@ -139,7 +139,9 @@ int rpmsg_handle_read(void *data, struct rpmsg_rpc_svr *rpcs)
 
 	if (rpc_read_req->fd == 0) {
 		bytes_read = MAX_STRING_LEN;
-		/* Perform read from fd for large size since this is a STD/I request */
+		/* Perform read from fd for large size since this is a
+		 * STD/I request
+		 */
 		bytes_read = read(rpc_read_req->fd, rpc_read_resp.buf,
 				  bytes_read);
 	} else {
