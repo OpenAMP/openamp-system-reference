@@ -20,8 +20,8 @@
 
 #define SHUTDOWN_MSG	0xEF56A55A
 
-#define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
+#define LPRINTF(format, ...) metal_info(format, ##__VA_ARGS__)
+#define LPERROR(format, ...) metal_err(format, ##__VA_ARGS__)
 
 static struct rpmsg_endpoint lept;
 static int shutdown_req = 0;
@@ -64,7 +64,7 @@ int rpmsg_echo_app(struct rpmsg_device *rdev, void *priv)
 	int ret;
 
 	/* Initialize RPMSG framework */
-	LPRINTF("Try to create rpmsg endpoint.\r\n");
+	metal_dbg("Try to create rpmsg endpoint.\r\n");
 
 	ret = rpmsg_create_ept(&lept, rdev, RPMSG_SERVICE_NAME,
 			       RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
@@ -75,10 +75,12 @@ int rpmsg_echo_app(struct rpmsg_device *rdev, void *priv)
 		return -1;
 	}
 
-	LPRINTF("Successfully created rpmsg endpoint.\r\n");
+	metal_log(METAL_LOG_NOTICE,
+		  "created rpmsg channel %s, src=0x%x, dst=0x%x\r\n",
+		   RPMSG_SERVICE_NAME, lept.addr, lept.dest_addr);
 
-	LPRINTF("RPMsg device TX buffer size: %#x\r\n", rpmsg_get_tx_buffer_size(&lept));
-	LPRINTF("RPMsg device RX buffer size: %#x\r\n", rpmsg_get_rx_buffer_size(&lept));
+	metal_dbg("RPMsg device TX buffer size: %#x\r\n", rpmsg_get_tx_buffer_size(&lept));
+	metal_dbg("RPMsg device RX buffer size: %#x\r\n", rpmsg_get_rx_buffer_size(&lept));
 
 	while(1) {
 		platform_poll(priv);
@@ -101,6 +103,13 @@ int __attribute__((weak)) main(int argc, char *argv[])
 	struct rpmsg_device *rpdev;
 	int ret;
 
+	/* Initialize platform */
+	ret = platform_init(argc, argv, &platform);
+	if (ret) {
+		LPERROR("Failed to initialize platform.\r\n");
+		return ret;
+	}
+
 	LPRINTF("openamp lib version: %s (", openamp_version());
 	LPRINTF("Major: %d, ", openamp_version_major());
 	LPRINTF("Minor: %d, ", openamp_version_minor());
@@ -113,23 +122,16 @@ int __attribute__((weak)) main(int argc, char *argv[])
 
 	LPRINTF("Starting application...\r\n");
 
-	/* Initialize platform */
-	ret = platform_init(argc, argv, &platform);
-	if (ret) {
-		LPERROR("Failed to initialize platform.\r\n");
+	rpdev = platform_create_rpmsg_vdev(platform, 0,
+					   VIRTIO_DEV_DEVICE,
+					   NULL, NULL);
+	if (!rpdev) {
+		LPERROR("Failed to create rpmsg virtio device.\r\n");
 		ret = -1;
 	} else {
-		rpdev = platform_create_rpmsg_vdev(platform, 0,
-						   VIRTIO_DEV_DEVICE,
-						   NULL, NULL);
-		if (!rpdev) {
-			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			ret = -1;
-		} else {
-			rpmsg_echo_app(rpdev, platform);
-			platform_release_rpmsg_vdev(rpdev, platform);
-			ret = 0;
-		}
+		rpmsg_echo_app(rpdev, platform);
+		platform_release_rpmsg_vdev(rpdev, platform);
+		ret = 0;
 	}
 
 	LPRINTF("Stopping application...\r\n");

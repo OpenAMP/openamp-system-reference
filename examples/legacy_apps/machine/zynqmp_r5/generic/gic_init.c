@@ -80,9 +80,13 @@ int system_interrupt_register(int intr_num, void (*intr_handler)(void *),
 
 	Xil_ExceptionEnable();
 	/* Connect Interrupt ID with ISR */
-	XScuGic_Connect(&xInterruptController, intr_num,
+	status = XScuGic_Connect(&xInterruptController, intr_num,
 			(Xil_InterruptHandler)intr_handler,
 			(void *)data);
 
-	return 0;
+	if (status != XST_SUCCESS)
+		metal_err("failed to config interrupt %d\n", intr_num);
+
+	metal_dbg("sys interrupt %d config success\n", intr_num);
+	return status;
 }

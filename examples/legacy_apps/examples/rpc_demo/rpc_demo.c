@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <metal/log.h>
 #include <openamp/open_amp.h>
 #include <openamp/rpmsg_retarget.h>
 #include "rsc_table.h"
@@ -30,9 +31,9 @@
 #define REDEF_O_APPEND  0002000
 #define REDEF_O_ACCMODE 0000003
 
-#define LPRINTF(format, ...) xil_printf(format, ##__VA_ARGS__)
+#define LPRINTF(format, ...) metal_info(format, ##__VA_ARGS__)
 //#define LPRINTF(format, ...)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
+#define LPERROR(format, ...) metal_err(format, ##__VA_ARGS__)
 
 static void rpmsg_rpc_shutdown(struct rpmsg_rpc_data *rpc)
 {
@@ -150,25 +151,25 @@ int __attribute__((weak)) main(int argc, char *argv[])
 	struct rpmsg_device *rpdev;
 	int ret;
 
-	LPRINTF("Starting application...\r\n");
-
 	/* Initialize platform */
 	ret = platform_init(argc, argv, &platform);
 	if (ret) {
 		LPERROR("Failed to initialize platform.\r\n");
+		return -1;
+	}
+
+	LPRINTF("Starting application...\r\n");
+
+	rpdev = platform_create_rpmsg_vdev(platform, 0,
+					   VIRTIO_DEV_DEVICE,
+					   NULL, NULL);
+	if (!rpdev) {
+		LPERROR("Failed to create rpmsg virtio device.\r\n");
 		ret = -1;
 	} else {
-		rpdev = platform_create_rpmsg_vdev(platform, 0,
-						   VIRTIO_DEV_DEVICE,
-						   NULL, NULL);
-		if (!rpdev) {
-			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			ret = -1;
-		} else {
-			rpmsg_rpc_app(rpdev, platform);
-			platform_release_rpmsg_vdev(rpdev, platform);
-			ret = 0;
-		}
+		rpmsg_rpc_app(rpdev, platform);
+		platform_release_rpmsg_vdev(rpdev, platform);
+		ret = 0;
 	}
 
 	LPRINTF("Stopping application...\r\n");

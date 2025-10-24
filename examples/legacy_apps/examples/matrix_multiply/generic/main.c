@@ -13,8 +13,8 @@
 #include "platform_info.h"
 #include <stdio.h>
 
-#define LPRINTF(fmt, ...) metal_info("%s():%u " fmt, __func__, __LINE__, ##__VA_ARGS__)
-#define LPERROR(fmt, ...) metal_err("ERROR: " fmt, ##__VA_ARGS__)
+#define LPRINTF(format, ...) metal_info(format, ##__VA_ARGS__)
+#define LPERROR(format, ...) metal_err(format, ##__VA_ARGS__)
 
 /*-----------------------------------------------------------------------------*
  *  Application entry point
@@ -25,25 +25,27 @@ int main(int argc, char *argv[])
 	struct rpmsg_device *rpdev;
 	int ret;
 
-	LPRINTF("Starting application...\r\n");
-
 	/* Initialize platform */
 	ret = platform_init(argc, argv, &platform);
 	if (ret) {
 		LPERROR("Failed to initialize platform.\r\n");
+		return ret;
+	}
+
+	LPRINTF("openamp lib version: %s\n", openamp_version());
+	LPRINTF("libmetal lib version: %s\n", metal_ver());
+	LPRINTF("Starting application...\r\n");
+
+	rpdev = platform_create_rpmsg_vdev(platform, 0,
+					   VIRTIO_DEV_DEVICE,
+					   NULL, NULL);
+	if (!rpdev) {
+		LPERROR("Failed to create rpmsg virtio device.\r\n");
 		ret = -1;
 	} else {
-		rpdev = platform_create_rpmsg_vdev(platform, 0,
-						   VIRTIO_DEV_DEVICE,
-						   NULL, NULL);
-		if (!rpdev) {
-			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			ret = -1;
-		} else {
-			rpmsg_matrix_app(rpdev, platform);
-			platform_release_rpmsg_vdev(rpdev, platform);
-			ret = 0;
-		}
+		rpmsg_matrix_app(rpdev, platform);
+		platform_release_rpmsg_vdev(rpdev, platform);
+		ret = 0;
 	}
 
 	LPRINTF("Stopping application...\r\n");

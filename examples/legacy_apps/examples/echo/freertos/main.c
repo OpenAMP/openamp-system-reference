@@ -16,40 +16,45 @@
 #include "task.h"
 
 #define LPRINTF(format, ...) metal_info(format, ##__VA_ARGS__)
-#define LPERROR(fmt, ...) metal_err("ERROR: " fmt, ##__VA_ARGS__)
+#define LPERROR(fmt, ...) metal_err(fmt, ##__VA_ARGS__)
 
 TaskHandle_t rpmsg_task;
 
 /* RPMsg Task */
-static void rpmsg_listen_task(void *unused_arg)
+static void rpmsg_listen_task(void *arg)
 {
-	void *platform;
 	struct rpmsg_device *rpdev;
+	void *platform;
+	int ret;
 
-	(void)(int *)unused_arg;
-
-	/* can't use LPRINTF, metal_log setup is in init_system */
-	LPRINTF("openamp lib version: %s (", openamp_version());
-	LPRINTF("Major: %d, ", openamp_version_major());
-	LPRINTF("Minor: %d, ", openamp_version_minor());
-	LPRINTF("Patch: %d)\r\n", openamp_version_patch());
-
-	LPRINTF("libmetal lib version: %s (", metal_ver());
-	LPRINTF("Major: %d, ", metal_ver_major());
-	LPRINTF("Minor: %d, ", metal_ver_minor());
-	LPRINTF("Patch: %d)\r\n", metal_ver_patch());
-
-	LPRINTF("Starting application...\r\n");
+	(void)arg;
 
 	/* Initialize platform */
-	if (platform_init(0, NULL, &platform)) {
+	ret = platform_init(0, NULL, &platform);
+	if (ret) {
 		LPERROR("Failed to initialize platform.\r\n");
-	} else {
+		/* Terminate this task */
+		vTaskDelete(NULL);
+		return;
+	}
+
+	metal_info("\n");
+	metal_info("FreeRTOS Version: %u.%u.%u\n",
+		   tskKERNEL_VERSION_MAJOR,
+		   tskKERNEL_VERSION_MINOR,
+		   tskKERNEL_VERSION_BUILD);
+
+	LPRINTF("openamp lib version: %s\n", openamp_version());
+	LPRINTF("libmetal lib version: %s\n", metal_ver());
+	LPRINTF("Starting application...\r\n");
+
+	while (1) {
 		rpdev = platform_create_rpmsg_vdev(platform, 0,
 						   VIRTIO_DEV_DEVICE,
 						   NULL, NULL);
 		if (!rpdev) {
 			LPERROR("Failed to create rpmsg virtio device.\r\n");
+			break;
 		} else {
 			rpmsg_echo_app(rpdev, platform);
 			platform_release_rpmsg_vdev(rpdev, platform);
@@ -69,10 +74,9 @@ int main(void)
 	BaseType_t stat;
 
 	/* Create the tasks */
-	stat = xTaskCreate(rpmsg_listen_task, (const char *)"RPMsg task", 1024, NULL, 2,
-			   &rpmsg_task);
+	stat = xTaskCreate(rpmsg_listen_task, (const char *)"RPMsg task", 1024,
+			   NULL, 2, &rpmsg_task);
 	if (stat != pdPASS) {
-		LPERROR("cannot create task\r\n");
 		while (1);
 	}
 
