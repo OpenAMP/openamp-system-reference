@@ -21,6 +21,11 @@
 
 static XScuGic xInterruptController;
 
+int xlnx_hw_to_bsp_irq(int sys_irq)
+{
+	return sys_irq;
+}
+
 int system_interrupt_register(int intr_num, void (*intr_handler)(void *),
 			      void *data)
 {

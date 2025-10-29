@@ -15,50 +15,31 @@
 
 #include <xparameters.h>
 
+#ifdef SDT
+#include "bspconfig.h"
+#endif
+
 #include "platform_info_common.h"
 
 #if defined __cplusplus
 extern "C" {
 #endif
 
+/*
+ * If BSP is generated using Vitis or Yocto then header file
+ * already generates interupt id with the offset.
+ * If either of above tools are not used then have to use correct offset to
+ * configure interrupts correctly with freertos BSP.
+ */
 /* Cortex R5 memory attributes */
 #define DEVICE_SHARED       0x00000001U /* device, shareable */
 #define DEVICE_NONSHARED    0x00000010U /* device, non shareable */
 #define NORM_NSHARED_NCACHE 0x00000008U /* Non cacheable  non shareable */
 #define NORM_SHARED_NCACHE  0x0000000CU /* Non cacheable shareable */
 
-/* Interrupt vectors */
-#ifdef versal
-
-#ifndef IPI_IRQ_VECT_ID
-#define IPI_IRQ_VECT_ID     63
-#endif /* !IPI_IRQ_VECT_ID */
-
-#ifndef POLL_BASE_ADDR
-#define POLL_BASE_ADDR       0xFF340000 /* IPI base address*/
-#endif /* !POLL_BASE_ADDR */
-
-#ifndef IPI_CHN_BITMASK
-#define IPI_CHN_BITMASK     0x0000020 /* IPI channel bit mask for IPI from/to
-					   APU */
-#endif /* !IPI_CHN_BITMASK */
-
-#else
-
+#ifdef PLATFORM_ZYNQMP
 #include "xreg_cortexr5.h"
-#ifndef IPI_IRQ_VECT_ID
-#define IPI_IRQ_VECT_ID     65
-#endif /* !IPI_IRQ_VECT_ID */
-
-#ifndef POLL_BASE_ADDR
-#define POLL_BASE_ADDR      0xFF310000
-#endif /* !POLL_BASE_ADDR */
-
-#ifndef IPI_CHN_BITMASK
-#define IPI_CHN_BITMASK     0x01000000
-#endif /* !IPI_CHN_BITMASK */
-
-#endif /* versal */
+#endif
 
 #ifdef RPMSG_NO_IPI
 #undef POLL_BASE_ADDR

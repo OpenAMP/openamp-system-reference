@@ -17,11 +17,13 @@ collector_list (_deps PROJECT_LIB_DEPS)
 
 set (OPENAMP_LIB open_amp)
 
-if (${PROJECT_SYSTEM} STREQUAL "linux")
-  set (app_list rpc_demod)
-else (${PROJECT_SYSTEM})
-  set (app_list rpc_demo)
-endif (${PROJECT_SYSTEM} STREQUAL "linux")
+if (WITH_VIRTIO_DEVICE)
+	 set(app_list rpc_demo)
+elseif (WITH_VIRTIO_DRIVER)
+    set(app_list rpc_demod)
+else ()
+    message(FATAL_ERROR "Either WITH_VIRTIO_DEVICE or WITH_VIRTIO_DRIVER must be set.")
+endif (WITH_VIRTIO_DEVICE)
 
 foreach (_app ${app_list})
   collector_list (_sources APP_COMMON_SOURCES)

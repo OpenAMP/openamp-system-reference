@@ -48,6 +48,38 @@
 #define NORM_NSHARED_NCACHE	0x00000008U /* Non cacheable  non shareable */
 #define NORM_SHARED_NCACHE	0x0000000CU /* Non cacheable shareable */
 
+/* Interrupt vectors */
+#ifdef versal
+
+#ifndef IPI_IRQ_VECT_ID
+#define IPI_IRQ_VECT_ID     63
+#endif /* !IPI_IRQ_VECT_ID */
+
+#ifndef POLL_BASE_ADDR
+#define POLL_BASE_ADDR       0xFF340000 /* IPI base address*/
+#endif /* !POLL_BASE_ADDR */
+
+#ifndef IPI_CHN_BITMASK
+#define IPI_CHN_BITMASK     0x0000020 /* IPI channel bit mask for IPI from/to
+					   APU */
+#endif /* !IPI_CHN_BITMASK */
+
+#else
+
+#include "xreg_cortexr5.h"
+#ifndef IPI_IRQ_VECT_ID
+#define IPI_IRQ_VECT_ID     65
+#endif /* !IPI_IRQ_VECT_ID */
+
+#ifndef POLL_BASE_ADDR
+#define POLL_BASE_ADDR      0xFF310000
+#endif /* !POLL_BASE_ADDR */
+
+#ifndef IPI_CHN_BITMASK
+#define IPI_CHN_BITMASK     0x01000000
+#endif /* !IPI_CHN_BITMASK */
+
+#endif /* versal */
 #ifndef SHARED_MEM_PA
 #if XPAR_CPU_ID == 0
 #define SHARED_MEM_PA  0x3ED40000UL
@@ -112,6 +144,9 @@ extern struct metal_irq_controller xlnx_irq_cntr;
 
 int system_interrupt_register(int int_num, void (*intr_handler)(void *),
 			      void *data);
+
+int xlnx_hw_to_bsp_irq(int sys_irq);
+
 /* RPMsg virtio shared buffer pool */
 static struct rpmsg_virtio_shm_pool shpool;
 
@@ -187,6 +222,12 @@ static int xlnx_machine_init(void)
 		metal_err("invalid kick dev, irq info not available\n");
 		return -EINVAL;
 	}
+
+	metal_dbg("kick device irq id = %d\n", (int)kick_device.irq_info);
+
+	/* convert from HW irq number to bsp specific irq */
+	kick_device.irq_info =
+		(void *)xlnx_hw_to_bsp_irq((int)kick_device.irq_info);
 
 	ret = system_interrupt_register((int)kick_device.irq_info,
 					xlnx_irq_isr,
