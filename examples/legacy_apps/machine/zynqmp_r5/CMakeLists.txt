@@ -1,9 +1,5 @@
 include(CheckSymbolExists)
 
-if (${PROJECT_SYSTEM} STREQUAL "freertos")
-  add_definitions(-DFREERTOS_BSP)
-endif()
-
 collect (APP_COMMON_SOURCES platform_info.c)
 collect (APP_COMMON_SOURCES rsc_table.c)
 collect (APP_COMMON_SOURCES zynqmp_r5_a53_rproc.c)

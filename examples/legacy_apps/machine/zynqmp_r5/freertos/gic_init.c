@@ -14,21 +14,15 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "xil_exception.h"
-#include "xil_printf.h"
 #include "xparameters.h"
 #include "xscugic.h"
 
-/*
- * If BSP is generated using Vitis or Yocto then header file
- * already generates interupt id with the offset.
- * If either of above tools are not used then have to use correct offset to
- * configure interrupts correctly with freertos BSP.
- */
-#ifndef _AMD_GENERATED_
-#define FREERTOS_IRQ_OFFSET 32
-#else
-#define FREERTOS_IRQ_OFFSET 0
-#endif
+#define FREERTOS_BSP_IRQ_OFFSET 32
+
+int xlnx_hw_to_bsp_irq(int sys_irq)
+{
+	return sys_irq - FREERTOS_BSP_IRQ_OFFSET;
+}
 
 /* Interrupt Controller setup */
 int system_interrupt_register(int int_num, void (*intr_handler)(void *),
@@ -36,13 +30,21 @@ int system_interrupt_register(int int_num, void (*intr_handler)(void *),
 {
 	long ret;
 
-	int_num = int_num - FREERTOS_IRQ_OFFSET;
 	/*
 	 * Register the ISR with the interrupt controller instance
 	 * initialized by porting layer.
+	 * BSP returns success of this call with ret = 1.
+	 * This is unconventional so return 0 for success else -EINVAL.
 	 */
 	ret = xPortInstallInterruptHandler(int_num,
 					   intr_handler,
 					   data);
-	return (int)ret;
+	if (!ret) {
+		metal_err("failed to register interrupt %d\n", int_num);
+		return -EINVAL;
+	}
+
+	metal_info("sys interrupt %d config success\n", int_num);
+
+	return 0;
 }

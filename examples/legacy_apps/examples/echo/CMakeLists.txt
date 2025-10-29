@@ -15,7 +15,15 @@ collector_list (_deps PROJECT_LIB_DEPS)
 
 set (OPENAMP_LIB open_amp)
 
-foreach (_app rpmsg-echo-ping rpmsg-echo)
+if (WITH_VIRTIO_DEVICE)
+	 set(_app_list rpmsg-echo)
+elseif (WITH_VIRTIO_DRIVER)
+    set(_app_list rpmsg-echo-ping)
+else ()
+    message(FATAL_ERROR "Either WITH_VIRTIO_DEVICE or WITH_VIRTIO_DRIVER must be set.")
+endif (WITH_VIRTIO_DEVICE)
+
+foreach (_app ${_app_list})
   collector_list (_sources APP_COMMON_SOURCES)
   if (${_app} STREQUAL "rpmsg-echo-ping")
     list (APPEND _sources "${CMAKE_CURRENT_SOURCE_DIR}/rpmsg-ping.c")
