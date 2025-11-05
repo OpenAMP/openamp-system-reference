@@ -12,6 +12,7 @@
 #include <metal/atomic.h>
 #include <metal/assert.h>
 #include <metal/cpu.h>
+#include <metal/io.h>
 #include <metal/irq.h>
 
 #include <stdio.h>
@@ -169,6 +170,74 @@ static inline void update_stat(struct metal_stat *pst, uint64_t val)
 		pst->st_min = val;
 	if (pst->st_max < val)
 		pst->st_max = val;
+}
+
+/**
+ * @brief wait_for_notified() - Loop until notified flag is cleared by ISR
+ *
+ * @param notified Atomic flag cleared inside the IPI handler.
+ */
+static inline void wait_for_notified(atomic_flag *notified)
+{
+	unsigned int flags;
+
+	do {
+		flags = metal_irq_save_disable();
+		if (!atomic_flag_test_and_set(notified)) {
+			metal_irq_restore_enable(flags);
+			break;
+		}
+		metal_cpu_yield();
+		metal_irq_restore_enable(flags);
+	} while (1);
+}
+
+/**
+ * @brief read_timer() - return TTC counter value
+ *
+ * @param ttc_io TTC timer i/o region
+ * @param cnt_id counter ID
+ */
+static inline uint32_t read_timer(struct metal_io_region *ttc_io,
+				  unsigned long cnt_id)
+{
+	unsigned long offset = XTTCPS_CNT_VAL_OFFSET + XTTCPS_CNT_OFFSET(cnt_id);
+
+	return metal_io_read32(ttc_io, offset);
+}
+
+/**
+ * @brief reset_timer() - reset TTC counter by toggling the RST bit
+ *
+ * @param ttc_io TTC timer i/o region
+ * @param cnt_id counter ID
+ */
+static inline void reset_timer(struct metal_io_region *ttc_io,
+			       unsigned long cnt_id)
+{
+	uint32_t val;
+	unsigned long offset = XTTCPS_CNT_CNTRL_OFFSET +
+			       XTTCPS_CNT_OFFSET(cnt_id);
+
+	val = XTTCPS_CNT_CNTRL_RST_MASK;
+	metal_io_write32(ttc_io, offset, val);
+}
+
+/**
+ * @brief stop_timer() - stop TTC counter by setting the disable bit
+ *
+ * @param ttc_io TTC timer i/o region
+ * @param cnt_id counter ID
+ */
+static inline void stop_timer(struct metal_io_region *ttc_io,
+			      unsigned long cnt_id)
+{
+	uint32_t val;
+	unsigned long offset = XTTCPS_CNT_CNTRL_OFFSET +
+			       XTTCPS_CNT_OFFSET(cnt_id);
+
+	val = XTTCPS_CNT_CNTRL_DIS_MASK;
+	metal_io_write32(ttc_io, offset, val);
 }
 
 struct channel_s {
