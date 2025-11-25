@@ -309,7 +309,7 @@ platform_create_rpmsg_vdev(unsigned int vdev_index,
 		goto failed;
 	}
 
-	rpmsg_virtio_init_shm_pool(&shpool, NULL, SHM_SIZE);
+	rpmsg_virtio_init_shm_pool(&shpool, (void *)SHM_START_ADDR, SHM_SIZE);
 	ret =  rpmsg_init_vdev(&rvdev, vdev, ns_cb, shm_io, &shpool);
 
 	if (ret) {
