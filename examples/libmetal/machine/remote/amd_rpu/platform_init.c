@@ -276,29 +276,29 @@ void close_metal_devices(void)
 
 static XStatus init_ttc(void)
 {
-	XPm_NodeStatus NodeStatus = {0};
-	XIpiPsu_Config *IpiCfgPtr;
-	XIpiPsu IpiInst;
+	XPm_NodeStatus node_status = {0};
+	XIpiPsu_Config *ipi_cfg_ptr;
+	XIpiPsu ipi_inst;
 
 	/* Look Up the config data */
-	IpiCfgPtr = XIpiPsu_LookupConfig(XPAR_XIPIPSU_0_BASEADDR);
-	if (!IpiCfgPtr) {
+	ipi_cfg_ptr = XIpiPsu_LookupConfig(XPAR_XIPIPSU_0_BASEADDR);
+	if (!ipi_cfg_ptr) {
 		metal_err("HOST: %s ERROR in getting CfgPtr\n", __func__);
 		return -EINVAL;
 	}
 
 	/* Init with the Cfg Data */
-	if (XIpiPsu_CfgInitialize(&IpiInst, IpiCfgPtr, IpiCfgPtr->BaseAddress) != XST_SUCCESS) {
+	if (XIpiPsu_CfgInitialize(&ipi_inst, ipi_cfg_ptr, ipi_cfg_ptr->BaseAddress) != XST_SUCCESS) {
 		metal_err("HOST: Unable to configure IPI Instance for xilpm\n");
 		return -EINVAL;
 	}
 
-	if (XPm_InitXilpm(&IpiInst) != XST_SUCCESS) {
+	if (XPm_InitXilpm(&ipi_inst) != XST_SUCCESS) {
 		metal_err("HOST: Failed to init xilpm\n");
 		return -EINVAL;
 	}
 
-	if (XPm_GetNodeStatus(TTC_NODEID, &NodeStatus) != XST_SUCCESS) {
+	if (XPm_GetNodeStatus(TTC_NODEID, &node_status) != XST_SUCCESS) {
 		metal_err("HOST: XPm_GetNodeStatus failed\n");
 		return -EINVAL;
 	}
@@ -307,7 +307,7 @@ static XStatus init_ttc(void)
 	 * If node status is 1, then TTC is powered on.
 	 * Else attempt to power on TTC.
 	 */
-	if (!NodeStatus.status == 0 &&
+	if (!node_status.status == 0 &&
 	    XPm_RequestNode(TTC_NODEID, PM_CAP_ACCESS, 100, 0) != XST_SUCCESS) {
 		metal_err("HOST: TTC device was powered off. Attempt to power on failed.\n");
 		return -EINVAL;
