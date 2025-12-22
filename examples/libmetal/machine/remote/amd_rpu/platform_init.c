@@ -214,7 +214,7 @@ int platform_register_metal_device(void)
 	for (i = 0; i < sizeof(metal_dev_table) / sizeof(struct metal_device);
 	     i++) {
 		dev = &metal_dev_table[i];
-		metal_info("HOST: registering: %d, name=%s\n", i, dev->name);
+		metal_info("REMOTE: registering: %d, name=%s\n", i, dev->name);
 		ret = metal_register_generic_device(dev);
 		if (ret)
 			return ret;
@@ -235,21 +235,21 @@ int open_metal_devices(void)
 	/* Open shared memory device */
 	ret = metal_device_open(BUS_NAME, SHM_DEV_NAME, &shm_dev);
 	if (ret) {
-		metal_err("HOST: Failed to open device %s.\n", SHM_DEV_NAME);
+		metal_err("REMOTE: Failed to open device %s.\n", SHM_DEV_NAME);
 		goto out;
 	}
 
 	/* Open IPI device */
 	ret = metal_device_open(BUS_NAME, IPI_DEV_NAME, &ipi_dev);
 	if (ret) {
-		metal_err("HOST: Failed to open device %s.\n", IPI_DEV_NAME);
+		metal_err("REMOTE: Failed to open device %s.\n", IPI_DEV_NAME);
 		goto out;
 	}
 
 	/* Open TTC device */
 	ret = metal_device_open(BUS_NAME, TTC_DEV_NAME, &ttc_dev);
 	if (ret) {
-		metal_err("HOST: Failed to open device %s.\n", TTC_DEV_NAME);
+		metal_err("REMOTE: Failed to open device %s.\n", TTC_DEV_NAME);
 		goto out;
 	}
 
@@ -287,23 +287,23 @@ static XStatus init_ttc(void)
 	/* Look Up the config data */
 	ipi_cfg_ptr = XIpiPsu_LookupConfig(XPAR_XIPIPSU_0_BASEADDR);
 	if (!ipi_cfg_ptr) {
-		metal_err("HOST: %s ERROR in getting CfgPtr\n", __func__);
+		metal_err("REMOTE: %s ERROR in getting CfgPtr\n", __func__);
 		return -EINVAL;
 	}
 
 	/* Init with the Cfg Data */
 	if (XIpiPsu_CfgInitialize(&ipi_inst, ipi_cfg_ptr, ipi_cfg_ptr->BaseAddress) != XST_SUCCESS) {
-		metal_err("HOST: Unable to configure IPI Instance for xilpm\n");
+		metal_err("REMOTE: Unable to configure IPI Instance for xilpm\n");
 		return -EINVAL;
 	}
 
 	if (XPm_InitXilpm(&ipi_inst) != XST_SUCCESS) {
-		metal_err("HOST: Failed to init xilpm\n");
+		metal_err("REMOTE: Failed to init xilpm\n");
 		return -EINVAL;
 	}
 
 	if (XPm_GetNodeStatus(TTC_NODEID, &node_status) != XST_SUCCESS) {
-		metal_err("HOST: XPm_GetNodeStatus failed\n");
+		metal_err("REMOTE: XPm_GetNodeStatus failed\n");
 		return -EINVAL;
 	}
 
@@ -313,7 +313,7 @@ static XStatus init_ttc(void)
 	 */
 	if (!node_status.status == 0 &&
 	    XPm_RequestNode(TTC_NODEID, PM_CAP_ACCESS, 100, 0) != XST_SUCCESS) {
-		metal_err("HOST: TTC device was powered off. Attempt to power on failed.\n");
+		metal_err("REMOTE: TTC device was powered off. Attempt to power on failed.\n");
 		return -EINVAL;
 	}
 
@@ -375,12 +375,12 @@ int platform_init(struct channel_s *ch)
 	init_uart();
 
 	if (init_irq()) {
-		metal_err("HOST: Failed to initialize interrupt\n");
+		metal_err("REMOTE: Failed to initialize interrupt\n");
 		return XST_FAILURE;
 	}
 
 	if (init_ttc() != XST_SUCCESS) {
-		metal_err("HOST: Failed to init IPI for xilpm\n");
+		metal_err("REMOTE: Failed to init IPI for xilpm\n");
 		return XST_FAILURE;
 	}
 
@@ -390,28 +390,28 @@ int platform_init(struct channel_s *ch)
 	/* Initialize metal Xilinx IRQ controller */
 	ret = metal_xlnx_irq_init();
 	if (ret) {
-		metal_err("HOST: %s: Xilinx metal IRQ controller init failed.\n", __func__);
+		metal_err("REMOTE: %s: Xilinx metal IRQ controller init failed.\n", __func__);
 		return ret;
 	}
 
 	/* Register libmetal devices */
 	ret = platform_register_metal_device();
 	if (ret) {
-		metal_err("HOST: %s: failed to register devices: %d\n", __func__, ret);
+		metal_err("REMOTE: %s: failed to register devices: %d\n", __func__, ret);
 		return ret;
 	}
 
 	/* Open libmetal devices which have been registered */
 	ret = open_metal_devices();
 	if (ret) {
-		metal_err("HOST: %s: failed to open devices: %d\n", __func__, ret);
+		metal_err("REMOTE: %s: failed to open devices: %d\n", __func__, ret);
 		return ret;
 	}
 
 	/* wipe pending interrupts */
 	io = metal_device_io_region(ipi_dev, 0);
 	if (!io) {
-		metal_err("HOST: Failed to map io region for %s.\n", ipi_dev->name);
+		metal_err("REMOTE: Failed to map io region for %s.\n", ipi_dev->name);
 	} else {
 		/* disable IPI interrupt */
 		metal_io_write32(io, IPI_IDR_OFFSET, IPI_MASK);
@@ -440,7 +440,7 @@ int platform_init(struct channel_s *ch)
 	 */
 	io = metal_device_io_region(shm_dev, 0);
 	if (!io)
-		metal_err("HOST: Failed to map io region for %s.\n", shm_dev->name);
+		metal_err("REMOTE: Failed to map io region for %s.\n", shm_dev->name);
 	else
 		metal_io_block_set(io, 0, 0, 0x400000);
 
@@ -449,7 +449,7 @@ int platform_init(struct channel_s *ch)
 	/* Get TTC IO region */
 	ch->ttc_io = metal_device_io_region(ttc_dev, 0);
 	if (!ch->ttc_io) {
-		metal_err("HOST: Failed to map io region for %s.\n", ttc_dev->name);
+		metal_err("REMOTE: Failed to map io region for %s.\n", ttc_dev->name);
 		return -ENODEV;
 	}
 
