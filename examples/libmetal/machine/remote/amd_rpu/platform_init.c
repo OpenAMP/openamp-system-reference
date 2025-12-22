@@ -83,7 +83,7 @@ static struct metal_device metal_dev_table[] = {
 			{
 				.virt = (void *)SHM_BASE_ADDR,
 				.physmap = &metal_phys[1],
-				.size = 0x1000000,
+				.size = SHM_SIZE,
 				.page_shift = DEFAULT_PAGE_SHIFT,
 				.page_mask = DEFAULT_PAGE_MASK,
 				.mem_flags = NORM_SHARED_NCACHE |

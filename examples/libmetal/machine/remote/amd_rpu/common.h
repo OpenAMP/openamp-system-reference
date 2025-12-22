@@ -96,7 +96,7 @@
 /* Devices names */
 #define BUS_NAME        "generic"
 #define SHM_DEV_NAME	"3ed80000.shm"
-
+#define SHM_SIZE	0x200000
 #define SHM_BASE_ADDR   0x3ED80000
 
 /* IPI registers offset */
