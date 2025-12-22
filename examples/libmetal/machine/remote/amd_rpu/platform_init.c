@@ -422,6 +422,18 @@ int platform_init(struct channel_s *ch)
 	ch->ipi_io = io;
 	ch->ipi_mask = IPI_MASK;
 
+	/* disable IPI interrupt */
+	metal_io_write32(io, IPI_IDR_OFFSET, IPI_MASK);
+	/* clear old IPI interrupt */
+	metal_io_write32(io, IPI_ISR_OFFSET, IPI_MASK);
+	/* Get the IPI IRQ from the opened IPI device */
+	ch->irq_vector_id = (intptr_t)ipi_dev->irq_info;
+	/* Register IPI irq handler */
+	metal_irq_register(ch->irq_vector_id, ipi_irq_handler, ch);
+	/* Enable IPI interrupt */
+	metal_irq_enable(ch->irq_vector_id);
+	metal_io_write32(ch->ipi_io, IPI_IER_OFFSET, ch->ipi_mask);
+
 	/*
 	 * Buffer clean up. Do this at start in case a
 	 * previous run was stopped midway.
