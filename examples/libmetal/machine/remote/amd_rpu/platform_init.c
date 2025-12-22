@@ -171,8 +171,12 @@ void xlnx_irq_isr(void *arg)
 	vector = (uintptr_t)arg;
 	if (vector >= (unsigned int)xlnx_irq_cntr.irq_num)
 		return;
-
-	(void)metal_irq_handle(xlnx_irq_cntr.irqs, (int)vector);
+	/*
+	 * The argument passed in here is to denote this is for our enabled interrupt.
+	 * ipi_irq_handler will handle based on ISR register and determine source
+	 * based on ISR.
+	 */
+	(void)metal_irq_handle(&xlnx_irq_cntr.irqs[IPI_IRQ_VECT_ID], (int)IPI_IRQ_VECT_ID);
 }
 
 int metal_xlnx_irq_init(void)
