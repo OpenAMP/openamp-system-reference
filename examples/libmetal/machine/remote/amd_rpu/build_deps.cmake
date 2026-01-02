@@ -1,0 +1,7 @@
+collect(PROJECT_LIB_DEPS c)
+collect(PROJECT_LIB_DEPS xil)
+collect(PROJECT_LIB_DEPS xilpm)
+collect(PROJECT_LIB_DEPS xiltimer)
+collect(PROJECT_LIB_DEPS xilstandalone)
+collect(PROJECT_LIB_DEPS metal)
+collect(PROJECT_LIB_DEPS metal_xlnx_extension)
