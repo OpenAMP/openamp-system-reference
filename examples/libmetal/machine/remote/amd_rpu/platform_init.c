@@ -34,6 +34,18 @@
 #define DEFAULT_PAGE_SHIFT (-1UL)
 #define DEFAULT_PAGE_MASK  (-1UL)
 
+/* Possible to control metal log build time */
+#ifndef XLNX_METAL_LOG_LEVEL
+#define XLNX_METAL_LOG_LEVEL METAL_LOG_INFO
+#endif
+
+void xlnx_log_handler(enum metal_log_level level, const char *format, ...);
+
+#define XLNX_PLATFORM_METAL_INIT_PARAMS \
+{ \
+	.log_handler = xlnx_log_handler, \
+	.log_level = XLNX_METAL_LOG_LEVEL, \
+}
 /**
  * Definition of the interrupt controller will be provided by
  * libmetal_xlnx_extention module
@@ -367,7 +379,7 @@ static inline int ipi_irq_handler(int vect_id, void *priv)
  */
 int platform_init(struct channel_s *ch)
 {
-	struct metal_init_params metal_param = METAL_INIT_DEFAULTS;
+	struct metal_init_params metal_param = XLNX_PLATFORM_METAL_INIT_PARAMS;
 	struct metal_io_region *io = NULL;
 	int ret;
 
@@ -472,4 +484,19 @@ void platform_cleanup(struct channel_s *ch)
 	/* Finish libmetal environment */
 	metal_finish();
 	disable_caches();
+}
+
+void xlnx_log_handler(enum metal_log_level level, const char *format, ...)
+{
+	char msg[1024];
+	va_list args;
+
+	va_start(args, format);
+	vsnprintf(msg, sizeof(msg), format, args);
+	va_end(args);
+
+	if (level > metal_get_log_level())
+		return;
+
+	xil_printf("RPU%d: %s", XPAR_CPU_ID, msg);
 }
