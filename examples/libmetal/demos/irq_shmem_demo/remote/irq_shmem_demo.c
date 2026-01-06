@@ -21,10 +21,39 @@
 #define SHUTDOWN "shutdown"
 
 /* Shared memory offsets */
-#define SHM_DESC_OFFSET_RX 0x0
-#define SHM_BUFF_OFFSET_RX 0x04000
-#define SHM_DESC_OFFSET_TX 0x02000
-#define SHM_BUFF_OFFSET_TX 0x104000
+#define SHM0_DESC_OFFSET	0x0000U
+#define SHM0_DESC_SIZE		0x00004000U
+#define SHM1_DESC_OFFSET	0x00004000U
+#define SHM1_DESC_SIZE		0x00004000U
+#define SHM_PAYLOAD_OFFSET	0x00008000U
+#define SHM_PAYLOAD_SIZE	0x00040000U
+#define SHM_PAYLOAD_HALF_SIZE	(SHM_PAYLOAD_SIZE / 2U)
+#define SHM_PAYLOAD_RX_OFFSET	SHM_PAYLOAD_OFFSET
+#define SHM_PAYLOAD_TX_OFFSET	(SHM_PAYLOAD_OFFSET + SHM_PAYLOAD_HALF_SIZE)
+
+/* Descriptor 0 (Linux -> Zephyr) resides at SHM0_DESC_OFFSET.
+ * Descriptor 1 (Zephyr -> Linux) resides at SHM1_DESC_OFFSET.
+ * The payload carveout begins at SHM_PAYLOAD_OFFSET and is split evenly
+ * between RX (lower half) and TX (upper half).
+ */
+#define SHM_DESC_OFFSET_APU_TO_RPU SHM0_DESC_OFFSET
+#define SHM_DESC_OFFSET_RPU_TO_APU SHM1_DESC_OFFSET
+#define SHM_PAYLOAD_APU_TO_RPU    SHM_PAYLOAD_RX_OFFSET
+#define SHM_PAYLOAD_RPU_TO_APU    SHM_PAYLOAD_TX_OFFSET
+
+#define APU_TO_RPU_DESC_ADDR_START \
+	(SHM_DESC_OFFSET_APU_TO_RPU + SHM_DESC_ADDR_ARRAY_OFFSET)
+#define APU_TO_RPU_DESC_ADDR_END \
+	(SHM_DESC_OFFSET_APU_TO_RPU + SHM0_DESC_SIZE)
+#define RPU_TO_APU_DESC_ADDR_START \
+	(SHM_DESC_OFFSET_RPU_TO_APU + SHM_DESC_ADDR_ARRAY_OFFSET)
+#define RPU_TO_APU_DESC_ADDR_END \
+	(SHM_DESC_OFFSET_RPU_TO_APU + SHM1_DESC_SIZE)
+
+#define APU_TO_RPU_PAYLOAD_START   SHM_PAYLOAD_APU_TO_RPU
+#define APU_TO_RPU_PAYLOAD_END     (SHM_PAYLOAD_APU_TO_RPU + SHM_PAYLOAD_HALF_SIZE)
+#define RPU_TO_APU_PAYLOAD_START   SHM_PAYLOAD_RPU_TO_APU
+#define RPU_TO_APU_PAYLOAD_END     (SHM_PAYLOAD_RPU_TO_APU + SHM_PAYLOAD_HALF_SIZE)
 
 /* Shared memory descriptors offset */
 #define SHM_DESC_AVAIL_OFFSET 0x00
@@ -46,12 +75,12 @@
  */
 int demo(void *arg)
 {
+	unsigned long tx_data_offset, rx_data_offset, rx_used_offset;
 	unsigned long tx_avail_offset, rx_avail_offset;
 	unsigned long tx_addr_offset, rx_addr_offset;
-	unsigned long tx_data_offset, rx_data_offset;
 	struct channel_s ch_s = {0x0};
-	unsigned long rx_used_offset;
 	struct channel_s *ch = &ch_s;
+
 	bool platform_ready = false;
 	uint32_t rx_count, rx_avail;
 	struct msg_hdr_s *msg_hdr;
@@ -60,21 +89,22 @@ int demo(void *arg)
 	int ret = 0;
 
 	/* platform_init will set the OS agnostic channel information */
-	ret = platform_init(&ch_s);
+	ret = platform_init(ch);
 	if (ret) {
 		metal_err("REMOTE: Failed to initialize system.\n");
 		goto out;
 	}
+
 	platform_ready = true;
 
 	/* OS specific setup for system suspend/resume done here. */
-	ret = amp_os_init(&ch_s, arg);
+	ret = amp_os_init(ch, arg);
 	if (ret) {
 		metal_err("REMOTE: Failed to set task to system.\n");
 		goto out;
 	}
 
-	metal_info("REMOTE: IRQ and shared memory");
+	metal_info("REMOTE: IRQ and shared memory\n");
 
 	lbuf = metal_allocate_memory(BUF_SIZE_MAX);
 	if (!lbuf) {
@@ -84,19 +114,17 @@ int demo(void *arg)
 	}
 
 	/* Set tx/rx buffer address offset */
-	tx_avail_offset = SHM_DESC_OFFSET_TX + SHM_DESC_AVAIL_OFFSET;
-	rx_avail_offset = SHM_DESC_OFFSET_RX + SHM_DESC_AVAIL_OFFSET;
-	rx_used_offset = SHM_DESC_OFFSET_RX + SHM_DESC_USED_OFFSET;
-	tx_addr_offset = SHM_DESC_OFFSET_TX + SHM_DESC_ADDR_ARRAY_OFFSET;
-	rx_addr_offset = SHM_DESC_OFFSET_RX + SHM_DESC_ADDR_ARRAY_OFFSET;
-	tx_data_offset = SHM_DESC_OFFSET_TX + SHM_BUFF_OFFSET_TX;
-	rx_data_offset = SHM_DESC_OFFSET_RX + SHM_BUFF_OFFSET_RX;
+	tx_addr_offset = RPU_TO_APU_DESC_ADDR_START;
+	rx_addr_offset = APU_TO_RPU_DESC_ADDR_START;
+	tx_data_offset = RPU_TO_APU_PAYLOAD_START;
 
 	metal_info("REMOTE: Wait for echo test to start.\n");
 	rx_count = 0;
 	while (1) {
 		system_suspend(ch);
-		rx_avail = metal_io_read32(ch->shm_io, rx_avail_offset);
+
+		rx_avail = metal_io_read32(ch->shm_io,
+					   SHM_DESC_OFFSET_APU_TO_RPU + SHM_DESC_AVAIL_OFFSET);
 		while (rx_count != rx_avail) {
 			uint32_t buf_phy_addr;
 			/* Get the buffer location from the shared memory rx address array. */
@@ -132,7 +160,9 @@ int demo(void *arg)
 			payload = (char *)lbuf + sizeof(*msg_hdr);
 			rx_count++;
 			/* Increase rx used count to indicate it has consumed the received data. */
-			metal_io_write32(ch->shm_io, rx_used_offset, rx_count);
+			metal_io_write32(ch->shm_io,
+					 SHM_DESC_OFFSET_APU_TO_RPU + SHM_DESC_USED_OFFSET,
+					 rx_count);
 
 			/* Check if it is the shutdown message. */
 			if (msg_hdr->len == strlen(SHUTDOWN) && !strncmp(SHUTDOWN, payload,
@@ -151,7 +181,9 @@ int demo(void *arg)
 			tx_addr_offset += sizeof(uint32_t);
 
 			/* Increase number of available buffers. */
-			metal_io_write32(ch->shm_io, tx_avail_offset, rx_count);
+			metal_io_write32(ch->shm_io,
+					 SHM_DESC_OFFSET_RPU_TO_APU + SHM_DESC_AVAIL_OFFSET,
+					 rx_count);
 
 			/* Kick IRQ to notify data is in shared buffer. */
 			irq_kick(ch);

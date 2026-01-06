@@ -28,6 +28,12 @@
 
 #include "amp_demo_os.h"
 
+/* This symbol is provided in case a demo config .cmake file is provided. */
+#ifdef LIBMETAL_CFG_PROVIDED
+/* This provides IPI_DEV_NAME, IPI_MASK, and carveout definitions */
+#include "config.h"
+#endif /* LIBMETAL_CFG_PROVIDED */
+
 #define TTC_CNT_APU_TO_RPU 2 /* APU to RPU TTC counter ID */
 #define TTC_CNT_RPU_TO_APU 3 /* RPU to APU TTC counter ID */
 
@@ -45,59 +51,134 @@
 
 #if defined(PLATFORM_ZYNQMP)
 
+#ifndef TTC_NODEID
 #define TTC_NODEID NODE_TTC_0
+#endif
+#ifndef TTC0_BASE_ADDR
 #define TTC0_BASE_ADDR 0xff110000
+#endif
+#ifndef TTC_DEV_NAME
 #define TTC_DEV_NAME "ff110000.ttc"
+#endif
+#ifndef IPI_MASK
 #define IPI_MASK 0x1000000
+#endif
 
 #if XPAR_CPU_ID == 0
+#ifndef IPI_DEV_NAME
 #define IPI_DEV_NAME "ff310000.ipi"
+#endif
+#ifndef IPI_BASE_ADDR
 #define IPI_BASE_ADDR 0xff310000
+#endif
 #define IPI_IRQ_VECT_ID 65
 #else
+#ifndef IPI_DEV_NAME
 #define IPI_DEV_NAME "ff320000.ipi"
+#endif
+#ifndef IPI_BASE_ADDR
 #define IPI_BASE_ADDR 0xff320000
+#endif
 #define IPI_IRQ_VECT_ID 66
 #endif
 
 #elif defined(versal)
+#ifndef TTC0_BASE_ADDR
 #define TTC0_BASE_ADDR 0xFF0E0000
+#endif
+#ifndef IPI_BASE_ADDR
 #define IPI_BASE_ADDR 0xFF340000
+#endif
 #define IPI_IRQ_VECT_ID 63
+#ifndef IPI_MASK
 #define IPI_MASK 0x0000020
+#endif
+#ifndef TTC_DEV_NAME
 #define TTC_DEV_NAME "ff0e0000.ttc"
+#endif
+#ifndef IPI_DEV_NAME
 #define IPI_DEV_NAME "ff340000.ipi"
+#endif
 
 #elif defined(VERSAL_NET)
 
 #ifdef IS_VERSAL2
 
+#ifndef TTC0_BASE_ADDR
 #define TTC0_BASE_ADDR 0xF1E60000
+#endif
+#ifndef TTC_DEV_NAME
 #define TTC_DEV_NAME "f1e60000.ttc"
+#endif
 
 #else  /* Versal NET Case */
 
+#ifndef TTC0_BASE_ADDR
 #define TTC0_BASE_ADDR 0xFD1C0000
+#endif
+#ifndef TTC_DEV_NAME
 #define TTC_DEV_NAME "fd1c0000.ttc"
+#endif
 
 #endif /* IS_VERSAL2 */
 
+#ifndef IPI_BASE_ADDR
 #define IPI_BASE_ADDR 0xEB340000
+#endif
 #define IPI_IRQ_VECT_ID 90
+#ifndef IPI_MASK
 #define IPI_MASK 0x0000020
+#endif
+#ifndef IPI_DEV_NAME
 #define IPI_DEV_NAME "eb340000.ipi"
+#endif
 #endif
 
 /* Symbol name is same for all non-ZynqMP SOC's. */
 #ifndef PLATFORM_ZYNQMP
+#ifndef TTC_NODEID
 #define TTC_NODEID PM_DEV_TTC_0
+#endif
 #endif
 
 /* Devices names */
 #define BUS_NAME        "generic"
-#define SHM_DEV_NAME	"3ed80000.shm"
-#define SHM_SIZE	0x200000
-#define SHM_BASE_ADDR   0x3ED80000
+
+#ifndef SHM_DEV_NAME
+#define SHM_DEV_NAME	"9868000.shm"
+#endif /* SHM_DEV_NAME */
+
+#ifndef SHM0_DESC_BASE
+#define SHM0_DESC_BASE	0x09860000U
+#endif /* SHM0_DESC_BASE */
+
+#ifndef SHM0_DESC_SIZE
+#define SHM0_DESC_SIZE	0x00004000U
+#endif /* SHM0_DESC_SIZE */
+
+#ifndef SHM1_DESC_BASE
+#define SHM1_DESC_BASE	0x09864000U
+#endif /* SHM1_DESC_BASE */
+
+#ifndef SHM1_DESC_SIZE
+#define SHM1_DESC_SIZE	0x00004000U
+#endif /* SHM1_DESC_SIZE */
+
+#ifndef SHM_PAYLOAD_BASE
+#define SHM_PAYLOAD_BASE	0x09868000U
+#endif /* SHM_PAYLOAD_BASE */
+
+#ifndef SHM_PAYLOAD_SIZE
+#define SHM_PAYLOAD_SIZE	0x00040000U
+#endif /* SHM_PAYLOAD_SIZE */
+
+#ifndef SHM_BASE_ADDR
+#define SHM_BASE_ADDR SHM0_DESC_BASE
+#endif /* SHM_BASE_ADDR */
+
+#ifndef SHM_SIZE
+#define SHM_SIZE (SHM_PAYLOAD_SIZE + SHM0_DESC_SIZE + SHM1_DESC_SIZE)
+#endif /* SHM_SIZE */
 
 /* IPI registers offset */
 #define IPI_TRIG_OFFSET 0x0  /* IPI trigger reg offset */

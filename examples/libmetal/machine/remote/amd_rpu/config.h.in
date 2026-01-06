@@ -1,0 +1,27 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+/*
+ * Configured when LIBMETAL_CFG_PROVIDED is enabled.
+ * Leave symbols unset to fall back to the defaults in common.h.
+ */
+#define LIBMETAL_CFG_PROVIDED 1
+
+/* Carveout layout */
+#cmakedefine SHM0_DESC_BASE @SHM0_DESC_BASE@
+#cmakedefine SHM0_DESC_SIZE @SHM0_DESC_SIZE@
+#cmakedefine SHM1_DESC_BASE @SHM1_DESC_BASE@
+#cmakedefine SHM1_DESC_SIZE @SHM1_DESC_SIZE@
+#cmakedefine SHM_PAYLOAD_BASE @SHM_PAYLOAD_BASE@
+#cmakedefine SHM_PAYLOAD_SIZE @SHM_PAYLOAD_SIZE@
+
+/* IPI */
+#cmakedefine IPI_DEV_NAME "@IPI_DEV_NAME@"
+#cmakedefine IPI_BASE_ADDR @IPI_BASE_ADDR@
+#cmakedefine IPI_MASK @IPI_MASK@
+
+/* TTC */
+#cmakedefine TTC_DEV_NAME "@TTC_DEV_NAME@"
+#cmakedefine TTC0_BASE_ADDR @TTC0_BASE_ADDR@
+
+#endif /* CONFIG_H */

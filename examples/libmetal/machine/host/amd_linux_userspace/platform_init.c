@@ -12,6 +12,7 @@
 #include "common.h"
 
 static struct metal_device *shm_dev, *ipi_dev, *ttc_dev;
+static struct metal_device *rpu_to_apu_desc_dev, *apu_to_rpu_desc_dev;
 /**
  * @brief close_metal_devices() - close libmetal devices
  *        This function closes all the libmetal devices which have
@@ -31,6 +32,13 @@ static void close_metal_devices(void)
 	/* Close TTC device */
 	if (ttc_dev)
 		metal_device_close(ttc_dev);
+
+	/* Close descriptor devices */
+	if (rpu_to_apu_desc_dev)
+		metal_device_close(rpu_to_apu_desc_dev);
+
+	if (apu_to_rpu_desc_dev)
+		metal_device_close(apu_to_rpu_desc_dev);
 }
 
 /**
@@ -49,6 +57,22 @@ int open_metal_devices(void)
 		metal_err("HOST: Failed to open device %s.\n", SHM_DEV_NAME);
 		goto out;
 	}
+
+	/* Open descriptor devices */
+	ret = metal_device_open(BUS_NAME, SHM0_DESC_DEV_NAME,
+				&apu_to_rpu_desc_dev);
+	if (ret) {
+		metal_err("Failed to open device %s.\n", SHM0_DESC_DEV_NAME);
+		goto out;
+	}
+
+	ret = metal_device_open(BUS_NAME, SHM1_DESC_DEV_NAME,
+				&rpu_to_apu_desc_dev);
+	if (ret) {
+		metal_err("Failed to open device %s.\n", SHM1_DESC_DEV_NAME);
+		goto out;
+	}
+
 
 	/* Open IPI device */
 	ret = metal_device_open(BUS_NAME, IPI_DEV_NAME, &ipi_dev);
@@ -117,6 +141,20 @@ int platform_init(struct channel_s *ch)
 		return -ENODEV;
 	}
 
+	/* get descriptor IO Regions */
+	ch->apu_to_rpu_desc_io = metal_device_io_region(apu_to_rpu_desc_dev, 0);
+	if (!ch->apu_to_rpu_desc_io) {
+		metal_err("Failed to map io region for %s.\n",
+			apu_to_rpu_desc_dev->name);
+		return -ENODEV;
+	}
+	ch->rpu_to_apu_desc_io = metal_device_io_region(rpu_to_apu_desc_dev, 0);
+	if (!ch->rpu_to_apu_desc_io) {
+		metal_err("Failed to map io region for %s.\n",
+			rpu_to_apu_desc_dev->name);
+		return -ENODEV;
+	}
+
 	/* Get IPI device IO region */
 	ch->ipi_io = metal_device_io_region(ipi_dev, 0);
 	if (!ch->ipi_io) {
@@ -125,7 +163,7 @@ int platform_init(struct channel_s *ch)
 	}
 
 	/* Get the IPI IRQ from the opened IPI device */
-	ch->ipi_mask = (intptr_t)ipi_dev->irq_info;
+	ch->ipi_mask = IPI_MASK;
 
 	/* Get TTC IO region */
 	ch->ttc_io = metal_device_io_region(ttc_dev, 0);
@@ -133,6 +171,9 @@ int platform_init(struct channel_s *ch)
 		metal_err("HOST: Failed to map io region for %s.\n", ttc_dev->name);
 		return -ENODEV;
 	}
+
+	/* Get the IPI IRQ from the opened IPI device */
+	ch->irq_vector_id = (intptr_t)ipi_dev->irq_info;
 
 	/* disable IPI interrupt */
 	metal_io_write32(ch->ipi_io, IPI_IDR_OFFSET, IPI_MASK);

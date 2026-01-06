@@ -4,6 +4,14 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/build_deps.cmake)
 
 include_directories(${CMAKE_BINARY_DIR}/include)
 
+get_property (DEMO_CFG_FILE GLOBAL PROPERTY DEMO_CFG_FILE)
+if (EXISTS ${DEMO_CFG_FILE})
+  include(${DEMO_CFG_FILE})
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config.h")
+  message("WARNING: DEMO_CFG_FILE ${DEMO_CFG_FILE} passed in at configure time. Using this to configure demo.")
+endif()
+
 add_subdirectory (system)
 
 set (_elf_name ${DEMO})

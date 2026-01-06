@@ -5,6 +5,14 @@ include (CheckCSourceCompiles)
 include (${APPS_ROOT_DIR}/../legacy_apps/cmake/options.cmake)
 include (${APPS_ROOT_DIR}/../legacy_apps/cmake/collect.cmake)
 
+get_property (DEMO_CFG_FILE GLOBAL PROPERTY DEMO_CFG_FILE)
+if (EXISTS ${DEMO_CFG_FILE})
+  include(${DEMO_CFG_FILE})
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config.h")
+  message("WARNING: DEMO_CFG_FILE ${DEMO_CFG_FILE} passed in at configure time. Using this to configure demo.")
+endif()
+
 collect (APP_COMMON_SOURCES ipi-uio.c)
 collect (APP_COMMON_SOURCES platform_init.c)
 collect (APP_INC_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
