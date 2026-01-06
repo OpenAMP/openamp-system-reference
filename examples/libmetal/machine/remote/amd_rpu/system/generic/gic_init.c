@@ -25,7 +25,6 @@ extern void xlnx_irq_isr(void *arg);
 /* Handler for AMD specific baremetal BSP IPI driver */
 void IpiIntrHandler(void *arg)
 {
-
 	XIpiPsu *ipi = (XIpiPsu *)arg;
 	u32 src_mask, idx;
 

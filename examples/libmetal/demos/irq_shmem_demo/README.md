@@ -13,10 +13,10 @@ platform.
 |---------------------|----------------------------------------------------------------------|
 | 0x00000 – 0x00003   | Number of Host-to-Remote buffers available to the remote             |
 | 0x00004 – 0x00007   | Number of Host-to-Remote buffers consumed by the remote              |
-| 0x00008 – 0x01FFC   | Address array for Host-to-Remote shared buffers                      |
-| 0x02000 – 0x02003   | Number of Remote-to-Host buffers available to the host               |
-| 0x02004 – 0x02007   | Number of Remote-to-Host buffers consumed by the host                |
-| 0x02008 – 0x03FFC   | Address array for Remote-to-Host shared buffers                      |
-| 0x04000 – 0x103FFC  | Host-to-Remote payload buffers                                       |
-| 0x104000 – 0x203FFC | Remote-to-Host payload buffers                                       |
+| 0x00008 – 0x03FFC   | Address array for Host-to-Remote shared buffers                      |
+| 0x04000 – 0x04003   | Number of Remote-to-Host buffers available to the host               |
+| 0x04004 – 0x04007   | Number of Remote-to-Host buffers consumed by the host                |
+| 0x04008 – 0x07FFC   | Address array for Remote-to-Host shared buffers                      |
+| 0x08000 – 0x27FFF   | Host-to-Remote payload buffers                                       |
+| 0x28000 – 0x47FFF   | Remote-to-Host payload buffers                                       |
 

@@ -34,6 +34,8 @@
 #define DEFAULT_PAGE_SHIFT (-1UL)
 #define DEFAULT_PAGE_MASK  (-1UL)
 
+#define SHM_TOTAL_SIZE SHM0_DESC_SIZE + SHM1_DESC_SIZE + SHM_PAYLOAD_SIZE
+
 /* Possible to control metal log build time */
 #ifndef XLNX_METAL_LOG_LEVEL
 #define XLNX_METAL_LOG_LEVEL METAL_LOG_INFO
@@ -46,6 +48,7 @@ void xlnx_log_handler(enum metal_log_level level, const char *format, ...);
 	.log_handler = xlnx_log_handler, \
 	.log_level = XLNX_METAL_LOG_LEVEL, \
 }
+
 /**
  * Definition of the interrupt controller will be provided by
  * libmetal_xlnx_extention module
@@ -54,8 +57,8 @@ extern struct metal_irq_controller xlnx_irq_cntr;
 
 const metal_phys_addr_t metal_phys[] = {
 	IPI_BASE_ADDR, /**< base IPI address */
-	SHM_BASE_ADDR, /**< shared memory base address */
-	TTC0_BASE_ADDR, /**< base TTC0 address */
+	SHM0_DESC_BASE, /**< shared memory base address */
+	TTC_BASE_ADDR, /**< base TTC address */
 };
 
 /*
@@ -93,9 +96,9 @@ static struct metal_device metal_dev_table[] = {
 		.num_regions = 1,
 		.regions = {
 			{
-				.virt = (void *)SHM_BASE_ADDR,
+				.virt = (void *)SHM0_DESC_BASE,
 				.physmap = &metal_phys[1],
-				.size = SHM_SIZE,
+				.size = SHM_TOTAL_SIZE,
 				.page_shift = DEFAULT_PAGE_SHIFT,
 				.page_mask = DEFAULT_PAGE_MASK,
 				.mem_flags = NORM_SHARED_NCACHE |
@@ -108,13 +111,13 @@ static struct metal_device metal_dev_table[] = {
 		.irq_info = NULL,
 	},
 	{
-		/* ttc0 */
+		/* ttc */
 		.name = TTC_DEV_NAME,
 		.bus = NULL,
 		.num_regions = 1,
 		.regions = {
 			{
-				.virt = (void *)TTC0_BASE_ADDR,
+				.virt = (void *)TTC_BASE_ADDR,
 				.physmap = &metal_phys[2],
 				.size = 0x1000,
 				.page_shift = DEFAULT_PAGE_SHIFT,
@@ -183,12 +186,14 @@ void xlnx_irq_isr(void *arg)
 	vector = (uintptr_t)arg;
 	if (vector >= (unsigned int)xlnx_irq_cntr.irq_num)
 		return;
+
 	/*
 	 * The argument passed in here is to denote this is for our enabled interrupt.
 	 * ipi_irq_handler will handle based on ISR register and determine source
 	 * based on ISR.
 	 */
-	(void)metal_irq_handle(&xlnx_irq_cntr.irqs[IPI_IRQ_VECT_ID], (int)IPI_IRQ_VECT_ID);
+	(void)metal_irq_handle(&xlnx_irq_cntr.irqs[IPI_IRQ_VECT_ID],
+			       (int)IPI_IRQ_VECT_ID);
 }
 
 int metal_xlnx_irq_init(void)
@@ -219,9 +224,9 @@ int metal_xlnx_irq_init(void)
  */
 int platform_register_metal_device(void)
 {
+	struct metal_device *dev;
 	unsigned int i;
 	int ret;
-	struct metal_device *dev;
 
 	for (i = 0; i < sizeof(metal_dev_table) / sizeof(struct metal_device);
 	     i++) {
@@ -304,7 +309,8 @@ static XStatus init_ttc(void)
 	}
 
 	/* Init with the Cfg Data */
-	if (XIpiPsu_CfgInitialize(&ipi_inst, ipi_cfg_ptr, ipi_cfg_ptr->BaseAddress) != XST_SUCCESS) {
+	if (XIpiPsu_CfgInitialize(&ipi_inst, ipi_cfg_ptr,
+				  ipi_cfg_ptr->BaseAddress) != XST_SUCCESS) {
 		metal_err("REMOTE: Unable to configure IPI Instance for xilpm\n");
 		return -EINVAL;
 	}
@@ -325,7 +331,7 @@ static XStatus init_ttc(void)
 	 */
 	if (!node_status.status == 0 &&
 	    XPm_RequestNode(TTC_NODEID, PM_CAP_ACCESS, 100, 0) != XST_SUCCESS) {
-		metal_err("REMOTE: TTC device was powered off. Attempt to power on failed.\n");
+		metal_err("REMOTE: Attempt to power on TTC failed.\n");
 		return -EINVAL;
 	}
 
@@ -355,17 +361,19 @@ static inline int ipi_irq_handler(int vect_id, void *priv)
 	(void)vect_id;
 
 	if (ch) {
-		val = metal_io_read32(ch->ipi_io, IPI_ISR_OFFSET);
+		val = metal_io_read32(ch->ipi_io, XIPIPSU_ISR_OFFSET);
 		if (val & ch->ipi_mask) {
 			/* stop RPU -> APU timer */
 			if (ch->ttc_io) {
 				stop_timer(ch->ttc_io, TTC_CNT_APU_TO_RPU);
-				metal_io_write32(ch->ipi_io, IPI_ISR_OFFSET, ch->ipi_mask);
+				metal_io_write32(ch->ipi_io, XIPIPSU_ISR_OFFSET,
+						 ch->ipi_mask);
 				system_resume(ch);
 				return METAL_IRQ_HANDLED;
 			}
 		}
 	}
+
 	return METAL_IRQ_NOT_HANDLED;
 }
 
@@ -402,7 +410,8 @@ int platform_init(struct channel_s *ch)
 	/* Initialize metal Xilinx IRQ controller */
 	ret = metal_xlnx_irq_init();
 	if (ret) {
-		metal_err("REMOTE: %s: Xilinx metal IRQ controller init failed.\n", __func__);
+		metal_err("REMOTE: %s: Xilinx metal IRQ controller init failed.\n",
+			  __func__);
 		return ret;
 	}
 
@@ -426,25 +435,25 @@ int platform_init(struct channel_s *ch)
 		metal_err("REMOTE: Failed to map io region for %s.\n", ipi_dev->name);
 	} else {
 		/* disable IPI interrupt */
-		metal_io_write32(io, IPI_IDR_OFFSET, IPI_MASK);
+		metal_io_write32(io, XIPIPSU_IDR_OFFSET, IPI_MASK);
 		/* clear old IPI interrupt */
-		metal_io_write32(io, IPI_ISR_OFFSET, IPI_MASK);
+		metal_io_write32(io, XIPIPSU_ISR_OFFSET, IPI_MASK);
 	}
 
 	ch->ipi_io = io;
 	ch->ipi_mask = IPI_MASK;
 
 	/* disable IPI interrupt */
-	metal_io_write32(io, IPI_IDR_OFFSET, IPI_MASK);
+	metal_io_write32(io, XIPIPSU_IDR_OFFSET, IPI_MASK);
 	/* clear old IPI interrupt */
-	metal_io_write32(io, IPI_ISR_OFFSET, IPI_MASK);
+	metal_io_write32(io, XIPIPSU_ISR_OFFSET, IPI_MASK);
 	/* Get the IPI IRQ from the opened IPI device */
 	ch->irq_vector_id = (intptr_t)ipi_dev->irq_info;
 	/* Register IPI irq handler */
 	metal_irq_register(ch->irq_vector_id, ipi_irq_handler, ch);
 	/* Enable IPI interrupt */
 	metal_irq_enable(ch->irq_vector_id);
-	metal_io_write32(ch->ipi_io, IPI_IER_OFFSET, ch->ipi_mask);
+	metal_io_write32(ch->ipi_io, XIPIPSU_IER_OFFSET, ch->ipi_mask);
 
 	/*
 	 * Buffer clean up. Do this at start in case a
@@ -454,7 +463,7 @@ int platform_init(struct channel_s *ch)
 	if (!io)
 		metal_err("REMOTE: Failed to map io region for %s.\n", shm_dev->name);
 	else
-		metal_io_block_set(io, 0, 0, 0x400000);
+		metal_io_block_set(io, 0, 0, SHM_TOTAL_SIZE);
 
 	ch->shm_io = io;
 

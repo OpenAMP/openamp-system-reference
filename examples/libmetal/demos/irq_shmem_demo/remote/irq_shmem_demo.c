@@ -21,16 +21,40 @@
 #define SHUTDOWN "shutdown"
 
 /* Shared memory offsets */
-#define SHM_DESC_OFFSET_RX 0x0
-#define SHM_BUFF_OFFSET_RX 0x04000
-#define SHM_DESC_OFFSET_TX 0x02000
-#define SHM_BUFF_OFFSET_TX 0x104000
+#define SHM0_DESC_OFFSET	0x0
+#define SHM1_DESC_OFFSET	SHM0_DESC_SIZE
+#define SHM_PAYLOAD_OFFSET	(SHM0_DESC_SIZE + SHM1_DESC_SIZE)
 
 /* Shared memory descriptors offset */
 #define SHM_DESC_AVAIL_OFFSET 0x00
 #define SHM_DESC_USED_OFFSET  0x04
 #define SHM_DESC_ADDR_ARRAY_OFFSET 0x08
 
+/* Descriptor 0 (Host to Remote) resides at SHM0_DESC_OFFSET.
+ * Descriptor 1 (Remote to Host) resides at SHM1_DESC_OFFSET.
+ * The payload carveout begins at SHM_PAYLOAD_OFFSET and is split evenly
+ * between RX (lower half) and TX (upper half).
+ *
+ * Note that H_TO_R_ is host to remote and R_TO_H_ is vice versa.
+ */
+#define SHM_DESC_OFFSET_H_TO_R SHM0_DESC_OFFSET
+#define SHM_DESC_OFFSET_R_TO_H SHM1_DESC_OFFSET
+#define SHM_PAYLOAD_H_TO_R    SHM_PAYLOAD_RX_OFFSET
+#define SHM_PAYLOAD_R_TO_H    SHM_PAYLOAD_TX_OFFSET
+
+#define H_TO_R_DESC_ADDR_START \
+	(SHM_DESC_OFFSET_H_TO_R + SHM_DESC_ADDR_ARRAY_OFFSET)
+#define H_TO_R_DESC_ADDR_END \
+	(SHM_DESC_OFFSET_H_TO_R + SHM0_DESC_SIZE)
+#define R_TO_H_DESC_ADDR_START \
+	(SHM_DESC_OFFSET_R_TO_H + SHM_DESC_ADDR_ARRAY_OFFSET)
+#define R_TO_H_DESC_ADDR_END \
+	(SHM_DESC_OFFSET_R_TO_H + SHM1_DESC_SIZE)
+
+#define H_TO_R_PAYLOAD_START   SHM_PAYLOAD_H_TO_R
+#define H_TO_R_PAYLOAD_END     (SHM_PAYLOAD_H_TO_R + SHM_PAYLOAD_HALF_SIZE)
+#define R_TO_H_PAYLOAD_START   SHM_PAYLOAD_R_TO_H
+#define R_TO_H_PAYLOAD_END     (SHM_PAYLOAD_R_TO_H + SHM_PAYLOAD_HALF_SIZE)
 #define PKGS_TOTAL 1024
 
 /**
@@ -46,11 +70,10 @@
  */
 int demo(void *arg)
 {
+	unsigned long tx_data_offset, rx_data_offset, rx_used_offset;
 	unsigned long tx_avail_offset, rx_avail_offset;
 	unsigned long tx_addr_offset, rx_addr_offset;
-	unsigned long tx_data_offset, rx_data_offset;
 	struct channel_s ch_s = {0x0};
-	unsigned long rx_used_offset;
 	struct channel_s *ch = &ch_s;
 	bool platform_ready = false;
 	uint32_t rx_count, rx_avail;
@@ -60,21 +83,22 @@ int demo(void *arg)
 	int ret = 0;
 
 	/* platform_init will set the OS agnostic channel information */
-	ret = platform_init(&ch_s);
+	ret = platform_init(ch);
 	if (ret) {
 		metal_err("REMOTE: Failed to initialize system.\n");
 		goto out;
 	}
+
 	platform_ready = true;
 
 	/* OS specific setup for system suspend/resume done here. */
-	ret = amp_os_init(&ch_s, arg);
+	ret = amp_os_init(ch, arg);
 	if (ret) {
 		metal_err("REMOTE: Failed to set task to system.\n");
 		goto out;
 	}
 
-	metal_info("REMOTE: IRQ and shared memory");
+	metal_info("REMOTE: IRQ and shared memory\n");
 
 	lbuf = metal_allocate_memory(BUF_SIZE_MAX);
 	if (!lbuf) {
@@ -84,22 +108,21 @@ int demo(void *arg)
 	}
 
 	/* Set tx/rx buffer address offset */
-	tx_avail_offset = SHM_DESC_OFFSET_TX + SHM_DESC_AVAIL_OFFSET;
-	rx_avail_offset = SHM_DESC_OFFSET_RX + SHM_DESC_AVAIL_OFFSET;
-	rx_used_offset = SHM_DESC_OFFSET_RX + SHM_DESC_USED_OFFSET;
-	tx_addr_offset = SHM_DESC_OFFSET_TX + SHM_DESC_ADDR_ARRAY_OFFSET;
-	rx_addr_offset = SHM_DESC_OFFSET_RX + SHM_DESC_ADDR_ARRAY_OFFSET;
-	tx_data_offset = SHM_DESC_OFFSET_TX + SHM_BUFF_OFFSET_TX;
-	rx_data_offset = SHM_DESC_OFFSET_RX + SHM_BUFF_OFFSET_RX;
+	tx_addr_offset = R_TO_H_DESC_ADDR_START;
+	rx_addr_offset = H_TO_R_DESC_ADDR_START;
+	tx_data_offset = R_TO_H_PAYLOAD_START;
 
 	metal_info("REMOTE: Wait for echo test to start.\n");
 	rx_count = 0;
 	while (1) {
 		system_suspend(ch);
-		rx_avail = metal_io_read32(ch->shm_io, rx_avail_offset);
+
+		rx_avail = metal_io_read32(ch->shm_io,
+					   SHM_DESC_OFFSET_H_TO_R +
+					   SHM_DESC_AVAIL_OFFSET);
 		while (rx_count != rx_avail) {
 			uint32_t buf_phy_addr;
-			/* Get the buffer location from the shared memory rx address array. */
+			/* Get the buffer location from the rx addr array. */
 			buf_phy_addr = metal_io_read32(ch->shm_io, rx_addr_offset);
 			rx_data_offset = metal_io_phys_to_offset(ch->shm_io,
 								 (metal_phys_addr_t)buf_phy_addr);
@@ -113,8 +136,14 @@ int demo(void *arg)
 			rx_addr_offset += sizeof(buf_phy_addr);
 
 			/* Read message header from shared memory */
-			metal_io_block_read(ch->shm_io, rx_data_offset, lbuf,
-					    sizeof(struct msg_hdr_s));
+			ret = metal_io_block_read(ch->shm_io, rx_data_offset, lbuf,
+						  sizeof(struct msg_hdr_s));
+			if (ret < 0) {
+				metal_err("REMOTE: failed to read message header\n");
+				ret = -EINVAL;
+				goto out;
+			}
+
 			msg_hdr = (struct msg_hdr_s *)lbuf;
 
 			/* Check if the message header is valid */
@@ -126,32 +155,58 @@ int demo(void *arg)
 			}
 			rx_data_offset += sizeof(*msg_hdr);
 			/* Read message body. */
-			metal_io_block_read(ch->shm_io, rx_data_offset, lbuf + sizeof(*msg_hdr),
-					    msg_hdr->len);
+			ret = metal_io_block_read(ch->shm_io, rx_data_offset,
+						  lbuf + sizeof(*msg_hdr),
+						  msg_hdr->len);
+			if (ret < 0) {
+				metal_err("REMOTE: failed to read message body\n");
+				ret = -EINVAL;
+				goto out;
+			}
+
 			rx_data_offset += msg_hdr->len;
 			payload = (char *)lbuf + sizeof(*msg_hdr);
 			rx_count++;
-			/* Increase rx used count to indicate it has consumed the received data. */
-			metal_io_write32(ch->shm_io, rx_used_offset, rx_count);
+			/* Increase rx used count to indicate received data was used. */
+			metal_io_write32(ch->shm_io,
+					 SHM_DESC_OFFSET_H_TO_R + SHM_DESC_USED_OFFSET,
+					 rx_count);
 
 			/* Check if it is the shutdown message. */
-			if (msg_hdr->len == strlen(SHUTDOWN) && !strncmp(SHUTDOWN, payload,
+			if (msg_hdr->len == strlen(SHUTDOWN) && !strncmp(SHUTDOWN,
+									 payload,
 									 strlen(SHUTDOWN))) {
 				metal_info("REMOTE: Received shutdown message\n");
+				ret = 0;
 				goto out;
 			}
 			/* Copy the message back to the other end. */
-			metal_io_block_write(ch->shm_io, tx_data_offset, msg_hdr,
-					     sizeof(struct msg_hdr_s) + msg_hdr->len);
+			ret = metal_io_block_write(ch->shm_io, tx_data_offset, msg_hdr,
+						   sizeof(struct msg_hdr_s) +
+						   msg_hdr->len);
+			if (ret < 0) {
+				metal_err("REMOTE: failed to send message\n");
+				ret = -EINVAL;
+				goto out;
+			}
 
-			/* Write to the address array to tell the other end the buffer address. */
-			buf_phy_addr = (uint32_t)metal_io_phys(ch->shm_io, tx_data_offset);
+			/* Write to address array to tell host the buffer address. */
+			buf_phy_addr = (uint32_t)metal_io_phys(ch->shm_io,
+							       tx_data_offset);
+			if (buf_phy_addr == METAL_BAD_PHYS) {
+				metal_err("REMOTE: failed to get offset.\n");
+				ret = -EINVAL;
+				goto out;
+			}
+
 			metal_io_write32(ch->shm_io, tx_addr_offset, buf_phy_addr);
 			tx_data_offset += sizeof(struct msg_hdr_s) + msg_hdr->len;
 			tx_addr_offset += sizeof(uint32_t);
 
 			/* Increase number of available buffers. */
-			metal_io_write32(ch->shm_io, tx_avail_offset, rx_count);
+			metal_io_write32(ch->shm_io,
+					 SHM_DESC_OFFSET_R_TO_H + SHM_DESC_AVAIL_OFFSET,
+					 rx_count);
 
 			/* Kick IRQ to notify data is in shared buffer. */
 			irq_kick(ch);
@@ -160,7 +215,7 @@ int demo(void *arg)
 	}
 
 out:
-	metal_info("REMOTE: IRQ with shared memory demo finished with exit code: %i.\n", ret);
+	metal_info("REMOTE: IRQ shared memory demo finished with exit code: %i.\n", ret);
 
 	if (lbuf)
 		metal_free_memory(lbuf);

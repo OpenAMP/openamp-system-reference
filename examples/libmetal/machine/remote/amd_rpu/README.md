@@ -16,8 +16,10 @@ sends a `"shutdown"` marker.
   libraries (`xilstandalone`, `xiltimer`, `xilpm`, etc.).
 - libmetal and the Xilinx libmetal extension libraries available to the
   toolchain via the include/library search paths.
-- The linker script and BSP expose the shared memory window at `0x3ED80000`
-  together with the IPI and TTC peripherals described in `common.h`.
+- The linker script and BSP expose the shared memory window at `0x09860000`
+  (size `0x48000`) with three carveouts: desc0 at `0x09860000` (4 KiB), desc1 at
+  `0x09864000` (4 KiB), and payload at `0x09868000` (256 KiB split evenly for
+  RX/TX), together with the IPI and TTC peripherals described in `common.h`.
 - The CMake toolchain file used for configuration defines the correct platform
   macro (for example, `-DPLATFORM_ZYNQMP`, `-Dversal`, or `-DVERSAL_NET`) so the
   peripheral map matches the target silicon.
@@ -59,7 +61,7 @@ Buffer layout shared between the host and remote binaries.
   matches the target device so the correct IPI/TTC base addresses are compiled
   into the firmware.
 - **Shared memory offset errors**: ensure the linker script and MPU/cache
-  settings expose the `0x3ED80000` window coherently to both sides.
+  settings expose the `0x09860000` window coherently to both sides.
 - **Linker failures**: confirm the cross toolchain can locate libmetal,
   `metal_xlnx_extension`, and BSP libraries through `CMAKE_INCLUDE_PATH` and
   `CMAKE_LIBRARY_PATH`.

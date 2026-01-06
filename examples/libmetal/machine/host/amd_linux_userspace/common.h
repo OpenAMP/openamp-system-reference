@@ -16,65 +16,7 @@
 
 #include <stdio.h>
 
-#define BUS_NAME        "platform"
-
-#ifndef SHM_DEV_NAME
-#define SHM_DEV_NAME    "3ed80000.shm"
-#endif /* !SHM_DEV_NAME */
-
-#if defined(PLATFORM_ZYNQMP)
-
-#ifndef IPI_DEV_NAME
-#define IPI_DEV_NAME "ff340000.ipi"
-#endif /* !IPI_DEV_NAME */
-
-#ifndef TTC_DEV_NAME
-#define TTC_DEV_NAME "ff110000.timer"
-#endif /* !TTC_DEV_NAME */
-
-#ifndef IPI_MASK
-#define IPI_MASK 0x100
-#endif /* !IPI_MASK */
-
-#elif defined(versal)
-
-#ifndef IPI_DEV_NAME
-#define IPI_DEV_NAME "ff360000.ipi"
-#endif /* !IPI_DEV_NAME */
-
-#ifndef IPI_MASK
-#define IPI_MASK 0x08
-#endif /* !IPI_MASK */
-
-#ifndef TTC_DEV_NAME
-#define TTC_DEV_NAME "ff0e0000.ttc0"
-#endif /* TTC_DEV_NAME */
-
-#elif defined(VERSAL_NET)
-
-#ifndef IPI_DEV_NAME
-#define IPI_DEV_NAME "eb3600000.ipi"
-#endif /* !IPI_DEV_NAME */
-
-#ifndef IPI_MASK
-#define IPI_MASK 0x08
-#endif /* !IPI_MASK */
-
-#ifdef IS_VERSALGEN2
-
-#ifndef TTC_DEV_NAME
-#define TTC_DEV_NAME "f1e60000.ttc0"
-#endif /* !TTC_DEV_NAME */
-
-#else /* Versal NET case */
-
-#ifndef TTC_DEV_NAME
-#define TTC_DEV_NAME "fd1c0000.ttc0"
-#endif /* !TTC_DEV_NAME */
-
-#endif /* IS_VERSALGEN2 */
-
-#endif
+#include "config.h"
 
 /*
  * Apply this snippet to the device tree in an overlay so that Linux userspace can
@@ -172,12 +114,14 @@ static inline void update_stat(struct metal_stat *pst, uint64_t val)
 }
 
 struct channel_s {
+	struct metal_io_region *host_to_remote_desc_io; /* host to remote descriptors */
+	struct metal_io_region *remote_to_host_desc_io; /* remote to host descriptors */
 	struct metal_io_region *ipi_io; /* IPI metal i/o region */
 	struct metal_io_region *shm_io; /* Shared memory metal i/o region */
 	struct metal_io_region *ttc_io; /* TTC metal i/o region */
+	atomic_flag remote_nkicked; /* IRQ kick flag */
 	uint32_t ipi_mask; /* RPU IPI mask */
 	int irq_vector_id; /* IRQ number. */
-	atomic_flag remote_nkicked; /* IRQ kick flag */
 };
 
 /**

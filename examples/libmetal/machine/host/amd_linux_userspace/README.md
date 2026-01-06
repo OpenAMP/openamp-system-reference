@@ -19,9 +19,10 @@ messages.
 - Signals completion via IPI and then disables the interrupt and releases the mapped devices.
 
 ## Prerequisites
-- Linux kernel exposes the shared memory (`3ed80000.shm` UIO on AMD SoCs; adjust
-  to the platform-specific device/offset), IPI, and TTC peripherals to
-  userspace with permissions suitable for the demo binary.
+- Linux kernel exposes the shared memory carveouts and descriptor UIOs
+  (`9868000.shm`, `9860000.shm_desc`, `9864000.shm_desc` by default; adjust to
+  the platform-specific devices/offsets), along with IPI and TTC peripherals,
+  to userspace with permissions suitable for the demo binary.
 - libmetal (and dependent libraries) installed on the host system, as well as
   the `metal_xlnx_extension` library when required by the platform glue.
 - The project toolchain file defines the correct platform macro (for example,
@@ -62,9 +63,10 @@ Shared buffer map used by both sides of the demo.
 
 ## Troubleshooting
 - **Hangs waiting for notification**: ensure the IPI mask configured in
-  `common.h` matches the remote firmware and that the host process can write to
-  the IPI device.
-- **Shared-memory access errors**: confirm the UIO entry exposes the expected
-  physical range (`0x3ED80000`) with read/write permissions for the demo user.
+  `common.h` (or overridden via the optional demo config file) matches the
+  remote firmware and that the host process can write to the IPI device.
+- **Shared-memory access errors**: confirm the UIO entries expose the expected
+  descriptor/payload ranges (`0x09860000` base) with read/write permissions for
+  the demo user.
 - **Mismatched payloads**: verify both sides agree on descriptor offsets and
   the `PKGS_TOTAL` value compiled into each binary.

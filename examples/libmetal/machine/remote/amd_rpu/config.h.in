@@ -1,0 +1,47 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+/* Carveout layout */
+#cmakedefine SHM0_DESC_BASE @SHM0_DESC_BASE@
+#cmakedefine SHM0_DESC_SIZE @SHM0_DESC_SIZE@
+#cmakedefine SHM1_DESC_BASE @SHM1_DESC_BASE@
+#cmakedefine SHM1_DESC_SIZE @SHM1_DESC_SIZE@
+#cmakedefine SHM_PAYLOAD_BASE @SHM_PAYLOAD_BASE@
+#cmakedefine SHM_PAYLOAD_SIZE @SHM_PAYLOAD_SIZE@
+
+#cmakedefine SHM_DEV_NAME "@SHM_DEV_NAME@"
+#cmakedefine SHM0_DESC_DEV_NAME "@SHM0_DESC_DEV_NAME@"
+#cmakedefine SHM1_DESC_DEV_NAME "@SHM1_DESC_DEV_NAME@"
+
+#cmakedefine SHM_IMAGE_BASE @SHM_IMAGE_BASE@
+#cmakedefine SHM0_DESC_BASE @SHM0_DESC_BASE@
+#cmakedefine SHM1_DESC_BASE @SHM1_DESC_BASE@
+
+#cmakedefine SHM_IMAGE_SIZE @SHM_IMAGE_SIZE@
+#cmakedefine SHM0_DESC_SIZE @SHM0_DESC_SIZE@
+#cmakedefine SHM1_DESC_SIZE @SHM1_DESC_SIZE@
+
+#cmakedefine SHM_BASE_ADDR @SHM_BASE_ADDR@
+#cmakedefine SHM_SIZE @SHM_SIZE@
+
+#cmakedefine SHM_PAYLOAD_BASE @SHM_PAYLOAD_BASE@
+#cmakedefine SHM_PAYLOAD_SIZE @SHM_PAYLOAD_SIZE@
+#cmakedefine SHM_PAYLOAD_HALF_SIZE @SHM_PAYLOAD_HALF_SIZE@
+
+#cmakedefine SHM_PAYLOAD_RX_OFFSET @SHM_PAYLOAD_RX_OFFSET@
+#cmakedefine SHM_PAYLOAD_TX_OFFSET @SHM_PAYLOAD_TX_OFFSET@
+
+/* IPI */
+#cmakedefine IPI_DEV_NAME "@IPI_DEV_NAME@"
+#cmakedefine IPI_BASE_ADDR @IPI_BASE_ADDR@
+#cmakedefine IPI_MASK @IPI_MASK@
+#cmakedefine IPI_IRQ_VECT_ID @IPI_IRQ_VECT_ID@
+
+/* TTC */
+#cmakedefine TTC_DEV_NAME "@TTC_DEV_NAME@"
+#cmakedefine TTC_NODEID @TTC_NODEID@
+#cmakedefine TTC_BASE_ADDR @TTC_BASE_ADDR@
+
+#cmakedefine BUS_NAME "@BUS_NAME@"
+
+#endif /* CONFIG_H */
