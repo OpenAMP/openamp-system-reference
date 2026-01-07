@@ -13,7 +13,6 @@ if (EXISTS ${DEMO_CFG_FILE})
   message("WARNING: DEMO_CFG_FILE ${DEMO_CFG_FILE} passed in at configure time. Using this to configure demo.")
 endif()
 
-collect (APP_COMMON_SOURCES ipi-uio.c)
 collect (APP_COMMON_SOURCES platform_init.c)
 collect (APP_INC_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 
