@@ -37,9 +37,7 @@ extern "C" {
 #define NORM_NSHARED_NCACHE 0x00000008U /* Non cacheable  non shareable */
 #define NORM_SHARED_NCACHE  0x0000000CU /* Non cacheable shareable */
 
-#ifdef PLATFORM_ZYNQMP
 #include "xreg_cortexr5.h"
-#endif
 
 #ifdef RPMSG_NO_IPI
 #undef POLL_BASE_ADDR
