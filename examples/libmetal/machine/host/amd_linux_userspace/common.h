@@ -16,12 +16,74 @@
 
 #include <stdio.h>
 
+/* This symbol is provided in case a demo config .cmake file is provided. */
+#ifdef LIBMETAL_CFG_PROVIDED
+/* This provides IPI_DEV_NAME, IPI_MASK, and carveout definitions */
+#include "config.h"
+#endif /* LIBMETAL_CFG_PROVIDED */
+
 #define BUS_NAME        "platform"
 
+/*
+ * Shared memory carveouts (override via config.h or toolchain flags).
+ */
 #ifndef SHM_DEV_NAME
-#define SHM_DEV_NAME    "3ed80000.shm"
-#endif /* !SHM_DEV_NAME */
+#define SHM_DEV_NAME    "9868000.shm"
+#endif /* SHM_DEV_NAME */
 
+#ifndef SHM0_DESC_DEV_NAME
+#define SHM0_DESC_DEV_NAME     "9860000.shm_desc"
+#endif /* SHM0_DESC_DEV_NAME */
+
+#ifndef SHM1_DESC_DEV_NAME
+#define SHM1_DESC_DEV_NAME     "9864000.shm_desc"
+#endif /* SHM1_DESC_DEV_NAME */
+
+#ifndef SHM_IMAGE_BASE
+#define SHM_IMAGE_BASE         0x09800000U
+#endif /* SHM_IMAGE_BASE */
+
+#ifndef SHM_IMAGE_SIZE
+#define SHM_IMAGE_SIZE         0x00060000U
+#endif /* SHM_IMAGE_SIZE */
+
+#ifndef SHM0_DESC_BASE
+#define SHM0_DESC_BASE         0x09860000U
+#endif /* SHM0_DESC_BASE */
+
+#ifndef SHM0_DESC_SIZE
+#define SHM0_DESC_SIZE         0x00004000U
+#endif /* SHM0_DESC_SIZE */
+
+#ifndef SHM1_DESC_BASE
+#define SHM1_DESC_BASE         0x09864000U
+#endif /* SHM1_DESC_BASE */
+
+#ifndef SHM1_DESC_SIZE
+#define SHM1_DESC_SIZE         0x00004000U
+#endif /* SHM1_DESC_SIZE */
+
+#ifndef SHM_PAYLOAD_BASE
+#define SHM_PAYLOAD_BASE       0x09868000U
+#endif /* SHM_PAYLOAD_BASE */
+
+#ifndef SHM_PAYLOAD_SIZE
+#define SHM_PAYLOAD_SIZE       0x00040000U
+#endif /* SHM_PAYLOAD_SIZE */
+
+#ifndef SHM_PAYLOAD_HALF_SIZE
+#define SHM_PAYLOAD_HALF_SIZE  (SHM_PAYLOAD_SIZE / 2U)
+#endif /* SHM_PAYLOAD_HALF_SIZE */
+
+#ifndef SHM_PAYLOAD_TX_OFFSET
+#define SHM_PAYLOAD_TX_OFFSET  SHM_PAYLOAD_HALF_SIZE
+#endif /* SHM_PAYLOAD_TX_OFFSET */
+
+#ifndef SHM_PAYLOAD_RX_OFFSET
+#define SHM_PAYLOAD_RX_OFFSET  0x00000000U
+#endif /* SHM_PAYLOAD_RX_OFFSET */
+
+/* IPI/TTC defaults per platform; config.h can override by predefining. */
 #if defined(PLATFORM_ZYNQMP)
 
 #ifndef IPI_DEV_NAME
@@ -174,6 +236,8 @@ static inline void update_stat(struct metal_stat *pst, uint64_t val)
 struct channel_s {
 	struct metal_io_region *ipi_io; /* IPI metal i/o region */
 	struct metal_io_region *shm_io; /* Shared memory metal i/o region */
+	struct metal_io_region *apu_to_rpu_desc_io; /* host to remote descriptors */
+	struct metal_io_region *rpu_to_apu_desc_io; /* remote to host descriptors */
 	struct metal_io_region *ttc_io; /* TTC metal i/o region */
 	uint32_t ipi_mask; /* RPU IPI mask */
 	int irq_vector_id; /* IRQ number. */
