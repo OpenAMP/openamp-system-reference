@@ -60,7 +60,7 @@ static inline void system_suspend(struct channel_s *ch)
 {
 	metal_assert(ch);
 
-	while(!atomic_flag_test_and_set(&ch->irq_pending)) {
+	while (atomic_flag_test_and_set(&ch->irq_pending)) {
 		metal_asm volatile("wfi");
 	}
 }
