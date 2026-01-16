@@ -10,7 +10,6 @@
 #include <stdint.h>
 
 #include "xparameters.h"
-#include "xil_exception.h"
 #include "xil_printf.h"
 #include "xscugic.h"
 #include "xipipsu.h"
@@ -23,6 +22,25 @@ static XIpiPsu ipi_inst;
 
 extern void xlnx_irq_isr(void *arg);
 
+/* Handler for AMD specific baremetal BSP IPI driver */
+void IpiIntrHandler(void *arg)
+{
+
+	XIpiPsu *ipi = (XIpiPsu *)arg;
+	u32 src_mask, idx;
+
+	metal_assert(ipi);
+
+	src_mask = XIpiPsu_GetInterruptStatus(ipi);
+
+	for (idx = 0U; idx < ipi->Config.TargetCount; idx++) {
+		if (src_mask & ipi->Config.TargetList[idx].Mask) {
+			/* Raise to Generic Libmetal ISR */
+			xlnx_irq_isr((void*)IPI_IRQ_VECT_ID);
+		}
+	}
+}
+
 /* Interrupt Controller setup */
 int init_irq(void)
 {
@@ -30,7 +48,7 @@ int init_irq(void)
 	int status = XST_FAILURE;
 
 	/* Look Up the config data */
-	cfg_ptr = XIpiPsu_LookupConfig(XPAR_XIPIPSU_0_BASEADDR);
+	cfg_ptr = XIpiPsu_LookupConfig(IPI_BASE_ADDR);
 	if (!cfg_ptr) {
 		return XST_FAILURE;
 	}
@@ -42,7 +60,7 @@ int init_irq(void)
 	}
 
 	/* Setup the GIC */
-	status = XSetupInterruptSystem(&ipi_inst, &xlnx_irq_isr,
+	status = XSetupInterruptSystem(&ipi_inst, &IpiIntrHandler,
 				       ipi_inst.Config.IntId,
 				       ipi_inst.Config.IntrParent,
 				       XINTERRUPT_DEFAULT_PRIORITY);
@@ -50,13 +68,8 @@ int init_irq(void)
 		return XST_FAILURE;
 	}
 
-	/* Enable reception of IPIs from all CPUs */
-	XIpiPsu_InterruptEnable(&ipi_inst, XIPIPSU_ALL_MASK);
-
 	/* Clear Any existing Interrupts */
 	XIpiPsu_ClearInterruptStatus(&ipi_inst, XIPIPSU_ALL_MASK);
-
-	Xil_ExceptionEnable();
 
 	return 0;
 }
