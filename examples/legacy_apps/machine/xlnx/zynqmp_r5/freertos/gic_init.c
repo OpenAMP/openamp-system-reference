@@ -17,13 +17,6 @@
 #include "xparameters.h"
 #include "xscugic.h"
 
-#define FREERTOS_BSP_IRQ_OFFSET 32
-
-int xlnx_hw_to_bsp_irq(int sys_irq)
-{
-	return sys_irq - FREERTOS_BSP_IRQ_OFFSET;
-}
-
 /* Interrupt Controller setup */
 int system_interrupt_register(int int_num, void (*intr_handler)(void *),
 			      void *data)
