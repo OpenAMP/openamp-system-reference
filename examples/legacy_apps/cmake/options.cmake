@@ -121,6 +121,6 @@ endif (DEFINED RPMSG_BUFFER_SIZE)
 
 option (WITH_DOC "Build with documentation" OFF)
 option (WITH_TESTS "Build tests" OFF)
-option (WITH_EXAMPLES "Build all examples" OFF)
+option (WITH_EXAMPLES "Build all examples" ON)
 
 message ("-- C_FLAGS : ${CMAKE_C_FLAGS}")
