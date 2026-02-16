@@ -1,4 +1,4 @@
-# Build Overview
+# System Reference Legacy Apps Build Overview
 
 This page details how to setup and build the
 [OpenAMP System Reference](https://github.com/OpenAMP/openamp-system-reference/) legacy apps
@@ -6,7 +6,7 @@ and test examples found in the examples/legacy_apps directory.
 These applications were moved from the [OpenAMP repository](https://github.com/OpenAMP/open-amp).
 
 
-# Initialization
+## Initialization
 
 The first step is to initialize the workspace folder (``my-workspace``) where
 the examples and all Zephyr modules will be cloned. You can do
@@ -20,7 +20,7 @@ cd my-workspace
 west update
 ```
 
-# Build
+## Build
 
 The following steps are to build legacy apps on a host machine.
 
@@ -28,20 +28,20 @@ The following steps are to build legacy apps on a host machine.
 export PROJECT_ROOT=$PWD
 ```
 
-## Build libmetal
+### Build libmetal
 ```shell
 cd $PROJECT_ROOT/libmetal
 cmake . -Bbuild -DCMAKE_INSTALL_PREFIX=$PROJECT_ROOT/target
 make -C build VERBOSE=1 install
 ```
 
-## Build open_amp
+### Build open_amp
 ```shell
 cd $PROJECT_ROOT/open-amp
 cmake . -Bbuild -DCMAKE_INCLUDE_PATH=$PROJECT_ROOT/libmetal/build/lib/include/   -DCMAKE_LIBRARY_PATH=$PROJECT_ROOT/libmetal/build/lib/ -DCMAKE_INSTALL_PREFIX=$PROJECT_ROOT/target
 make -C build VERBOSE=1 install
 ```
-## Build legacy Apps
+### Build legacy Apps
 ```shell
 cd $PROJECT_ROOT/openamp-system-reference/examples/legacy_apps
 cmake -Bbuild \
