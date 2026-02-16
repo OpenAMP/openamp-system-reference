@@ -8,7 +8,11 @@ back the message. The processor that sends the message will verify the echoed me
 Compilation
 ***********
 
-See `README.md <../../README.md>`_ for details.
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
+
+If you are perusing the github repository refer to the `legacy_apps README.md <../../README.md>`_
+for compilation information.
 
 Run demonstration on a Linux PC
 *******************************
