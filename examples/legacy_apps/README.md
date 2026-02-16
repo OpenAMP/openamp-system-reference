@@ -50,19 +50,3 @@ export PROJECT_ROOT=$PWD
 -DCMAKE_INSTALL_PREFIX=$PROJECT_ROOT/target
   $ make -C build VERBOSE=1 install
 ```
-
-## Run application on a Linux PC
-It is possible to run application on a Linux PC to communicate between two Linux processes.
-
-```shell
-  $ cd $PROJECT_ROOT/target
-  $ echo "################### run ping test #####################"
-  $ LD_LIBRARY_PATH=./lib  ./bin/rpmsg-echo-static &
-  $ sleep 1
-  $ LD_LIBRARY_PATH=./lib  ./bin//msg-test-rpmsg-ping-static 1
-
-  $ echo "################### run ping test #####################"
-  $ LD_LIBRARY_PATH=./lib  ./bin/rpmsg-nocopy-echo-static &
-  $ sleep 1
-  $ LD_LIBRARY_PATH=./lib  ./bin//rpmsg-nocopy-ping-static  1
-```
