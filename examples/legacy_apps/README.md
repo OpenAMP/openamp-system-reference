@@ -1,7 +1,9 @@
-# Summary
+# Build Overview
 
-This directory contains legacy applications and tests examples.
-These applications were moved from open-amp repository.
+This page details how to setup and build the
+[OpenAMP System Reference](https://github.com/OpenAMP/openamp-system-reference/) legacy apps
+and test examples found in the examples/legacy_apps directory.
+These applications were moved from the [OpenAMP repository](https://github.com/OpenAMP/open-amp).
 
 
 # Initialization
@@ -20,7 +22,7 @@ west update
 
 # Build
 
-Following steps to build legacy apps on host machine.
+The following steps are to build legacy apps on a host machine.
 
 ```
 export PROJECT_ROOT=$PWD
