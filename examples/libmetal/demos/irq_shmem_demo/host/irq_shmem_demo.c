@@ -37,29 +37,10 @@
 #include "common.h"
 #include "platform_init.h"
 
-/* Shared memory offsets */
-#define SHM_DESC_OFFSET_TX 0x0
-#define SHM_BUFF_OFFSET_TX 0x04000
-#define SHM_DESC_OFFSET_RX 0x02000
-#define SHM_BUFF_OFFSET_RX 0x104000
-
 /* Shared memory descriptors offset */
 #define SHM_DESC_AVAIL_OFFSET 0x00
 #define SHM_DESC_USED_OFFSET  0x04
 #define SHM_DESC_ADDR_ARRAY_OFFSET 0x08
-
-/* Descriptor regions for each direction. */
-/* Note that H_TO_R_ is host to remote and R_TO_H_ is vice versa. */
-#define H_TO_R_DESC_ADDR_START SHM_DESC_ADDR_ARRAY_OFFSET
-#define H_TO_R_DESC_ADDR_END   SHM0_DESC_SIZE
-#define R_TO_H_DESC_ADDR_START SHM_DESC_ADDR_ARRAY_OFFSET
-#define R_TO_H_DESC_ADDR_END   SHM1_DESC_SIZE
-
-/* Split of the data / payload area for each direction */
-#define H_TO_R_PAYLOAD_START   SHM_PAYLOAD_RX_OFFSET
-#define H_TO_R_PAYLOAD_END     (SHM_PAYLOAD_RX_OFFSET + SHM_PAYLOAD_HALF_SIZE)
-#define R_TO_H_PAYLOAD_START   SHM_PAYLOAD_TX_OFFSET
-#define R_TO_H_PAYLOAD_END     (SHM_PAYLOAD_TX_OFFSET + SHM_PAYLOAD_HALF_SIZE)
 
 #define PKGS_TOTAL 1024
 
@@ -132,19 +113,17 @@ static int irq_shmem_echo(struct channel_s *ch)
 {
 	struct metal_io_region *desc_host_to_remote = ch->host_to_remote_desc_io;
 	struct metal_io_region *desc_remote_to_host = ch->remote_to_host_desc_io;
+	unsigned long tx_avail_offset, rx_avail_offset, tx_addr_offset;
+	unsigned long rx_addr_offset, tx_data_offset, rx_data_offset;
+	uint32_t tx_phy_addr_32, rx_avail, r_to_h_payload_end, i;
+	uint32_t h_to_r_desc_addr_end, h_to_r_payload_start;
+	long long tdiff_avg_s = 0, tdiff_avg_ns = 0, tdiff;
+	uint32_t h_to_r_payload_end, r_to_h_payload_start;
 	struct metal_io_region *payload_io = ch->shm_io;
-	unsigned long tx_avail_offset, rx_avail_offset;
-	unsigned long tx_addr_offset, rx_addr_offset;
-	unsigned long tx_data_offset, rx_data_offset;
 	void *txbuf = NULL, *rxbuf = NULL, *tmpptr;
-	long long tdiff_avg_s = 0, tdiff_avg_ns = 0;
 	unsigned long long tstart, tend;
 	unsigned long rx_used_offset;
 	struct msg_hdr_s *msg_hdr;
-	uint32_t tx_phy_addr_32;
-	uint32_t rx_avail;
-	long long tdiff;
-	uint32_t i;
 	int ret;
 
 	txbuf = metal_allocate_memory(BUF_SIZE_MAX);
@@ -165,20 +144,26 @@ static int irq_shmem_echo(struct channel_s *ch)
 		return -EINVAL;
 	}
 
+	h_to_r_desc_addr_end = ch->desc0_size;
+	h_to_r_payload_start = 0;
+	h_to_r_payload_end = ch->shm_payload_size / 2;
+	r_to_h_payload_start = ch->shm_payload_size / 2;
+	r_to_h_payload_end = ch->shm_payload_size;
+
 	/* Clear shared memory and descriptors */
-	ret = metal_io_block_set(ch->shm_io, 0, 0, SHM_PAYLOAD_SIZE);
+	ret = metal_io_block_set(ch->shm_io, 0, 0, ch->shm_payload_size);
 	if (ret < 0) {
 		metal_err("HOST: Failed to clear payload area.\n");
 		goto out;
 	}
 
-	ret = metal_io_block_set(ch->host_to_remote_desc_io, 0, 0, SHM0_DESC_SIZE);
+	ret = metal_io_block_set(ch->host_to_remote_desc_io, 0, 0, ch->desc0_size);
 	if (ret < 0) {
 		metal_err("HOST: Failed to clear host to remote descriptor area.\n");
 		goto out;
 	}
 
-	ret = metal_io_block_set(ch->remote_to_host_desc_io, 0, 0, SHM1_DESC_SIZE);
+	ret = metal_io_block_set(ch->remote_to_host_desc_io, 0, 0, ch->desc1_size);
 	if (ret < 0) {
 		metal_err("HOST: Failed to clear remote to host descriptor area.\n");
 		goto out;
@@ -188,10 +173,10 @@ static int irq_shmem_echo(struct channel_s *ch)
 	tx_avail_offset = SHM_DESC_AVAIL_OFFSET;
 	rx_avail_offset = SHM_DESC_AVAIL_OFFSET;
 	rx_used_offset = SHM_DESC_USED_OFFSET;
-	tx_addr_offset = H_TO_R_DESC_ADDR_START;
-	rx_addr_offset = R_TO_H_DESC_ADDR_START;
-	tx_data_offset = H_TO_R_PAYLOAD_START;
-	rx_data_offset = R_TO_H_PAYLOAD_START;
+	tx_addr_offset = SHM_DESC_ADDR_ARRAY_OFFSET;
+	rx_addr_offset = SHM_DESC_ADDR_ARRAY_OFFSET;
+	tx_data_offset = h_to_r_payload_start;
+	rx_data_offset = r_to_h_payload_start;
 
 	metal_info("HOST: Start echo flood testing....\n");
 	metal_info("HOST: Sending msgs to the remote.\n");
@@ -227,8 +212,8 @@ static int irq_shmem_echo(struct channel_s *ch)
 		metal_io_write32(desc_host_to_remote, tx_addr_offset, tx_phy_addr_32);
 		tx_data_offset += sizeof(struct msg_hdr_s) + msg_hdr->len;
 		tx_addr_offset += sizeof(uint32_t);
-		if (tx_addr_offset >= H_TO_R_DESC_ADDR_END)
-			tx_addr_offset = H_TO_R_DESC_ADDR_START;
+		if (tx_addr_offset >= h_to_r_desc_addr_end)
+			tx_addr_offset = SHM_DESC_ADDR_ARRAY_OFFSET;
 
 		/* Increase number of available buffers */
 		metal_io_write32(desc_host_to_remote, tx_avail_offset, (i + 1));
@@ -237,7 +222,7 @@ static int irq_shmem_echo(struct channel_s *ch)
 	}
 	metal_info("HOST: Waiting for messages to echo back and verify.\n");
 	i = 0;
-	tx_data_offset = H_TO_R_PAYLOAD_START;
+	tx_data_offset = h_to_r_payload_start;
 
 	while (i != PKGS_TOTAL) {
 
@@ -298,6 +283,8 @@ static int irq_shmem_echo(struct channel_s *ch)
 			}
 
 			rx_data_offset += msg_hdr->len;
+			if (rx_data_offset >= r_to_h_payload_end)
+				rx_data_offset = r_to_h_payload_start;
 			/*
 			 * Increase RX used count to indicate it has consumed the received data.
 			 */
@@ -313,6 +300,8 @@ static int irq_shmem_echo(struct channel_s *ch)
 			}
 
 			tx_data_offset += sizeof(*msg_hdr) + sizeof(tstart);
+			if (tx_data_offset >= h_to_r_payload_end)
+				tx_data_offset = h_to_r_payload_start;
 			/* Compare the received message and the sent message */
 			ret = memcmp(rxbuf, txbuf, sizeof(*msg_hdr) + sizeof(tstart));
 			if (ret) {
@@ -374,13 +363,26 @@ out:
 	return ret;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
 	struct channel_s ch_s;
+	const char *config_path = NULL;
+	int opt;
 	int ret = 0;
 
+	while ((opt = getopt(argc, argv, "c:")) != -1) {
+		switch (opt) {
+		case 'c':
+			config_path = optarg;
+			break;
+		default:
+			fprintf(stderr, "Usage: %s [-c config_file]\n", argv[0]);
+			return 1;
+		}
+	}
+
 	/* platform_init will set the OS agnostic channel information */
-	ret = platform_init(&ch_s);
+	ret = platform_init(&ch_s, config_path);
 	if (ret) {
 		metal_err("HOST: Failed to initialize system.\n");
 		return ret;

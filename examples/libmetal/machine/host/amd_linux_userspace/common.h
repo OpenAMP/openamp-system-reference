@@ -16,8 +16,6 @@
 
 #include <stdio.h>
 
-#include "config.h"
-
 /*
  * Apply this snippet to the device tree in an overlay so that Linux userspace can
  * see and use TTC0:
@@ -122,6 +120,9 @@ struct channel_s {
 	atomic_flag remote_nkicked; /* IRQ kick flag */
 	uint32_t ipi_mask; /* RPU IPI mask */
 	int irq_vector_id; /* IRQ number. */
+	uint32_t desc0_size; /* host to remote descriptor region size */
+	uint32_t desc1_size; /* remote to host descriptor region size */
+	uint32_t shm_payload_size; /* shared payload buffer size */
 };
 
 /**

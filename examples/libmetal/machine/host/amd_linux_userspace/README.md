@@ -51,11 +51,15 @@ The static executable is emitted at
 
 ## Run
 1. Start the remote firmware so it sits in the notification loop.
-2. Launch the host binary (root/sudo may be required for IPI device access):
+2. Generate the runtime config from the device tree and UIO sysfs:
    ```bash
-   ./irq_shmem_demo-static
+   discover_platform.sh -o ./platform.conf
    ```
-3. Observe the console output for packet progress and the final average
+3. Launch the host binary (root/sudo may be required for IPI device access):
+   ```bash
+   ./irq_shmem_demo-static -c ./platform.conf
+   ```
+4. Observe the console output for packet progress and the final average
    round-trip latency.
 
 ## [Shared Memory Layout](../../../demos/irq_shmem_demo/README.md#shared-memory-layout)

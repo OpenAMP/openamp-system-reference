@@ -9,7 +9,7 @@
 
 #include "platform_init.h"
 
-int platform_init(struct channel_s *ch);
+int platform_init(struct channel_s *ch, const char *config_path);
 void platform_cleanup(struct channel_s *ch);
 
 #endif /* __PLATFORM_INIT_H__ */
