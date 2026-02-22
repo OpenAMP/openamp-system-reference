@@ -1,3 +1,6 @@
+Overview
+********
+
 This readme is about the OpenAMP linux_rpc_demo.
 
 The linux_rpc_demo is about remote procedure calls between linux host and a linux
@@ -9,7 +12,11 @@ Compilation
 ***********
 Add cmake option `-DWITH_PROXY_APPS=ON` to build the system reference demonstration applications.
 
-See `README.md <../../README.md>`_ for details.
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
+
+If you are perusing the github repository refer to the `legacy_apps README.md <../../README.md>`_
+for compilation information.
 
 Run demonstration on a Linux PC
 *******************************
@@ -31,7 +38,7 @@ Run demonstration on a Linux PC
 Enter the inputs on the host side the same gets printed on the remote side. You will see
 communication between the host and remote process using rpmsg calls.
 
-Note:
-*****
-`sudo` is required to run the OpenAMP demos between Linux processes, as it doesn't work on
-some systems if you are normal users.
+.. note::
+
+   `sudo` is required to run the OpenAMP demos between Linux processes, as it doesn't work on
+   some systems if you are normal users.
