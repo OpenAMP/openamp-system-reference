@@ -1,8 +1,5 @@
 .. _openAMP_rsc_table_sample:
 
-OpenAMP multi services sample Application using resource table
-##############################################################
-
 Overview
 ********
 
@@ -28,8 +25,12 @@ Tested on board:
 * `imx8mp_evk/mimx8ml8/adsp        <https://docs.zephyrproject.org/latest/boards/nxp/imx8mp_evk/doc/index.html>`_
 * `imx95_evk/mimx9596/m7        <https://docs.zephyrproject.org/latest/boards/nxp/imx95_evk/doc/index.html>`_
 
+
 Building the application
 *************************
+
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
 
 Zephyr
 ======
