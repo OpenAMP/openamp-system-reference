@@ -1,15 +1,6 @@
 # Zephyr Example Application
 
-This repository contains Zephyr example applications. The main purpose of this
-repository is to provide references and demo on the use of OpenAMP on Zephyr based applications. features demonstrated in this example are:
-
-- [rpmsg multi service][rms_app] application
-- [dual qemu ivshmem][dqi_app] application
-
-
-
-[rms_app]: #rpmsg_multi_services/README.md
-[dqi_app]: #dual_qemu_ivshmem/README.md
+Building of the Zephyr example applications is detailed below.
 
 ## Getting Started
 
