@@ -89,7 +89,7 @@ Open a Linux shell (minicom, ssh, etc.)
 
 .. code-block:: console
 
-   root@linuxshell: insmod rpmsg_client_sample.ko rpmsg_tty.ko rpmsg_char.ko rpmsg_ctrl.ko
+   insmod rpmsg_client_sample.ko rpmsg_tty.ko rpmsg_char.ko rpmsg_ctrl.ko
 
 * Start the demo environment
 
@@ -98,8 +98,8 @@ Then start the firmware:
 
 .. code-block:: console
 
-  root@linuxshell: echo rpmsg_multi_services.elf > /sys/class/remoteproc/remoteproc0/firmware
-  root@linuxshell: echo start >/sys/class/remoteproc/remoteproc0/state
+  echo rpmsg_multi_services.elf > /sys/class/remoteproc/remoteproc0/firmware
+  echo start >/sys/class/remoteproc/remoteproc0/state
 
 Result on Zephyr console on boot
 ================================
@@ -107,6 +107,7 @@ Result on Zephyr console on boot
 The following messages will appear on the corresponding Zephyr console
 
 .. code-block:: console
+     :caption: Output
 
   [   54.495343] virtio_rpmsg_bus virtio0: rpmsg host is online
   [   54.500044] virtio_rpmsg_bus virtio0: creating channel rpmsg-client-sample addr 0x400
@@ -126,7 +127,11 @@ This inform that following rpmsg channels devices have been created:
 
   .. code-block:: console
 
-    root@linuxshell: dmesg
+    dmesg
+
+  .. code-block:: console
+     :caption: Output
+
     ...
     [   54.500044] virtio_rpmsg_bus virtio0: creating channel rpmsg-client-sample addr 0x400
     ...
@@ -135,7 +140,11 @@ This inform that following rpmsg channels devices have been created:
 
   .. code-block:: console
 
-    root@linuxshell: ls /dev/ttyRPMSG*
+    ls /dev/ttyRPMSG*
+
+  .. code-block:: console
+     :caption: Output
+
     /dev/ttyRPMSG0
 
 
@@ -143,7 +152,11 @@ This inform that following rpmsg channels devices have been created:
 
   .. code-block:: console
 
-    root@linuxshell: ls /dev/rpmsg?
+    ls /dev/rpmsg?
+
+  .. code-block:: console
+     :caption: Output
+
     /dev/rpmsg0
 
 The following messages will appear on the corresponding Zephyr console or
@@ -151,7 +164,11 @@ in the remoteproc trace buffer depending on the Hardware.
 
 .. code-block:: console
 
-  root@linuxshell:  cat /sys/kernel/debug/remoteproc/remoteproc0/trace0
+  cat /sys/kernel/debug/remoteproc/remoteproc0/trace0
+
+.. code-block:: console
+     :caption: Output
+
   *** Booting Zephyr OS build zephyr-v3.2.0-1-g6b49008b6b83  ***
   Starting application threads!
 
@@ -185,6 +202,7 @@ Associated traces
 -----------------
 
   .. code-block:: console
+     :caption: Output
 
     [   54.548954] rpmsg_client_sample virtio0.rpmsg-client-sample.-1.1024: new channel: 0x402 -> 0x400!
     [   54.557337] rpmsg_client_sample virtio0.rpmsg-client-sample.-1.1024: incoming msg 1 (src: 0x400)
@@ -215,9 +233,17 @@ Demo
   By default the Zephyr has created a rpmsg-tty channel
 
   .. code-block:: console
+     :caption: Output
 
     [   54.507923] virtio_rpmsg_bus virtio0: creating channel rpmsg-tty addr 0x401
-    root@linuxshell: ls /dev/ttyRPMSG*
+
+  .. code-block:: console
+
+    ls /dev/ttyRPMSG*
+
+  .. code-block:: console
+     :caption: Output
+
     /dev/ttyRPMSG0
 
 2. Send and receive messages on /dev/ttyRPMSG0
@@ -227,10 +253,21 @@ Demo
 
   .. code-block:: console
 
-    root@linuxshell: cat /dev/ttyRPMSG0 &
-    root@linuxshell: echo "Hello Zephyr" >/dev/ttyRPMSG0
+    cat /dev/ttyRPMSG0 &
+    echo "Hello Zephyr" >/dev/ttyRPMSG0
+
+  .. code-block:: console
+     :caption: Output
+
     TTY 0: Hello Zephyr
-    root@linuxshell: echo "Goodbye Zephyr" >/dev/ttyRPMSG0
+
+  .. code-block:: console
+
+    echo "Goodbye Zephyr" >/dev/ttyRPMSG0
+
+  .. code-block:: console
+     :caption: Output
+
     TTY 0: Goodbye Zephyr
 
 Demo 3: dynamic creation/release of a rpmsg-tty device
@@ -258,15 +295,19 @@ Demo
 
     .. code-block:: console
 
-      root@linuxshell: cat /dev/ttyRPMSG0 &
-      root@linuxshell: echo "Hello Zephyr" >/dev/ttyRPMSG0
+      cat /dev/ttyRPMSG0 &
+      echo "Hello Zephyr" >/dev/ttyRPMSG0
+
+  .. code-block:: console
+     :caption: Output
+
       TTY 0: Hello Zephyr
 
   * Check if the rpmsg-utils tools are installed on your platform.
 
     .. code-block:: console
 
-      root@linuxshell: rpmsg_ping
+      rpmsg_ping
 
 
   * If the rpmsg_ping application does not exist:
@@ -280,7 +321,7 @@ Demo
 
     .. code-block:: console
 
-      root@linuxshell: echo -n 'file virtio_rpmsg_bus.c +p' > /sys/kernel/debug/dynamic_debug/control
+      echo -n 'file virtio_rpmsg_bus.c +p' > /sys/kernel/debug/dynamic_debug/control
 
 2. create a new TTY channel
 
@@ -296,13 +337,17 @@ Demo
 
   .. code-block:: console
 
-    root@linuxshell: ./rpmsg_export_dev /dev/rpmsg_ctrl0 rpmsg-tty 257 -1
+    ./rpmsg_export_dev /dev/rpmsg_ctrl0 rpmsg-tty 257 -1
 
   The /dev/ttyRPMSG1 is created
 
   .. code-block:: console
 
-    root@linuxshell: ls /dev/ttyRPMSG*
+    ls /dev/ttyRPMSG*
+
+  .. code-block:: console
+     :caption: Output
+
     /dev/ttyRPMSG0  /dev/ttyRPMSG1
 
   A name service announcement has been sent to Zephyr, which has created a local endpoint (@ 0x400),
@@ -310,7 +355,11 @@ Demo
 
   .. code-block:: console
 
-    root@linuxshell: dmesg
+    dmesg
+
+  .. code-block:: console
+     :caption: Output
+
     [  115.757439] rpmsg_tty virtio0.rpmsg-tty.257.-1: TX From 0x101, To 0x35, Len 40, Flags 0, Reserved 0
     [  115.757497] rpmsg_virtio TX: 01 01 00 00 35 00 00 00 00 00 00 00 28 00 00 00  ....5.......(...
     [  115.757514] rpmsg_virtio TX: 72 70 6d 73 67 2d 74 74 79 00 00 00 00 00 00 00  rpmsg-tty.......
@@ -330,11 +379,22 @@ Demo
 
   .. code-block:: console
 
-    root@linuxshell: cat /dev/ttyRPMSG0 &
-    root@linuxshell: cat /dev/ttyRPMSG1 &
-    root@linuxshell: echo hello dev0 >/dev/ttyRPMSG0
+    cat /dev/ttyRPMSG0 &
+    cat /dev/ttyRPMSG1 &
+    echo hello dev0 >/dev/ttyRPMSG0
+
+  .. code-block:: console
+     :caption: Output
+
     TTY 0: hello dev0
-    root@linuxshell: echo hello dev1 >/dev/ttyRPMSG1
+
+  .. code-block:: console
+
+    echo hello dev1 >/dev/ttyRPMSG1
+
+  .. code-block:: console
+     :caption: Output
+
     TTY 1: hello dev1
 
 4. Destroy RPMSG TTY devices
@@ -343,21 +403,25 @@ Demo
 
   .. code-block:: console
 
-    root@linuxshell: ./rpmsg_export_dev /dev/rpmsg_ctrl0 -d rpmsg-tty 257 -1
+    ./rpmsg_export_dev /dev/rpmsg_ctrl0 -d rpmsg-tty 257 -1
 
   Destroy the /dev/ttyRPMSG0
   * Get the source address
 
   .. code-block:: console
 
-    root@linuxshell: cat /sys/bus/rpmsg/devices/virtio0.rpmsg-tty.-1.*/src
+    cat /sys/bus/rpmsg/devices/virtio0.rpmsg-tty.-1.*/src
+
+  .. code-block:: console
+     :caption: Output
+
     0x402
 
   * Destroy the /dev/ttyRPMSG0 specifying the address 1026 (0x402)
 
   .. code-block:: console
 
-    root@linuxshell: ./rpmsg_export_dev /dev/rpmsg_ctrl0 -d rpmsg-tty 1026 -1
+    ./rpmsg_export_dev /dev/rpmsg_ctrl0 -d rpmsg-tty 1026 -1
 
   The /dev/ttyRPMGx devices no more exists
 
@@ -388,6 +452,7 @@ Demo
   By default the Zephyr has created a rpmsg-raw channel
 
   .. code-block:: console
+     :caption: Output
 
     [   54.514795] virtio_rpmsg_bus virtio0: creating channel rpmsg-raw addr 0x402
 
@@ -395,7 +460,11 @@ Demo
 
   .. code-block:: console
 
-    root@linuxshell: ls /dev/rpmsg?
+    ls /dev/rpmsg?
+
+  .. code-block:: console
+     :caption: Output
+
     /dev/rpmsg0
 
 4. Send and receive messages on /dev/rpmsg0
@@ -405,7 +474,11 @@ Demo
 
   .. code-block:: console
 
-    root@linuxshell: ./rpmsg_ping /dev/rpmsg0
+    ./rpmsg_ping /dev/rpmsg0
+
+  .. code-block:: console
+     :caption: Output
+
     message for /dev/rpmsg0: "from ept 0x0402: ping /dev/rpmsg0"
 
 Demo 5: Multi endpoints demo using rpmsg-ctrl device
@@ -439,6 +512,7 @@ Demo
   By default the Zephyr has created a rpmsg-raw channel
 
   .. code-block:: console
+     :caption: Output
 
     [   54.514795] virtio_rpmsg_bus virtio0: creating channel rpmsg-raw addr 0x402
 
@@ -446,38 +520,75 @@ Demo
 
   .. code-block:: console
 
-    root@linuxshell: ls /dev/rpmsg*
+    ls /dev/rpmsg*
+
+  .. code-block:: console
+     :caption: Output
+
     /dev/rpmsg0       /dev/rpmsg_ctrl0
 
 4. Create 3 new endpoints
 
   .. code-block:: console
 
-    root@linuxshell: ./rpmsg_export_ept /dev/rpmsg_ctrl0 my_endpoint1 100 1
-    root@linuxshell: ./rpmsg_export_ept /dev/rpmsg_ctrl0 my_endpoint2 101 1
-    root@linuxshell: ./rpmsg_export_ept /dev/rpmsg_ctrl0 my_endpoint2 103 1
-    root@linuxshell: ls /dev/rpmsg?
+    ./rpmsg_export_ept /dev/rpmsg_ctrl0 my_endpoint1 100 1
+    ./rpmsg_export_ept /dev/rpmsg_ctrl0 my_endpoint2 101 1
+    ./rpmsg_export_ept /dev/rpmsg_ctrl0 my_endpoint2 103 1
+    ls /dev/rpmsg?
+
+  .. code-block:: console
+     :caption: Output
+
     /dev/rpmsg0  /dev/rpmsg1  /dev/rpmsg2  /dev/rpmsg3
 
 5. Test them
 
   .. code-block:: console
 
-    root@linuxshell: ./rpmsg_ping  /dev/rpmsg0
+    ./rpmsg_ping  /dev/rpmsg0
+
+  .. code-block:: console
+     :caption: Output
+
     message for /dev/rpmsg0: "from ept 0x0402: ping /dev/rpmsg0"
-    root@linuxshell: ./rpmsg_ping  /dev/rpmsg1
+
+  .. code-block:: console
+
+    ./rpmsg_ping  /dev/rpmsg1
+
+  .. code-block:: console
+     :caption: Output
+
     message for /dev/rpmsg1: "from ept 0x0001: ping /dev/rpmsg1"
-    root@linuxshell: ./rpmsg_ping  /dev/rpmsg2
+
+  .. code-block:: console
+
+    ./rpmsg_ping  /dev/rpmsg2
+
+  .. code-block:: console
+     :caption: Output
+
     message for /dev/rpmsg2: "from ept 0x0001: ping /dev/rpmsg2"
-    root@linuxshell: ./rpmsg_ping  /dev/rpmsg3
+
+  .. code-block:: console
+
+    ./rpmsg_ping  /dev/rpmsg3
+
+  .. code-block:: console
+     :caption: Output
+
     message for /dev/rpmsg3: "from ept 0x0001: ping /dev/rpmsg3"
 
 6. Destroy them
 
   .. code-block:: console
 
-    root@linuxshell: ./rpmsg_destroy_ept /dev/rpmsg1
-    root@linuxshell: ./rpmsg_destroy_ept /dev/rpmsg2
-    root@linuxshell: ./rpmsg_destroy_ept /dev/rpmsg3
-    root@linuxshell: ls /dev/rpmsg?
+    ./rpmsg_destroy_ept /dev/rpmsg1
+    ./rpmsg_destroy_ept /dev/rpmsg2
+    ./rpmsg_destroy_ept /dev/rpmsg3
+    ls /dev/rpmsg?
+
+  .. code-block:: console
+     :caption: Output
+
     /dev/rpmsg0
