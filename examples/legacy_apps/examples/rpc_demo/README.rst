@@ -1,3 +1,6 @@
+Overview
+********
+
 This readme is about the OpenAMP rpc_demo demo.
 The rpc_demo is about one processor uses the UART on the other processor and creates file on
 the other processor's filesystem with file operations.
@@ -19,7 +22,13 @@ Here is an example to generate the to generate the `rpc_demo` application:
 
     cmake -DCMAKE_TOOLCHAIN_FILE=zynqmp_r5_generic -DWITH_APPS=ON -DWITH_PROXY=ON
 
-See `README.md <../../README.md>`_ to generate the `rpc_demod` application.
+
+.. include:: ../../README.md
+   :parser: myst_parser.sphinx_
+
+If you are perusing the github repository refer to the `legacy_apps README.md <../../README.md>`_
+for compilation information.
+
 
 Linux Compilation
 =================
