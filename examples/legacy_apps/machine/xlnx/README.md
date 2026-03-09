@@ -5,7 +5,7 @@ Dependencies:
 2. System Device Tree generated from design : https://docs.amd.com/r/en-US/ug1647-porting-embeddedsw-components/Generating-a-System-Device-Tree-Using-SDTGen
 
 Below is sample run for Versal Gen 1 platform
-### Generate OpenAMP RPU Device Tree
+## Generate OpenAMP RPU Device Tree
 
 SDT is the System Device Tree generated from design
 ```sh
@@ -21,7 +21,7 @@ python3 lopper.py -f --enhanced \
 ```
 The above Device Tree "rpu.dts" will be used for configuration of the app's interrupts, shared memory and linker script.
 
-### Generate OpenAMP App config header
+## Generate OpenAMP App config header
 
 ```sh
 export LOPPER_DTC_FLAGS="-b 0 -@"
@@ -37,7 +37,7 @@ cd -
 The output amd_platform_info.h needs to be in the location denoted above of "openamp-system-reference/examples/legacy_apps/machine/zynqmp_r5" BEFORE
 cmake configure step.
 
-### Generate RPU Application Linker config object
+## Generate RPU Application Linker config object
 
 ```sh
 export LOPPER_DTC_FLAGS="-b 0 -@"
