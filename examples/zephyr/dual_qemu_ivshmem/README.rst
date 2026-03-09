@@ -20,7 +20,7 @@ Note:
 *****
 
 * The Vendor-ID 0x1AF4 is being used from all other Zephyr in-tree samples, currently there
-is no Vendor allocated with the selected number.
+  is no Vendor allocated with the selected number.
 
 ivshmem-server needs to be available and running. The server is available in
 Zephyr SDK or pre-built in some distributions. Otherwise, it is available in
