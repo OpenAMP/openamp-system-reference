@@ -122,7 +122,7 @@
 #define XLNX_METAL_LOG_LEVEL METAL_LOG_INFO
 #endif
 
-void xlnx_log_handler(enum metal_log_level level, const char *format, ...);
+static void xlnx_log_handler(enum metal_log_level level, const char *format, ...);
 
 #define XLNX_PLATFORM_METAL_INIT_PARAMS \
 { \
@@ -183,6 +183,21 @@ int xlnx_hw_to_bsp_irq(int sys_irq);
 
 /* RPMsg virtio shared buffer pool */
 static struct rpmsg_virtio_shm_pool shpool;
+
+/* circular buffer for trace buffer */
+static struct {
+	char *c_buf;
+	uint32_t c_len;
+	uint32_t c_pos;
+	uint32_t c_cnt;
+} circ;
+
+static void rsc_trace_putchar(char c)
+{
+	if (circ.c_pos >= circ.c_len)
+		circ.c_pos = 0;
+	circ.c_buf[circ.c_pos++] = c;
+}
 
 static void xlnx_irq_isr(void *arg)
 {
@@ -248,11 +263,53 @@ platform_create_proc(int proc_index, int rsc_index)
 	return &rproc_inst;
 }
 
+static void xlnx_log_handler(enum metal_log_level level,
+			   const char *format, ...)
+{
+	static const char * const level_strs[] = {
+		"emergency",
+		"alert",
+		"critical",
+		"error",
+		"warning",
+		"notice",
+		"info",
+		"debug",
+	};
+	char msg[128];
+	char *p;
+	int32_t len;
+	va_list args;
+
+	if (level > METAL_LOG_DEBUG)
+		level = METAL_LOG_EMERGENCY;
+
+	len = snprintf(msg, sizeof(msg), "RPU%d: %s: ", XPAR_CPU_ID,
+		       level_strs[level]);
+
+	circ.c_cnt++;
+
+	va_start(args, format);
+	vsnprintf(msg + len, (int32_t)sizeof(msg) - len, format, args);
+	va_end(args);
+
+	/* copy at most sizeof(msg) to the circular buffer */
+	for (len = 0, p = msg; *p && len < (int32_t)sizeof(msg); ++len, ++p)
+		rsc_trace_putchar(*p);
+
+	xil_printf("%s", msg);
+}
+
 static int xlnx_machine_init(void)
 {
 
 	struct metal_init_params metal_param = XLNX_PLATFORM_METAL_INIT_PARAMS;
 	int ret;
+
+	/* Init circular buffer */
+	circ.c_buf = get_rsc_trace_info(&circ.c_len);
+	if (circ.c_buf && circ.c_len)
+		circ.c_pos = circ.c_cnt = 0;
 
 	metal_init(&metal_param);
 
@@ -295,21 +352,6 @@ static void xlnx_machine_cleanup(void)
 	Xil_ICacheDisable();
 	Xil_DCacheInvalidate();
 	Xil_ICacheInvalidate();
-}
-
-void xlnx_log_handler(enum metal_log_level level, const char *format, ...)
-{
-	char msg[1024];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(msg, sizeof(msg), format, args);
-	va_end(args);
-
-	if (level > metal_get_log_level())
-		return;
-
-	xil_printf("RPU%d: %s", XPAR_CPU_ID, msg);
 }
 
 int platform_init(int argc, char *argv[], void **platform)
