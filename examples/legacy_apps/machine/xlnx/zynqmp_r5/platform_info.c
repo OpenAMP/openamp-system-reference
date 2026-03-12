@@ -101,9 +101,9 @@
 #endif /* versal */
 #ifndef SHARED_MEM_PA
 #if XPAR_CPU_ID == 0
-#define SHARED_MEM_PA  0x3ED40000UL
+#define SHARED_MEM_PA  0x9860000UL
 #else
-#define SHARED_MEM_PA  0x3EF40000UL
+#define SHARED_MEM_PA  0x9C60000UL
 #endif /* XPAR_CPU_ID */
 #endif /* !SHARED_MEM_PA */
 

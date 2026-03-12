@@ -11,7 +11,7 @@ endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_SYSTEM}/gic_init.c")
 
 # If not provided, add default value for resource table
 if(NOT DEFINED ${RSC_TABLE})
-  set(RSC_TABLE 0x3ed00000 CACHE STRING "")
+  set(RSC_TABLE 0x9800000 CACHE STRING "")
 endif(NOT DEFINED ${RSC_TABLE})
 
 set (_linker_script "${CMAKE_CURRENT_SOURCE_DIR}/linker_remote.ld")
