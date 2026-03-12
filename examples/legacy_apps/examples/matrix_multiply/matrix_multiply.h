@@ -7,6 +7,8 @@
 #ifndef MATRIX_MULTIPLY_H
 #define MATRIX_MULTIPLY_H
 
+#include <openamp/rpmsg.h>
+
 #define RPMSG_SERVICE_NAME         "rpmsg-openamp-demo-channel"
 
 int rpmsg_matrix_app(struct rpmsg_device *rdev, void *priv);
