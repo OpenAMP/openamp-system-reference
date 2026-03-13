@@ -113,16 +113,12 @@ int rpmsg_matrix_app(struct rpmsg_device *rdev, void *priv)
 		   RPMSG_SERVICE_NAME, lept.addr, lept.dest_addr);
 
 	LPRINTF("Waiting for events...\r\n");
-	while(1) {
-		platform_poll(priv);
-		/* we got a shutdown request, exit */
-		if (shutdown_req) {
-			break;
-		}
-	}
+	ret = platform_poll(priv);
+	if (ret)
+		metal_err("platform_poll failed with error %d\n", ret);
 	rpmsg_destroy_ept(&lept);
 
-	return 0;
+	return ret;
 }
 
 /*-----------------------------------------------------------------------------*

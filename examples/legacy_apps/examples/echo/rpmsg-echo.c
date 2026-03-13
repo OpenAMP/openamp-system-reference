@@ -82,16 +82,12 @@ int rpmsg_echo_app(struct rpmsg_device *rdev, void *priv)
 	metal_dbg("RPMsg device TX buffer size: %#x\r\n", rpmsg_get_tx_buffer_size(&lept));
 	metal_dbg("RPMsg device RX buffer size: %#x\r\n", rpmsg_get_rx_buffer_size(&lept));
 
-	while(1) {
-		platform_poll(priv);
-		/* we got a shutdown request, exit */
-		if (shutdown_req) {
-			break;
-		}
-	}
+	ret = platform_poll(priv);
+	if (ret)
+		metal_err("platform poll failed err = %d\n", ret);
 	rpmsg_destroy_ept(&lept);
 
-	return 0;
+	return ret;
 }
 
 /*-----------------------------------------------------------------------------*

@@ -29,6 +29,7 @@
 #include <metal/sys.h>
 #include <metal/utilities.h>
 #include <openamp/rpmsg_virtio.h>
+#include <openamp/virtio.h>
 
 #include "platform_info.h"
 #include "rsc_table.h"
@@ -414,20 +415,42 @@ err1:
 
 int platform_poll(void *priv)
 {
+	struct rpmsg_virtio_device *rpmsg_vdev;
+	struct remoteproc_virtio *rproc_vdev;
 	struct remoteproc *rproc = priv;
 	struct remoteproc_priv *prproc;
+	struct metal_list *node;
+	uint8_t vdev_status = 0;
 	unsigned int flags;
 	int ret;
 
 	prproc = rproc->priv;
-	while(1) {
+	/* If vdev reset is issued, then stop polling */
+	node = metal_list_first(&rproc->vdevs);
+	if (!node) {
+		metal_err("failed to get rproc_vdev node\n");
+		return -EINVAL;
+	}
+
+	rproc_vdev = metal_container_of(node,
+					struct remoteproc_virtio,
+					node);
+	rpmsg_vdev = rproc_vdev->vdev.priv;
+	if (!rpmsg_vdev) {
+		metal_err("failed to get rpmsg_vdev\n");
+		return -ENODEV;
+	}
+	if (!rpmsg_vdev->vdev) {
+		metal_err("failed to get virtio device\n");
+		return -ENODEV;
+	}
+	do {
 #ifdef RPMSG_NO_IPI
 		if (metal_io_read32(prproc->kick_io, 0)) {
 			ret = remoteproc_get_notification(rproc,
 							  RSC_NOTIFY_ID_ANY);
 			if (ret)
 				return ret;
-			break;
 		}
 		(void)flags;
 #else /* !RPMSG_NO_IPI */
@@ -438,12 +461,18 @@ int platform_poll(void *priv)
 							  RSC_NOTIFY_ID_ANY);
 			if (ret)
 				return ret;
-			break;
 		}
-		system_suspend();
 		metal_irq_restore_enable(flags);
+		system_suspend();
 #endif /* RPMSG_NO_IPI */
-	}
+
+		ret = virtio_get_status(rpmsg_vdev->vdev, &vdev_status);
+		if (ret) {
+			metal_err("failed to get vdev status %d\n", ret);
+			return ret;
+		}
+	} while (vdev_status);
+
 	return 0;
 }
 
