@@ -187,8 +187,8 @@ in the remoteproc trace buffer depending on the Hardware.
 Demo 1: rpmsg-client-sample device
 ==================================
 
-Principle
------------
+Demo 1 Principle
+----------------
 
   This demo is automatically run when the co-processor firmware is started. It confirms that the rpmsg
   and virtio protocols are working properly. The Zephyr requests the creation of the
@@ -220,13 +220,13 @@ Associated traces
 Demo 2: rpmsg-tty device
 ========================
 
-Principle
----------
+Demo 2 Principle
+----------------
 
   This channel allows to create a /dev/ttyRPMSGx for terminal based communication with Zephyr.
 
-Demo
-----
+Demo 2 Instructions
+-------------------
 
 1. Check presence of the /dev/ttyRPMSG0
 
@@ -273,8 +273,8 @@ Demo
 Demo 3: dynamic creation/release of a rpmsg-tty device
 ======================================================
 
-Principle
----------
+Demo 3 Principle
+----------------
 
   This demo is based on the rpmsg_ctrl IOCtrls:
 
@@ -283,8 +283,8 @@ Principle
 * RPMSG_RELEASE_DEV_IOCTL: release the local rpmsg device and to send a name service destroy
   announcement to the remote processor
 
-Demo
-----
+Demo 3 Instructions
+-------------------
 
 1. Prerequisite
 
@@ -428,13 +428,13 @@ Demo
 Demo 4: rpmsg-char device
 =========================
 
-Principle
----------
+Demo 4 Principle
+----------------
 
   This channel allows to create a /dev/rpmsgX for character device based communication with Zephyr.
 
-Demo
-----
+Demo 4 Instructions
+-------------------
 
 1. Prerequisite
 
@@ -484,8 +484,8 @@ Demo
 Demo 5: Multi endpoints demo using rpmsg-ctrl device
 ====================================================
 
-Principle
----------
+Demo 5 Principle
+----------------
 
   Use the rpmsg_ctrl RPMSG_CREATE_EPT_IOCTL IoCtrl to instantiate endpoints on Linux side. Theses
   endpoints will not be associated to a channel but will communicate with a predefined remote proc
@@ -493,8 +493,8 @@ Principle
   endpoint with a prefixed address 0x1 has been created. When it receives a message it re-sends a the
   message to the Linux sender endpoint, prefixed by "from ept 0x0001:"
 
-Demo
-----
+Demo 5 Instructions
+-------------------
 
 1. Prerequisite
 
