@@ -1,4 +1,5 @@
 AMD RPU Baremetal System Port
+=============================
 
 This directory holds the minimal OS layer that lets the remote IRQ
 shared-memory demo run without an RTOS on the AMD RPU.
