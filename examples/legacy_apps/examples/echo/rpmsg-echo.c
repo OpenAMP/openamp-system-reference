@@ -72,7 +72,7 @@ int rpmsg_echo_app(struct rpmsg_device *rdev, void *priv)
 			       rpmsg_service_unbind);
 	if (ret) {
 		LPERROR("Failed to create endpoint.\r\n");
-		return -1;
+		return ret;
 	}
 
 	metal_log(METAL_LOG_NOTICE,
@@ -118,17 +118,21 @@ int __attribute__((weak)) main(int argc, char *argv[])
 
 	LPRINTF("Starting application...\r\n");
 
-	rpdev = platform_create_rpmsg_vdev(platform, 0,
-					   VIRTIO_DEV_DEVICE,
-					   NULL, NULL);
-	if (!rpdev) {
-		LPERROR("Failed to create rpmsg virtio device.\r\n");
-		ret = -1;
-	} else {
-		rpmsg_echo_app(rpdev, platform);
-		platform_release_rpmsg_vdev(rpdev, platform);
+	/* keep repeating application until it fails */
+	do {
 		ret = 0;
-	}
+		rpdev = platform_create_rpmsg_vdev(platform, 0,
+						   VIRTIO_DEV_DEVICE,
+						   NULL, NULL);
+		if (!rpdev) {
+			LPERROR("Failed to create rpmsg virtio device.\r\n");
+			ret = -1;
+		} else {
+			ret = rpmsg_echo_app(rpdev, platform);
+			platform_release_rpmsg_vdev(rpdev, platform);
+		}
+		LPRINTF("Creating vdev devices again\r\n");
+	} while (!ret);
 
 	LPRINTF("Stopping application...\r\n");
 	platform_cleanup(platform);
