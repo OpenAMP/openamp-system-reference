@@ -388,7 +388,6 @@ static inline int ipi_irq_handler(int vect_id, void *priv)
 int platform_init(struct channel_s *ch)
 {
 	struct metal_init_params metal_param = XLNX_PLATFORM_METAL_INIT_PARAMS;
-	struct metal_io_region *io = NULL;
 	int ret;
 
 	enable_caches();
@@ -430,23 +429,24 @@ int platform_init(struct channel_s *ch)
 	}
 
 	/* wipe pending interrupts */
-	io = metal_device_io_region(ipi_dev, 0);
-	if (!io) {
+	ch->ipi_io = metal_device_io_region(ipi_dev, 0);
+	if (!ch->ipi_io) {
 		metal_err("REMOTE: Failed to map io region for %s.\n", ipi_dev->name);
 	} else {
 		/* disable IPI interrupt */
-		metal_io_write32(io, XIPIPSU_IDR_OFFSET, IPI_MASK);
+		metal_io_write32(ch->ipi_io, XIPIPSU_IDR_OFFSET, IPI_MASK);
 		/* clear old IPI interrupt */
-		metal_io_write32(io, XIPIPSU_ISR_OFFSET, IPI_MASK);
+		metal_io_write32(ch->ipi_io, XIPIPSU_ISR_OFFSET, IPI_MASK);
 	}
 
-	ch->ipi_io = io;
 	ch->ipi_mask = IPI_MASK;
+	if (!ch->ipi_io)
+		return -ENODEV;
 
 	/* disable IPI interrupt */
-	metal_io_write32(io, XIPIPSU_IDR_OFFSET, IPI_MASK);
+	metal_io_write32(ch->ipi_io, XIPIPSU_IDR_OFFSET, IPI_MASK);
 	/* clear old IPI interrupt */
-	metal_io_write32(io, XIPIPSU_ISR_OFFSET, IPI_MASK);
+	metal_io_write32(ch->ipi_io, XIPIPSU_ISR_OFFSET, IPI_MASK);
 	/* Get the IPI IRQ from the opened IPI device */
 	ch->irq_vector_id = (intptr_t)ipi_dev->irq_info;
 	/* Register IPI irq handler */
@@ -485,6 +485,8 @@ int platform_init(struct channel_s *ch)
 
 void platform_cleanup(struct channel_s *ch)
 {
+	metal_io_write32(ch->ipi_io, XIPIPSU_IDR_OFFSET, ch->ipi_mask);
+	metal_irq_disable(ch->irq_vector_id);
 	metal_irq_unregister(ch->irq_vector_id);
 	memset(&ch, 0, sizeof(ch));
 
