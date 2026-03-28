@@ -17,6 +17,8 @@
 #include "xil_printf.h"
 
 struct channel_s {
+	struct metal_io_region *host_to_remote_desc_io; /* host to remote descriptors */
+	struct metal_io_region *remote_to_host_desc_io; /* remote to host descriptors */
 	struct metal_io_region *ipi_io; /* IPI metal i/o region */
 	struct metal_io_region *shm_io; /* Shared memory metal i/o region */
 	struct metal_io_region *ttc_io; /* TTC metal i/o region */

@@ -34,8 +34,6 @@
 #define DEFAULT_PAGE_SHIFT (-1UL)
 #define DEFAULT_PAGE_MASK  (-1UL)
 
-#define SHM_TOTAL_SIZE SHM0_DESC_SIZE + SHM1_DESC_SIZE + SHM_PAYLOAD_SIZE
-
 /* Possible to control metal log build time */
 #ifndef XLNX_METAL_LOG_LEVEL
 #define XLNX_METAL_LOG_LEVEL METAL_LOG_INFO
@@ -57,16 +55,18 @@ extern struct metal_irq_controller xlnx_irq_cntr;
 
 const metal_phys_addr_t metal_phys[] = {
 	IPI_BASE_ADDR, /**< base IPI address */
-	SHM0_DESC_BASE, /**< shared memory base address */
+	SHM0_DESC_BASE, /**< host to remote descriptor base address */
+	SHM1_DESC_BASE, /**< remote to host descriptor base address */
+	SHM_PAYLOAD_BASE, /**< shared payload base address */
 	TTC_BASE_ADDR, /**< base TTC address */
 };
 
 /*
- * Define the metal device table for IPI, shared memory, and TTC devices. Linux
- * uses device trees, but FreeRTOS relies on libmetal structures to describe the
- * peripherals. Because these devices are memory mapped, we must expose their
- * regions and interrupt information. The FreeRTOS memory map is flat, so the
- * virtual and physical addresses are identical.
+ * Define the metal device table for IPI, descriptor, payload, and TTC devices.
+ * Linux uses device trees, but remote relies on libmetal structures to
+ * describe the peripherals. Because these devices are memory mapped, we must
+ * expose their regions and interrupt information. The FreeRTOS memory map is
+ * flat, so the virtual and physical addresses are identical.
  */
 static struct metal_device metal_dev_table[] = {
 	{
@@ -90,15 +90,57 @@ static struct metal_device metal_dev_table[] = {
 		.irq_info = (void *)IPI_IRQ_VECT_ID,
 	},
 	{
-		/* Shared memory management device */
-		.name = SHM_DEV_NAME,
+		/* Host to remote descriptor device */
+		.name = SHM0_DESC_DEV_NAME,
 		.bus = NULL,
 		.num_regions = 1,
 		.regions = {
 			{
 				.virt = (void *)SHM0_DESC_BASE,
 				.physmap = &metal_phys[1],
-				.size = SHM_TOTAL_SIZE,
+				.size = SHM0_DESC_SIZE,
+				.page_shift = DEFAULT_PAGE_SHIFT,
+				.page_mask = DEFAULT_PAGE_MASK,
+				.mem_flags = NORM_SHARED_NCACHE |
+						PRIV_RW_USER_RW,
+				.ops = {NULL},
+			}
+		},
+		.node = {NULL},
+		.irq_num = 0,
+		.irq_info = NULL,
+	},
+	{
+		/* Remote to host descriptor device */
+		.name = SHM1_DESC_DEV_NAME,
+		.bus = NULL,
+		.num_regions = 1,
+		.regions = {
+			{
+				.virt = (void *)SHM1_DESC_BASE,
+				.physmap = &metal_phys[2],
+				.size = SHM1_DESC_SIZE,
+				.page_shift = DEFAULT_PAGE_SHIFT,
+				.page_mask = DEFAULT_PAGE_MASK,
+				.mem_flags = NORM_SHARED_NCACHE |
+						PRIV_RW_USER_RW,
+				.ops = {NULL},
+			}
+		},
+		.node = {NULL},
+		.irq_num = 0,
+		.irq_info = NULL,
+	},
+	{
+		/* Shared payload device */
+		.name = SHM_DEV_NAME,
+		.bus = NULL,
+		.num_regions = 1,
+		.regions = {
+			{
+				.virt = (void *)SHM_PAYLOAD_BASE,
+				.physmap = &metal_phys[3],
+				.size = SHM_PAYLOAD_SIZE,
 				.page_shift = DEFAULT_PAGE_SHIFT,
 				.page_mask = DEFAULT_PAGE_MASK,
 				.mem_flags = NORM_SHARED_NCACHE |
@@ -118,7 +160,7 @@ static struct metal_device metal_dev_table[] = {
 		.regions = {
 			{
 				.virt = (void *)TTC_BASE_ADDR,
-				.physmap = &metal_phys[2],
+				.physmap = &metal_phys[4],
 				.size = 0x1000,
 				.page_shift = DEFAULT_PAGE_SHIFT,
 				.page_mask = DEFAULT_PAGE_MASK,
@@ -136,6 +178,8 @@ static struct metal_device metal_dev_table[] = {
  * Extern global variables
  */
 struct metal_device *ipi_dev = NULL;
+static struct metal_device *host_to_remote_desc_dev = NULL;
+static struct metal_device *remote_to_host_desc_dev = NULL;
 struct metal_device *shm_dev = NULL;
 struct metal_device *ttc_dev = NULL;
 
@@ -249,10 +293,27 @@ int open_metal_devices(void)
 {
 	int ret;
 
-	/* Open shared memory device */
+	/* Open payload device */
 	ret = metal_device_open(BUS_NAME, SHM_DEV_NAME, &shm_dev);
 	if (ret) {
 		metal_err("REMOTE: Failed to open device %s.\n", SHM_DEV_NAME);
+		goto out;
+	}
+
+	/* Open descriptor devices */
+	ret = metal_device_open(BUS_NAME, SHM0_DESC_DEV_NAME,
+				&host_to_remote_desc_dev);
+	if (ret) {
+		metal_err("REMOTE: Failed to open device %s.\n",
+			  SHM0_DESC_DEV_NAME);
+		goto out;
+	}
+
+	ret = metal_device_open(BUS_NAME, SHM1_DESC_DEV_NAME,
+				&remote_to_host_desc_dev);
+	if (ret) {
+		metal_err("REMOTE: Failed to open device %s.\n",
+			  SHM1_DESC_DEV_NAME);
 		goto out;
 	}
 
@@ -282,9 +343,16 @@ out:
  */
 void close_metal_devices(void)
 {
-	/* Close shared memory device */
+	/* Close payload device */
 	if (shm_dev)
 		metal_device_close(shm_dev);
+
+	/* Close descriptor devices */
+	if (host_to_remote_desc_dev)
+		metal_device_close(host_to_remote_desc_dev);
+
+	if (remote_to_host_desc_dev)
+		metal_device_close(remote_to_host_desc_dev);
 
 	/* Close IPI device */
 	if (ipi_dev)
@@ -459,13 +527,37 @@ int platform_init(struct channel_s *ch)
 	 * Buffer clean up. Do this at start in case a
 	 * previous run was stopped midway.
 	 */
-	io = metal_device_io_region(shm_dev, 0);
-	if (!io)
-		metal_err("REMOTE: Failed to map io region for %s.\n", shm_dev->name);
-	else
-		metal_io_block_set(io, 0, 0, SHM_TOTAL_SIZE);
+	ch->host_to_remote_desc_io = metal_device_io_region(host_to_remote_desc_dev, 0);
+	if (!ch->host_to_remote_desc_io) {
+		metal_err("REMOTE: Failed to map io region for %s.\n",
+			  host_to_remote_desc_dev->name);
+		return -ENODEV;
+	}
 
-	ch->shm_io = io;
+	ch->remote_to_host_desc_io = metal_device_io_region(remote_to_host_desc_dev, 0);
+	if (!ch->remote_to_host_desc_io) {
+		metal_err("REMOTE: Failed to map io region for %s.\n",
+			  remote_to_host_desc_dev->name);
+		return -ENODEV;
+	}
+
+	ch->shm_io = metal_device_io_region(shm_dev, 0);
+	if (!ch->shm_io) {
+		metal_err("REMOTE: Failed to map io region for %s.\n", shm_dev->name);
+		return -ENODEV;
+	}
+
+	ret = metal_io_block_set(ch->host_to_remote_desc_io, 0, 0, SHM0_DESC_SIZE);
+	if (ret < 0)
+		return ret;
+
+	ret = metal_io_block_set(ch->remote_to_host_desc_io, 0, 0, SHM1_DESC_SIZE);
+	if (ret < 0)
+		return ret;
+
+	ret = metal_io_block_set(ch->shm_io, 0, 0, SHM_PAYLOAD_SIZE);
+	if (ret < 0)
+		return ret;
 
 	/* Get TTC IO region */
 	ch->ttc_io = metal_device_io_region(ttc_dev, 0);
@@ -473,12 +565,6 @@ int platform_init(struct channel_s *ch)
 		metal_err("REMOTE: Failed to map io region for %s.\n", ttc_dev->name);
 		return -ENODEV;
 	}
-
-	/* Get the IPI IRQ from the opened IPI device */
-	ch->irq_vector_id = (intptr_t)ipi_dev->irq_info;
-
-	/* Register IPI irq handler */
-	metal_irq_register(ch->irq_vector_id, ipi_irq_handler, ch);
 
 	return 0;
 }
