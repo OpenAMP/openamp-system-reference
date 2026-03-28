@@ -14,6 +14,7 @@
 #include <pm_api_sys.h>
 #include <xil_cache.h>
 #include <xil_exception.h>
+#include <xil_mpu.h>
 #include <xipipsu.h>
 #include <xparameters.h>
 #include <xreg_cortexr5.h>
@@ -523,6 +524,23 @@ int platform_init(struct channel_s *ch)
 	metal_irq_enable(ch->irq_vector_id);
 	metal_io_write32(ch->ipi_io, XIPIPSU_IER_OFFSET, ch->ipi_mask);
 
+#ifdef VERSAL_NET
+	/*
+	 * Temporary workaround for a Cortex-R52 MPU overlapping-region bug. When
+	 * libmetal remaps shared-memory windows inside the default DDR region, the
+	 * overlap adjustment can mis-split the existing DDR MPU entry. Configure the
+	 * full DDR range with the libmetal attributes up front to avoid that path.
+	 *
+	 * Remove this once the R52 MPU overlapping-region handling is fixed.
+	 *
+	 * Note this only applies for R52 based systems - hence the ifdef.
+	 */
+	if (Xil_SetMPURegion(0x0U, 0x7FFFFFFFU,
+			     NORM_SHARED_NCACHE | PRIV_RW_USER_RW) != XST_SUCCESS) {
+		metal_err("REMOTE: Failed to set MPU Region for 0x%x.\n", 0x0U);
+		return -EINVAL;
+	}
+#endif
 	/*
 	 * Buffer clean up. Do this at start in case a
 	 * previous run was stopped midway.
