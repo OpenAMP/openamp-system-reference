@@ -4,21 +4,21 @@
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
-#include <xparameters.h>
+#include "common.h"
+
+#include <metal/device.h>
+#include <metal/irq.h>
+#include <metal/io.h>
+#include <metal/sys.h>
+
+#include <pm_api_sys.h>
 #include <xil_cache.h>
 #include <xil_exception.h>
-#include <xstatus.h>
-#include <xscugic.h>
-#include <xreg_cortexr5.h>
 #include <xipipsu.h>
-#include <pm_api_sys.h>
-
-#include <metal/io.h>
-#include <metal/device.h>
-#include <metal/sys.h>
-#include <metal/irq.h>
-
-#include "common.h"
+#include <xparameters.h>
+#include <xreg_cortexr5.h>
+#include <xscugic.h>
+#include <xstatus.h>
 
 #ifdef STDOUT_IS_16550
  #include <xuartns550_l.h>

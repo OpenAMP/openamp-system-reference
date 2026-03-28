@@ -12,10 +12,9 @@
  * Shared-memory partitioning details are documented in machine/remote/amd_rpu/
  * README.md.
  */
+#include "common.h"
 
 #include <stdbool.h>
-
-#include "common.h"
 
 #define BUF_SIZE_MAX 512
 #define SHUTDOWN "shutdown"
