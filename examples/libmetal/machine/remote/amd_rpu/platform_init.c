@@ -592,7 +592,7 @@ void platform_cleanup(struct channel_s *ch)
 	metal_io_write32(ch->ipi_io, XIPIPSU_IDR_OFFSET, ch->ipi_mask);
 	metal_irq_disable(ch->irq_vector_id);
 	metal_irq_unregister(ch->irq_vector_id);
-	memset(&ch, 0, sizeof(ch));
+	memset(ch, 0, sizeof(*ch));
 
 	/* Close libmetal devices which have been opened */
 	close_metal_devices();
