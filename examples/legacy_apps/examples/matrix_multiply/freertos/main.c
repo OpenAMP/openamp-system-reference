@@ -46,18 +46,18 @@ static void rpmsg_listen_task(__attribute__((unused)) void *arg)
 
 	LPRINTF("Starting application...\r\n");
 
-	while (1) {
+	do {
 		rpdev = platform_create_rpmsg_vdev(platform, 0,
 						   VIRTIO_DEV_DEVICE,
 						   NULL, NULL);
 		if (!rpdev) {
 			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			break;
+			ret = -EINVAL;
+		} else {
+			ret = rpmsg_matrix_app(rpdev, platform);
+			platform_release_rpmsg_vdev(rpdev, platform);
 		}
-
-		rpmsg_matrix_app(rpdev, platform);
-		platform_release_rpmsg_vdev(rpdev, platform);
-	}
+	} while (!ret);
 
 	LPRINTF("Stopping application...\r\n");
 	platform_cleanup(platform);

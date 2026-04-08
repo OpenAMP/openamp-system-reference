@@ -105,7 +105,7 @@ int rpmsg_matrix_app(struct rpmsg_device *rdev, void *priv)
 			       rpmsg_service_unbind);
 	if (ret) {
 		LPERROR("Failed to create endpoint.\r\n");
-		return -1;
+		return ret;
 	}
 
 	metal_log(METAL_LOG_NOTICE,
@@ -113,16 +113,12 @@ int rpmsg_matrix_app(struct rpmsg_device *rdev, void *priv)
 		   RPMSG_SERVICE_NAME, lept.addr, lept.dest_addr);
 
 	LPRINTF("Waiting for events...\r\n");
-	while(1) {
-		platform_poll(priv);
-		/* we got a shutdown request, exit */
-		if (shutdown_req) {
-			break;
-		}
-	}
+	ret = platform_poll(priv);
+	if (ret)
+		metal_err("platform_poll failed with error %d\n", ret);
 	rpmsg_destroy_ept(&lept);
 
-	return 0;
+	return ret;
 }
 
 /*-----------------------------------------------------------------------------*
@@ -140,20 +136,23 @@ int __attribute__((weak)) main(int argc, char *argv[])
 	ret = platform_init(argc, argv, &platform);
 	if (ret) {
 		LPERROR("Failed to initialize platform.\r\n");
-		ret = -1;
-	} else {
+		return ret;
+	}
+
+	do {
 		rpdev = platform_create_rpmsg_vdev(platform, 0,
 						   VIRTIO_DEV_DEVICE,
 						   NULL, NULL);
 		if (!rpdev) {
 			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			ret = -1;
+			ret = -EINVAL;
 		} else {
-			rpmsg_matrix_app(rpdev, platform);
+			ret = rpmsg_matrix_app(rpdev, platform);
 			platform_release_rpmsg_vdev(rpdev, platform);
-			ret = 0;
 		}
+		LPRINTF("creating rpmsg vdev devices again\r\n");
 	}
+	while (!ret);
 
 	LPRINTF("Stopping application...\r\n");
 	platform_cleanup(platform);

@@ -32,22 +32,23 @@ int main(int argc, char *argv[])
 		return ret;
 	}
 
-
 	LPRINTF("openamp lib version: %s\n", openamp_version());
 	LPRINTF("libmetal lib version: %s\n", metal_ver());
 	LPRINTF("Starting application...\r\n");
 
-	rpdev = platform_create_rpmsg_vdev(platform, 0,
-					   VIRTIO_DEV_DEVICE,
-					   NULL, NULL);
-	if (!rpdev) {
-		LPERROR("Failed to create rpmsg virtio device.\r\n");
-		ret = -1;
-	} else {
-		rpmsg_echo_app(rpdev, platform);
-		platform_release_rpmsg_vdev(rpdev, platform);
-		ret = 0;
-	}
+	/* support repeate attach-detach by recreating virtio devices on vdev reset */
+	do {
+		rpdev = platform_create_rpmsg_vdev(platform, 0,
+						   VIRTIO_DEV_DEVICE,
+						   NULL, NULL);
+		if (!rpdev) {
+			LPERROR("Failed to create rpmsg virtio device.\r\n");
+			ret = -1;
+		} else {
+			ret = rpmsg_echo_app(rpdev, platform);
+			platform_release_rpmsg_vdev(rpdev, platform);
+		}
+	} while (!ret);
 
 	LPRINTF("Stopping application...\r\n");
 	platform_cleanup(platform);

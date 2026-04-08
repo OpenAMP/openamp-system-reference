@@ -48,18 +48,21 @@ static void rpmsg_listen_task(void *arg)
 	LPRINTF("libmetal lib version: %s\n", metal_ver());
 	LPRINTF("Starting application...\r\n");
 
-	while (1) {
+	do {
 		rpdev = platform_create_rpmsg_vdev(platform, 0,
 						   VIRTIO_DEV_DEVICE,
 						   NULL, NULL);
 		if (!rpdev) {
 			LPERROR("Failed to create rpmsg virtio device.\r\n");
-			break;
+			ret = 0;
 		} else {
-			rpmsg_echo_app(rpdev, platform);
+			ret = rpmsg_echo_app(rpdev, platform);
+			if (ret)
+				metal_err("rpmsg_echo_app failed with err, %d\n",
+					  ret);
 			platform_release_rpmsg_vdev(rpdev, platform);
 		}
-	}
+	} while (!ret);
 
 	LPRINTF("Stopping application...\r\n");
 	platform_cleanup(platform);

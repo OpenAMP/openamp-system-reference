@@ -72,7 +72,7 @@ int rpmsg_echo_app(struct rpmsg_device *rdev, void *priv)
 			       rpmsg_service_unbind);
 	if (ret) {
 		LPERROR("Failed to create endpoint.\r\n");
-		return -1;
+		return ret;
 	}
 
 	metal_log(METAL_LOG_NOTICE,
@@ -82,16 +82,12 @@ int rpmsg_echo_app(struct rpmsg_device *rdev, void *priv)
 	metal_dbg("RPMsg device TX buffer size: %#x\r\n", rpmsg_get_tx_buffer_size(&lept));
 	metal_dbg("RPMsg device RX buffer size: %#x\r\n", rpmsg_get_rx_buffer_size(&lept));
 
-	while(1) {
-		platform_poll(priv);
-		/* we got a shutdown request, exit */
-		if (shutdown_req) {
-			break;
-		}
-	}
+	ret = platform_poll(priv);
+	if (ret)
+		metal_err("platform poll failed err = %d\n", ret);
 	rpmsg_destroy_ept(&lept);
 
-	return 0;
+	return ret;
 }
 
 /*-----------------------------------------------------------------------------*
@@ -122,17 +118,21 @@ int __attribute__((weak)) main(int argc, char *argv[])
 
 	LPRINTF("Starting application...\r\n");
 
-	rpdev = platform_create_rpmsg_vdev(platform, 0,
-					   VIRTIO_DEV_DEVICE,
-					   NULL, NULL);
-	if (!rpdev) {
-		LPERROR("Failed to create rpmsg virtio device.\r\n");
-		ret = -1;
-	} else {
-		rpmsg_echo_app(rpdev, platform);
-		platform_release_rpmsg_vdev(rpdev, platform);
+	/* keep repeating application until it fails */
+	do {
 		ret = 0;
-	}
+		rpdev = platform_create_rpmsg_vdev(platform, 0,
+						   VIRTIO_DEV_DEVICE,
+						   NULL, NULL);
+		if (!rpdev) {
+			LPERROR("Failed to create rpmsg virtio device.\r\n");
+			ret = -1;
+		} else {
+			ret = rpmsg_echo_app(rpdev, platform);
+			platform_release_rpmsg_vdev(rpdev, platform);
+		}
+		LPRINTF("Creating vdev devices again\r\n");
+	} while (!ret);
 
 	LPRINTF("Stopping application...\r\n");
 	platform_cleanup(platform);

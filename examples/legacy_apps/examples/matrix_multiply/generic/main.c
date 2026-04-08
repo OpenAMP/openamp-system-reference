@@ -36,17 +36,19 @@ int main(int argc, char *argv[])
 	LPRINTF("libmetal lib version: %s\n", metal_ver());
 	LPRINTF("Starting application...\r\n");
 
-	rpdev = platform_create_rpmsg_vdev(platform, 0,
-					   VIRTIO_DEV_DEVICE,
-					   NULL, NULL);
-	if (!rpdev) {
-		LPERROR("Failed to create rpmsg virtio device.\r\n");
-		ret = -1;
-	} else {
-		rpmsg_matrix_app(rpdev, platform);
-		platform_release_rpmsg_vdev(rpdev, platform);
-		ret = 0;
-	}
+	/* on vdev reset, recreate rpmsg devices */
+	do {
+		rpdev = platform_create_rpmsg_vdev(platform, 0,
+						   VIRTIO_DEV_DEVICE,
+						   NULL, NULL);
+		if (!rpdev) {
+			LPERROR("Failed to create rpmsg virtio device.\r\n");
+			ret = -EINVAL;
+		} else {
+			ret = rpmsg_matrix_app(rpdev, platform);
+			platform_release_rpmsg_vdev(rpdev, platform);
+		}
+	} while (!ret);
 
 	LPRINTF("Stopping application...\r\n");
 	platform_cleanup(platform);
