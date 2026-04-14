@@ -179,8 +179,6 @@ extern struct metal_irq_controller xlnx_irq_cntr;
 int system_interrupt_register(int int_num, void (*intr_handler)(void *),
 			      void *data);
 
-int xlnx_hw_to_bsp_irq(int sys_irq);
-
 /* RPMsg virtio shared buffer pool */
 static struct rpmsg_virtio_shm_pool shpool;
 
@@ -262,10 +260,6 @@ static int xlnx_machine_init(void)
 	}
 
 	metal_dbg("kick device irq id = %d\n", (int)kick_device.irq_info);
-
-	/* convert from HW irq number to bsp specific irq */
-	kick_device.irq_info =
-		(void *)xlnx_hw_to_bsp_irq((int)kick_device.irq_info);
 
 	ret = system_interrupt_register((int)kick_device.irq_info,
 					xlnx_irq_isr,
