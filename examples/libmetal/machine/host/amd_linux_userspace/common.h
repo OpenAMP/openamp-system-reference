@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 
+#include "irq_shmem_demo.h"
 #include "config.h"
 
 /*
@@ -113,16 +114,17 @@ static inline void update_stat(struct metal_stat *pst, uint64_t val)
 		pst->st_max = val;
 }
 
-struct channel_s {
-	struct metal_io_region *host_to_remote_desc_io; /* host to remote descriptors */
-	struct metal_io_region *remote_to_host_desc_io; /* remote to host descriptors */
-	struct metal_io_region *ipi_io; /* IPI metal i/o region */
-	struct metal_io_region *shm_io; /* Shared memory metal i/o region */
-	struct metal_io_region *ttc_io; /* TTC metal i/o region */
+struct channel_machine_ctx_s {
 	atomic_flag remote_nkicked; /* IRQ kick flag */
-	uint32_t ipi_mask; /* RPU IPI mask */
-	int irq_vector_id; /* IRQ number. */
 };
+
+static inline struct channel_machine_ctx_s *channel_machine_ctx(struct channel_s *ch)
+{
+	metal_assert(ch);
+	metal_assert(ch->machine_ctx);
+
+	return (struct channel_machine_ctx_s *)ch->machine_ctx;
+}
 
 /**
  * @ AMD RPU port for IRQ notification

@@ -17,8 +17,9 @@ add_subdirectory (system)
 set (_elf_name ${DEMO})
 
 set (source_dirs ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/system/${PROJECT_SYSTEM})
+collector_list (_inc_dirs PROJECT_INC_DIRS)
 link_directories(${source_dirs})
-include_directories(${source_dirs})
+include_directories(${source_dirs} ${_inc_dirs})
 
 collector_list (_deps PROJECT_LIB_DEPS)
 
@@ -60,5 +61,6 @@ target_link_libraries(${_elf_name}.elf PRIVATE
   -Wl,--start-group ${_deps} -Wl,--end-group)
 
 target_compile_definitions(${_elf_name}.elf PUBLIC ${USER_COMPILE_DEFINITIONS})
+target_include_directories(${_elf_name}.elf PUBLIC ${_inc_dirs})
 target_include_directories(${_elf_name}.elf PUBLIC ${USER_INCLUDE_DIRECTORIES})
 install (TARGETS ${_elf_name}.elf RUNTIME DESTINATION bin)

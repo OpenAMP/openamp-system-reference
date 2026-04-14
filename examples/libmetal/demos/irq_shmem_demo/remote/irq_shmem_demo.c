@@ -40,9 +40,12 @@
  */
 int demo(void *arg)
 {
+	struct channel_machine_ctx_s ch_machine_s = {0};
 	unsigned long tx_data_offset, rx_data_offset;
 	unsigned long tx_addr_offset, rx_addr_offset;
-	struct channel_s ch_s = {0x0};
+	struct channel_s ch_s = {
+		.machine_ctx = &ch_machine_s,
+	};
 	struct channel_s *ch = &ch_s;
 	bool platform_ready = false;
 	uint32_t rx_count, rx_avail;

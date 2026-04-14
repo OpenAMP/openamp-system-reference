@@ -94,6 +94,7 @@ out:
 static int irq_isr(int vect_id, void *priv)
 {
 	struct channel_s *ch = (struct channel_s *)priv;
+	struct channel_machine_ctx_s *machine = channel_machine_ctx(ch);
 	struct metal_io_region *ipi_io = ch->ipi_io;
 	uint32_t ipi_mask = IPI_MASK;
 	uint64_t val = 1;
@@ -105,7 +106,7 @@ static int irq_isr(int vect_id, void *priv)
 	val = metal_io_read32(ipi_io, IPI_ISR_OFFSET);
 	if (val & ipi_mask) {
 		metal_io_write32(ipi_io, IPI_ISR_OFFSET, ipi_mask);
-		atomic_flag_clear(&ch->remote_nkicked);
+		atomic_flag_clear(&machine->remote_nkicked);
 		return METAL_IRQ_HANDLED;
 	}
 	return METAL_IRQ_NOT_HANDLED;
@@ -117,6 +118,7 @@ int platform_init(struct channel_s *ch)
 	int ret;
 
 	metal_assert(ch);
+	metal_assert(ch->machine_ctx);
 
 	ret = metal_init(&init_param);
 	if (ret) {
@@ -125,8 +127,8 @@ int platform_init(struct channel_s *ch)
 	}
 
 	/* initialize remote_nkicked */
-	ch->remote_nkicked = (atomic_flag)ATOMIC_FLAG_INIT;
-	atomic_flag_test_and_set(&ch->remote_nkicked);
+	channel_machine_ctx(ch)->remote_nkicked = (atomic_flag)ATOMIC_FLAG_INIT;
+	atomic_flag_test_and_set(&channel_machine_ctx(ch)->remote_nkicked);
 
 	ret = open_metal_devices();
 	if (ret) {
