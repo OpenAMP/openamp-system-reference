@@ -21,6 +21,10 @@
 
 #include "platform_info_common.h"
 
+#if !defined(_AMD_GENERATED_) && !defined(SHARED_MEM_SIZE)
+#define SHARED_MEM_SIZE 0x100000UL
+#endif /* !SHARED_MEM_SIZE */
+
 #if defined __cplusplus
 extern "C" {
 #endif
