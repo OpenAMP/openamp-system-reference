@@ -14,18 +14,22 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
+#include "irq_shmem_demo.h"
 #include "portmacro.h"
 
 #include "xil_printf.h"
 
-struct channel_s {
-	struct metal_io_region *ipi_io; /* IPI metal i/o region */
-	struct metal_io_region *shm_io; /* Shared memory metal i/o region */
-	struct metal_io_region *ttc_io; /* TTC metal i/o region */
-	uint32_t ipi_mask; /* RPU IPI mask */
+struct channel_machine_ctx_s {
 	TaskHandle_t task; /* Demo task handle used for suspend/resume. */
-	int irq_vector_id; /* IRQ number. */
 };
+
+static inline struct channel_machine_ctx_s *channel_machine_ctx(struct channel_s *ch)
+{
+	metal_assert(ch);
+	metal_assert(ch->machine_ctx);
+
+	return (struct channel_machine_ctx_s *)ch->machine_ctx;
+}
 
 /**
  * @brief amp_os_init() - set OS specific information in the channel
@@ -40,7 +44,7 @@ static inline int amp_os_init(struct channel_s *ch, void *arg)
 	metal_assert(ch);
 	metal_assert(task);
 
-	ch->task = task;
+	channel_machine_ctx(ch)->task = task;
 
 	return 0;
 }
@@ -69,11 +73,12 @@ static inline void system_suspend(struct channel_s *ch)
 static inline void system_resume(struct channel_s *ch)
 {
 	BaseType_t yield_required;
+	struct channel_machine_ctx_s *machine = channel_machine_ctx(ch);
 
 	metal_assert(ch);
-	metal_assert(ch->task);
+	metal_assert(machine->task);
 
-	yield_required = xTaskResumeFromISR(ch->task);
+	yield_required = xTaskResumeFromISR(machine->task);
 	portYIELD_FROM_ISR(yield_required);
 }
 

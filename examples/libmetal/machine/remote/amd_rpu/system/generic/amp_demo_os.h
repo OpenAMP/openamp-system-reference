@@ -14,16 +14,20 @@
 #include <metal/cpu.h>
 #include <metal/sys.h>
 
+#include "irq_shmem_demo.h"
 #include "xil_printf.h"
 
-struct channel_s {
-	struct metal_io_region *ipi_io; /* IPI metal i/o region */
-	struct metal_io_region *shm_io; /* Shared memory metal i/o region */
-	struct metal_io_region *ttc_io; /* TTC metal i/o region */
-	uint32_t ipi_mask;              /* RPU IPI mask */
-	int irq_vector_id;              /* IRQ number. */
+struct channel_machine_ctx_s {
 	atomic_flag irq_pending;        /* Lightweight wait primitive. */
 };
+
+static inline struct channel_machine_ctx_s *channel_machine_ctx(struct channel_s *ch)
+{
+	metal_assert(ch);
+	metal_assert(ch->machine_ctx);
+
+	return (struct channel_machine_ctx_s *)ch->machine_ctx;
+}
 
 /**
  * @brief amp_os_init() - initialize bare-metal rendezvous primitives
@@ -40,10 +44,10 @@ static inline int amp_os_init(struct channel_s *ch, void *arg)
 
 	metal_assert(ch);
 
-	ch->irq_pending = (atomic_flag)ATOMIC_FLAG_INIT;
+	channel_machine_ctx(ch)->irq_pending = (atomic_flag)ATOMIC_FLAG_INIT;
 
 	/* Start in the "waiting" state until the first interrupt arrives. */
-	(void)atomic_flag_test_and_set(&ch->irq_pending);
+	(void)atomic_flag_test_and_set(&channel_machine_ctx(ch)->irq_pending);
 
 	return 0;
 }
@@ -60,7 +64,7 @@ static inline void system_suspend(struct channel_s *ch)
 {
 	metal_assert(ch);
 
-	while (atomic_flag_test_and_set(&ch->irq_pending)) {
+	while (atomic_flag_test_and_set(&channel_machine_ctx(ch)->irq_pending)) {
 		metal_asm volatile("wfi");
 	}
 }
@@ -73,7 +77,7 @@ static inline void system_suspend(struct channel_s *ch)
 static inline void system_resume(struct channel_s *ch)
 {
 	metal_assert(ch);
-	atomic_flag_clear(&ch->irq_pending);
+	atomic_flag_clear(&channel_machine_ctx(ch)->irq_pending);
 }
 
 #endif /* __AMP_DEMO_OS_H__ */

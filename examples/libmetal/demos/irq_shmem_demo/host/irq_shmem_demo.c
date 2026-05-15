@@ -130,6 +130,7 @@ static inline void dump_buffer(void *buf, unsigned int len)
  */
 static int irq_shmem_echo(struct channel_s *ch)
 {
+	struct channel_machine_ctx_s *machine = channel_machine_ctx(ch);
 	struct metal_io_region *desc_host_to_remote = ch->host_to_remote_desc_io;
 	struct metal_io_region *desc_remote_to_host = ch->remote_to_host_desc_io;
 	struct metal_io_region *payload_io = ch->shm_io;
@@ -241,7 +242,7 @@ static int irq_shmem_echo(struct channel_s *ch)
 
 	while (i != PKGS_TOTAL) {
 
-		wait_for_notified(&ch->remote_nkicked);
+		wait_for_notified(&machine->remote_nkicked);
 
 		rx_avail = metal_io_read32(desc_remote_to_host, rx_avail_offset);
 		while (i != rx_avail) {
@@ -376,7 +377,10 @@ out:
 
 int main(void)
 {
-	struct channel_s ch_s;
+	struct channel_machine_ctx_s ch_machine_s = {0};
+	struct channel_s ch_s = {
+		.machine_ctx = &ch_machine_s,
+	};
 	int ret = 0;
 
 	/* platform_init will set the OS agnostic channel information */
