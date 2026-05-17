@@ -79,8 +79,8 @@ int rpmsg_echo_app(struct rpmsg_device *rdev, void *priv)
 		  "created rpmsg channel %s, src=0x%x, dst=0x%x\r\n",
 		   RPMSG_SERVICE_NAME, lept.addr, lept.dest_addr);
 
-	metal_dbg("RPMsg device TX buffer size: %#x\r\n", rpmsg_get_tx_buffer_size(&lept));
-	metal_dbg("RPMsg device RX buffer size: %#x\r\n", rpmsg_get_rx_buffer_size(&lept));
+	metal_info("RPMsg device TX buffer size: %d\r\n", rpmsg_get_tx_buffer_size(&lept));
+	metal_info("RPMsg device RX buffer size: %d\r\n", rpmsg_get_rx_buffer_size(&lept));
 
 	while(1) {
 		platform_poll(priv);

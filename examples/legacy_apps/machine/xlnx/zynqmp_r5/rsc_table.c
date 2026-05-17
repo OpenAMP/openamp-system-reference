@@ -56,14 +56,23 @@ struct remote_resource_table __resource resources = {
 	 },
 
 	/* Virtio device entry */
-	{
-	 RSC_VDEV, VIRTIO_ID_RPMSG_, 31, RPMSG_VDEV_DFEATURES, 0, 0, 0,
-	 NUM_VRINGS, {0, 0},
-	 },
+	.rpmsg_vdev = {
+		RSC_VDEV, VIRTIO_ID_RPMSG_, 31, RPMSG_VDEV_DFEATURES, 0,
+		/* vdev config space len */
+		sizeof(struct rpmsg_virtio_config), 0,
+		NUM_VRINGS, {0, 0},
+	},
 
 	/* Vring rsc entry - part of vdev rsc entry */
 	{RING_TX, VRING_ALIGN, VRING_SIZE, 1, 0},
 	{RING_RX, VRING_ALIGN, VRING_SIZE, 2, 0},
+	/* vdev config space */
+	.vdev_config = {
+		.version = 1,
+		.h2r_buf_size = 256, /* host to remote, i.e. tx for host */
+		.r2h_buf_size = 128, /* remote to host, i.e. rx for host */
+		.split_shpool = false
+	},
 };
 
 struct remote_resource_table_metadata __resource_metadata resources_metadata = {

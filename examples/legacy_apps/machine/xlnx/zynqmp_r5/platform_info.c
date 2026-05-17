@@ -362,6 +362,7 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 			   void (*rst_cb)(struct virtio_device *vdev),
 			   rpmsg_ns_bind_cb ns_bind_cb)
 {
+	struct remote_resource_table *rsc_tbl;
 	struct remoteproc *rproc = platform;
 	struct rpmsg_virtio_device *rpmsg_vdev;
 	struct virtio_device *vdev;
@@ -370,6 +371,8 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 	int ret;
 
 	restore_initial_rsc_table();
+
+	rsc_tbl = rproc->rsc_table;
 
 	rpmsg_vdev = metal_allocate_memory(sizeof(*rpmsg_vdev));
 	if (!rpmsg_vdev)
@@ -394,9 +397,9 @@ platform_create_rpmsg_vdev(void *platform, unsigned int vdev_index,
 
 	metal_dbg("initializing rpmsg vdev\r\n");
 	/* RPMsg virtio device can set shared buffers pool argument to NULL */
-	ret =  rpmsg_init_vdev(rpmsg_vdev, vdev, ns_bind_cb,
-			       shbuf_io,
-			       &shpool);
+	ret =  rpmsg_init_vdev_with_config(rpmsg_vdev, vdev, ns_bind_cb,
+					   shbuf_io, &shpool,
+					   &rsc_tbl->vdev_config);
 	if (ret) {
 		metal_err("failed rpmsg_init_vdev\r\n");
 		goto err2;
