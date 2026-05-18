@@ -9,7 +9,7 @@
 #include <metal/version.h>
 #include <openamp/open_amp.h>
 #include <openamp/version.h>
-#include "platform_info.h"
+#include "platform_info_common.h"
 #include "rpmsg-echo.h"
 #include <stdio.h>
 

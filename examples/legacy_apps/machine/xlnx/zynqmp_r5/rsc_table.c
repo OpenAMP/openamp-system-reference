@@ -37,9 +37,11 @@
 #endif /* RING_RX */
 #define VRING_SIZE                  256
 
-#define NUM_TABLE_ENTRIES           1
+#define NUM_TABLE_ENTRIES           2
+#define RSC_TRACE_SZ		    4096
 
 static struct remote_resource_table *initial_resources;
+static char rsc_trace_buf[RSC_TRACE_SZ];
 
 struct remote_resource_table __resource resources = {
 	/* Version */
@@ -51,19 +53,27 @@ struct remote_resource_table __resource resources = {
 	{0, 0,},
 
 	/* Offsets of rsc entries */
-	{
-	 offsetof(struct remote_resource_table, rpmsg_vdev),
-	 },
+	.offset[0] = offsetof(struct remote_resource_table, rpmsg_vdev),
+	.offset[1] = offsetof(struct remote_resource_table, rsc_trace),
 
 	/* Virtio device entry */
-	{
-	 RSC_VDEV, VIRTIO_ID_RPMSG_, 31, RPMSG_VDEV_DFEATURES, 0, 0, 0,
-	 NUM_VRINGS, {0, 0},
-	 },
+	.rpmsg_vdev = {
+		RSC_VDEV, VIRTIO_ID_RPMSG_, 31, RPMSG_VDEV_DFEATURES, 0, 0, 0,
+		NUM_VRINGS, {0, 0},
+	},
 
 	/* Vring rsc entry - part of vdev rsc entry */
 	{RING_TX, VRING_ALIGN, VRING_SIZE, 1, 0},
 	{RING_RX, VRING_ALIGN, VRING_SIZE, 2, 0},
+
+	/* trace buffer for logs, accessible via debugfs */
+	.rsc_trace = {
+		.type =		RSC_TRACE,
+		.da =		(uint32_t)rsc_trace_buf,
+		.len =		sizeof(rsc_trace_buf),
+		.reserved =	0,
+		.name =		"r5_trace",
+	},
 };
 
 struct remote_resource_table_metadata __resource_metadata resources_metadata = {
@@ -73,6 +83,12 @@ struct remote_resource_table_metadata __resource_metadata resources_metadata = {
 	.rsc_tbl_size = sizeof(resources),
 	.rsc_tbl = (uintptr_t)&resources
 };
+
+char *get_rsc_trace_info(uint32_t *len)
+{
+	*len = sizeof(rsc_trace_buf);
+	return rsc_trace_buf;
+}
 
 void *get_resource_table (int rsc_id, int *len)
 {

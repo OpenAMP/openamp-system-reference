@@ -15,7 +15,7 @@
 #include <openamp/version.h>
 #include <metal/alloc.h>
 #include <metal/version.h>
-#include "platform_info.h"
+#include "platform_info_common.h"
 #include "rpmsg-echo.h"
 
 #define SHUTDOWN_MSG	0xEF56A55A

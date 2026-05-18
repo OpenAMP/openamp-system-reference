@@ -34,6 +34,7 @@ struct remote_resource_table {
 	struct fw_rsc_vdev rpmsg_vdev;
 	struct fw_rsc_vdev_vring rpmsg_vring0;
 	struct fw_rsc_vdev_vring rpmsg_vring1;
+	struct fw_rsc_trace rsc_trace;
 }__attribute__((packed, aligned(0x100)));
 
 struct remote_resource_table_metadata {
@@ -44,6 +45,7 @@ struct remote_resource_table_metadata {
 	const uintptr_t rsc_tbl;
 }__attribute__((packed));
 
+char *get_rsc_trace_info(uint32_t *len);
 void *get_resource_table (int rsc_id, int *len);
 void free_resource_table (void);
 void restore_initial_rsc_table (void);
