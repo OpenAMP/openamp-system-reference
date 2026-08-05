@@ -14,10 +14,10 @@
 #include <metal/cpu.h>
 #include <metal/irq.h>
 
+#include <stdint.h>
 #include <stdio.h>
 
 #include "irq_shmem_demo.h"
-#include "config.h"
 
 /*
  * Apply this snippet to the device tree in an overlay so that Linux userspace can
