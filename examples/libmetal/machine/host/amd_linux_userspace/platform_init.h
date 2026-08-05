@@ -7,7 +7,7 @@
 #ifndef __PLATFORM_INIT_H__
 #define __PLATFORM_INIT_H__
 
-#include "platform_init.h"
+struct channel_s;
 
 int platform_init(struct channel_s *ch);
 void platform_cleanup(struct channel_s *ch);
