@@ -109,10 +109,6 @@
 #endif /* XPAR_CPU_ID */
 #endif /* !SHARED_MEM_PA */
 
-#ifndef SHARED_MEM_SIZE
-#define SHARED_MEM_SIZE 0x100000UL
-#endif /* !SHARED_MEM_SIZE */
-
 #ifndef SHARED_BUF_OFFSET
 #define SHARED_BUF_OFFSET 0x8000UL
 #endif /* !SHARED_BUF_OFFSET */
