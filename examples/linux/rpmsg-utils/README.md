@@ -1,5 +1,5 @@
-rpmsgexport
-===========
+rpmsg_export_ept
+================
 
 rpmsg_export_ept implements RPMSG_CREATE_EPT_IOCTL for usage in udev rules to
 automatically create endpoint devices as remoteproc devices are booted.
@@ -25,16 +25,16 @@ SUBSYSTEM=="rpmsg", KERNEL=="rpmsg[0-9]*", \
 		    SYMLINK+="rpmsg/$attr{rpmsg_name}/$attr{name}"
 ```
 
-eptdestroy
-==========
+rpmsg_destroy_ept
+=================
 "rpmsg_destroy_ept" implements RPMSG_DESTROY_EPT_IOCTL to destroy an endpoint created by the RPMSG_CREATE_EPT_IOCTL.
 
-ping
-====
+rpmsg_ping
+==========
 "rpmsg_ping" is a test binary that opens a rpmsg chardev for an echo test (write a pattern and wait an answer)
 
-rpmsgexportdev
-==============
+rpmsg_export_dev
+================
 "rpmsg_export_dev" implements RPMSG_CREATE_DEV_IOCTL to create local RPMsg device
 as remoteproc devices are booted.
 Adding option -d as first argument release the device using RPMSG_RELEASE_DEV_IOCTL control.
