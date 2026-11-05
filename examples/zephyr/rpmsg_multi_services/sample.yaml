@@ -9,6 +9,7 @@ tests:
           - imx8mp_evk/mimx8ml8/adsp
           - kv260_r5
           - stm32mp157c_dk2
+          - stm32mp257f_ev1/stm32mp257fxx/m33
           - versal2_rpu
           - versal_rpu
           - versalnet_rpu

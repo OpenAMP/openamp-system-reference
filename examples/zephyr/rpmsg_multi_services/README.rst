@@ -21,6 +21,7 @@ Tested on board:
 
 * `stm32mp157c_dk2 <https://docs.zephyrproject.org/latest/boards/st/stm32mp157c_dk2/doc/stm32mp157_dk2.html>`_
 * stm32mp157f_dk2 (use stm32mp157c_dk2 for the zephyr build)
+* `stm32mp257f_ev1/stm32mp257fxx/m33 <https://docs.zephyrproject.org/latest/boards/st/stm32mp257f_ev1/doc/index.html>`_
 * `kv260_r5        <https://docs.zephyrproject.org/latest/boards/amd/kv260_r5/doc/index.html>`_
 * `imx8mp_evk/mimx8ml8/adsp        <https://docs.zephyrproject.org/latest/boards/nxp/imx8mp_evk/doc/index.html>`_
 * `imx95_evk/mimx9596/m7        <https://docs.zephyrproject.org/latest/boards/nxp/imx95_evk/doc/index.html>`_
