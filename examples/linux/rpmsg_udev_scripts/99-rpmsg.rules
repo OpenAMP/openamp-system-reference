@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (C) 2026, Advanced Micro Devices, Inc.
+
+# Skip rpmsg_ctrl and rpmsg_ns devices by name using GOTO
+SUBSYSTEM=="rpmsg", ACTION=="add", \
+    KERNEL=="virtio*.rpmsg_ctrl.0.0", GOTO="rpmsg_end"
+
+SUBSYSTEM=="rpmsg", ACTION=="add", \
+    KERNEL=="virtio*.rpmsg_ns.53.53", GOTO="rpmsg_end"
+
+SUBSYSTEM=="rpmsg", ACTION=="add", \
+    KERNEL=="rpmsg_ctrl[0-9]*", GOTO="rpmsg_end"
+
+SUBSYSTEM=="rpmsg", ACTION=="remove", \
+    KERNEL=="rpmsg_ctrl[0-9]*", GOTO="rpmsg_end"
+
+# rpmsg endpoint creation rule
+SUBSYSTEM=="rpmsg", KERNEL=="rpmsg[0-9]*", ACTION=="add", \
+        GROUP="rpmsg", MODE="0660", \
+        RUN+="/usr/bin/rpmsg_add_ept_symlink.sh %k", GOTO="rpmsg_end"
+
+# rpmsg endpoint creation rule
+SUBSYSTEM=="rpmsg", KERNEL=="rpmsg[0-9]*", ACTION=="remove", \
+        RUN+="/usr/bin/rpmsg_remove_ept_symlink.sh %k", GOTO="rpmsg_end"
+
+# rpmsg channel creation rule
+SUBSYSTEM=="rpmsg", ACTION=="add", RUN+="/usr/bin/rpmsg_create_channel.sh %k"
+
+# ttyRPMSG device permission rule
+SUBSYSTEM=="tty", KERNEL=="ttyRPMSG[0-9]*", ACTION=="add", \
+    GROUP="rpmsg", MODE="0660"
+
+LABEL="rpmsg_end"
