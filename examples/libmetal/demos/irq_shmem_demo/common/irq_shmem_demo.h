@@ -25,6 +25,9 @@ struct channel_s {
 	void *machine_ctx; /* Platform- or OS-private channel state */
 	uint32_t ipi_mask; /* RPU IPI mask */
 	int irq_vector_id; /* IRQ number. */
+	uint32_t desc0_size; /* host to remote descriptor region size */
+	uint32_t desc1_size; /* remote to host descriptor region size */
+	uint32_t shm_payload_size; /* shared payload buffer size */
 };
 
 #endif /* __IRQ_SHMEM_DEMO_H__ */

@@ -7,6 +7,7 @@
 #ifndef __COMMON_H__
 #define __COMMON_H__
 
+#include <stdint.h>
 #include <sys/types.h>
 
 #include <metal/atomic.h>
@@ -17,7 +18,6 @@
 #include <stdio.h>
 
 #include "irq_shmem_demo.h"
-#include "config.h"
 
 /*
  * Apply this snippet to the device tree in an overlay so that Linux userspace can
