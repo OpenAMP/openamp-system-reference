@@ -149,6 +149,54 @@ The static executable is emitted at
 ## [Shared Memory Layout](../../../demos/irq_shmem_demo/README.md#shared-memory-layout)
 Shared buffer map used by both sides of the demo.
 
+## MicroBlaze-V Remote
+The same host runs the demo with a MicroBlaze-V remote in the PL
+(`../../remote/amd_mbv`). Notifications then go through the host's interface
+of an AXI Mailbox instead of an IPI: `notify_pl_mbox.c` instead of
+`notify_ipi.c`. The host binary is the same; nothing is configured at build
+time.
+
+At startup the host uses the mailbox when a UIO device named
+`libmetal-mbox` exists and the IPI otherwise. The mailbox device comes from
+the MicroBlaze-V device tree overlay, which Lopper generates from the system
+device tree (SDT) of the design and the MicroBlaze-V libmetal domain YAMLs
+(for example `versal-2ve-2vm-mbv-multidomain-base.yaml` and
+`versal-2ve-2vm-mbv-libmetal-overlay.yaml` in Lopper's `demos/openamp/inputs`)
+with `openamp cortexa78_0 linux_dt`, then `xlnx_overlay_pl_dt`. The overlay
+reuses the base device tree's `libmetal-data`, `libmetal-desc0` and
+`libmetal-desc1` carveouts, so the MicroBlaze-V and the RPU remotes cannot
+run at the same time. Load the overlay and the PL image to run with the
+MicroBlaze-V, and remove them to run with an RPU again.
+
+The mailbox UIO node needs its interrupt, for example:
+
+```dts
+mbv_mailbox_S0@b2060000 {
+        reg = <0x0 0xb2060000 0x0 0x10000>;
+        interrupt-parent = <&imux>;
+        interrupts = <0x0 0x6a 0x4>;
+        compatible = "uio";
+        linux,uio-name = "libmetal-mbox";
+};
+```
+
+### Latency profiling (optional)
+`-DMBV_PROFILE=ON` measures the PL Mailbox notification latency in both
+directions with a shared AXI Timer, and prints, when the demo ends, the
+minimum, average and maximum of:
+
+- host->remote notify: host write to remote read;
+- remote read->reply: remote read to remote reply;
+- remote->host notify: remote reply to host read;
+- round trip.
+
+The remote returns its timestamps with each reply, so it must be built
+with `MBV_PROFILE` too (see `../../remote/amd_mbv/README.md`, which also
+lists what the design and the domain YAMLs need). The host opens the timer
+as the UIO device `libmetal-mbv-timer` and takes its clock from the node's
+`clock-frequency` property; it fails at startup without them. See
+`pl_mbox_profile.h`.
+
 ## Troubleshooting
 - **Hangs waiting for notification**: ensure the host IPI UIO node exposes
   `libmetal,uio-ipi-bitmask`, that the host process can write to the IPI

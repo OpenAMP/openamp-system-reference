@@ -1,0 +1,31 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+/* Generated from the Lopper-generated DEMO_CFG_FILE. */
+
+/* libmetal devices the remote registers on its generic bus */
+#define BUS_NAME "@BUS_NAME@"
+#define SHM0_DESC_DEV_NAME "@SHM0_DESC_DEV_NAME@"
+#define SHM1_DESC_DEV_NAME "@SHM1_DESC_DEV_NAME@"
+#define SHM_DEV_NAME "@SHM_DEV_NAME@"
+#define MBOX_DEV_NAME "@MBOX_DEV_NAME@"
+
+/* Shared memory, as the MicroBlaze-V addresses it */
+#define SHM0_DESC_BASE @SHM0_DESC_BASE@UL
+#define SHM0_DESC_SIZE @SHM0_DESC_SIZE@UL
+#define SHM1_DESC_BASE @SHM1_DESC_BASE@UL
+#define SHM1_DESC_SIZE @SHM1_DESC_SIZE@UL
+#define SHM_PAYLOAD_BASE @SHM_PAYLOAD_BASE@UL
+#define SHM_PAYLOAD_SIZE @SHM_PAYLOAD_SIZE@UL
+#define SHM_PAYLOAD_HALF_SIZE @SHM_PAYLOAD_HALF_SIZE@UL
+#define SHM_PAYLOAD_RX_OFFSET @SHM_PAYLOAD_RX_OFFSET@UL
+#define SHM_PAYLOAD_TX_OFFSET @SHM_PAYLOAD_TX_OFFSET@UL
+
+/* MicroBlaze-V interface of the AXI Mailbox */
+#define MBOX_BASE_ADDR @MBOX_BASE_ADDR@UL
+#define MBOX_SIZE @MBOX_SIZE@UL
+
+/* Shared AXI Timer of the optional MBV_PROFILE latency profiling */
+#cmakedefine TIMER_BASE_ADDR @TIMER_BASE_ADDR@UL
+
+#endif /* CONFIG_H */
