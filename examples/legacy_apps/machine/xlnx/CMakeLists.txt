@@ -49,7 +49,11 @@ if (_vitis_build)
 
   string(TOUPPER "${CMAKE_MACHINE}" _soc)
 
-  if(_soc STREQUAL "ZYNQMP" OR _soc STREQUAL "VERSAL")
+  if(CMAKE_SYSTEM_PROCESSOR STREQUAL "microblaze_riscv")
+      set_property(GLOBAL PROPERTY SOC "MBV")
+      set(MACHINE "mbv32")
+      set(PROJECT_MACHINE "mbv32")
+  elseif(_soc STREQUAL "ZYNQMP" OR _soc STREQUAL "VERSAL")
       set_property(GLOBAL PROPERTY SOC "${_soc}")
   else()
       message(FATAL_ERROR "Unsupported CMAKE_MACHINE: ${CMAKE_MACHINE}")
@@ -131,7 +135,22 @@ if (_vitis_build)
   collect(PROJECT_LIB_DEPS xiltimer)
   collect(PROJECT_LIB_DEPS xilstandalone)
 
-  if (EXISTS ${LINKER_METADATA_FILE})
+  if (SOC STREQUAL "MBV")
+    # The MicroBlaze-V image layout comes only from the linker metadata
+    # baremetallinker_xlnx generates from the domain description: the
+    # memories, the CODE and DATA regions and the stack and heap sizes.
+    if (NOT EXISTS "${LINKER_METADATA_FILE}")
+      message(FATAL_ERROR
+        "mbv32: no Lopper linker metadata (*Example.cmake) in "
+        "${CMAKE_SOURCE_DIR}; see mbv32/README.md")
+    endif()
+    include(${LINKER_METADATA_FILE})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/linker_files/lscript_mb_riscv.ld.in
+                   "${CMAKE_CURRENT_SOURCE_DIR}/lscript.ld")
+    set (_linker_script "${CMAKE_CURRENT_SOURCE_DIR}/lscript.ld")
+    set (_linker_opt "-T\"${_linker_script}\"")
+    message("Using LINKER_METADATA_FILE: ${LINKER_METADATA_FILE}")
+  elseif (EXISTS ${LINKER_METADATA_FILE})
     include(${LINKER_METADATA_FILE})
     list (GET LOPPER_CFG_LINKERS ${soc_index} linker_in)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/linker_files/${linker_in} "${CMAKE_CURRENT_SOURCE_DIR}/lscript.ld")
@@ -142,7 +161,7 @@ if (_vitis_build)
     set (_linker_opt "-Wl,--defsym,_rsc_table=${RSC_TABLE} -T\"${_linker_script}\"")
   else()
     message(FATAL_ERROR "Could not find linker meta data file")
-  endif(EXISTS ${LINKER_METADATA_FILE})
+  endif()
 
   collector_list (_deps PROJECT_LIB_DEPS)
 
