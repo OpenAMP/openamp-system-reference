@@ -3,6 +3,7 @@
 include (${APPS_ROOT_DIR}/../legacy_apps/cmake/options.cmake)
 
 collect (APP_COMMON_SOURCES platform_init.c)
+collect (APP_COMMON_SOURCES notify_ipi.c)
 collect (APP_INC_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set (_elf_name ${DEMO})

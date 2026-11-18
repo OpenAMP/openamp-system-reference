@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2025 - 2026, Advanced Micro Devices, Inc.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -18,6 +18,7 @@
 #include <stdio.h>
 
 #include "irq_shmem_demo.h"
+#include "notify.h"
 
 /*
  * Apply this snippet to the device tree in an overlay so that Linux userspace can
@@ -27,14 +28,6 @@
  *         status = "okay";
  * };
  */
-
-/* IPI registers offset */
-#define IPI_TRIG_OFFSET 0x0  /* IPI trigger reg offset */
-#define IPI_OBS_OFFSET  0x4  /* IPI observation reg offset */
-#define IPI_ISR_OFFSET  0x10 /* IPI interrupt status reg offset */
-#define IPI_IMR_OFFSET  0x14 /* IPI interrupt mask reg offset */
-#define IPI_IER_OFFSET  0x18 /* IPI interrupt enable reg offset */
-#define IPI_IDR_OFFSET  0x1C /* IPI interrupt disable reg offset */
 
 /* TTC counter offsets */
 #define XTTCPS_CLK_CNTRL_OFFSET 0x0  /* TTC counter clock control reg offset */
@@ -116,6 +109,7 @@ static inline void update_stat(struct metal_stat *pst, uint64_t val)
 
 struct channel_machine_ctx_s {
 	atomic_flag remote_nkicked; /* IRQ kick flag */
+	const struct notify_ops *notify; /* notification backend */
 };
 
 static inline struct channel_machine_ctx_s *channel_machine_ctx(struct channel_s *ch)
@@ -127,12 +121,10 @@ static inline struct channel_machine_ctx_s *channel_machine_ctx(struct channel_s
 }
 
 /**
- * @ AMD RPU port for IRQ notification
- * @param[in] irq_io - IO region used for IRQ kick
+ * @brief irq_kick() - notify the remote through the notification backend
  */
 static inline void irq_kick(struct channel_s *ch)
 {
-	metal_assert(ch);
-	metal_io_write32(ch->ipi_io, IPI_TRIG_OFFSET, ch->ipi_mask);
+	channel_machine_ctx(ch)->notify->kick(ch);
 }
 #endif /* __COMMON_H__ */

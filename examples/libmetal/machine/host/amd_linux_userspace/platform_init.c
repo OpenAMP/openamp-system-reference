@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025, Advanced Micro Devices, Inc.
+ * Copyright (C) 2025 - 2026, Advanced Micro Devices, Inc.
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
@@ -17,9 +17,10 @@
 #include <metal/sys.h>
 #include <metal/time.h>
 #include "common.h"
+#include "platform_init.h"
 
 static struct metal_device *rpu_to_apu_desc_dev, *apu_to_rpu_desc_dev;
-static struct metal_device *shm_dev, *ipi_dev, *ttc_dev;
+static struct metal_device *shm_dev, *notify_dev, *ttc_dev;
 
 #define APP_UIO_BUS_NAME "uio"
 #define APP_UIO_CLASS_PATH "/sys/class/uio"
@@ -27,10 +28,12 @@ static struct metal_device *shm_dev, *ipi_dev, *ttc_dev;
 #define APP_SHM_DEV_NAME "libmetal-data"
 #define APP_SHM0_DESC_DEV_NAME "libmetal-desc0"
 #define APP_SHM1_DESC_DEV_NAME "libmetal-desc1"
-#define APP_IPI_DEV_NAME "libmetal-ipi"
 #define APP_TTC_DEV_NAME "libmetal-timer"
 
-#define APP_IPI_REMOTE_MASK_PROP "libmetal,uio-ipi-bitmask"
+/* Notification backends, in the order platform_init() looks for them. */
+static const struct notify_ops *const notify_backends[] = {
+	&notify_ipi_ops,
+};
 
 static int app_read_first_line(const char *path, char *output, size_t output_len)
 {
@@ -60,7 +63,7 @@ static int app_read_first_line(const char *path, char *output, size_t output_len
 	return 0;
 }
 
-static int app_uio_find_path(const char *uio_name, char *uio_path, size_t uio_path_len)
+int app_uio_find_path(const char *uio_name, char *uio_path, size_t uio_path_len)
 {
 	DIR *dir;
 	struct dirent *entry;
@@ -113,7 +116,7 @@ out:
 	return ret;
 }
 
-static int app_uio_read_dt_u32(const char *uio_name, const char *property, uint32_t *value)
+int app_uio_read_dt_u32(const char *uio_name, const char *property, uint32_t *value)
 {
 	unsigned char raw[4];
 	char uio_path[PATH_MAX];
@@ -147,6 +150,35 @@ static int app_uio_read_dt_u32(const char *uio_name, const char *property, uint3
 
 	return 0;
 }
+
+/**
+ * @brief find_notify_backend() - select the notification backend
+ *        The first backend whose UIO device exists is used.
+ *
+ * @return the backend, or NULL if no notification device exists.
+ */
+static const struct notify_ops *find_notify_backend(void)
+{
+	char uio_path[PATH_MAX];
+	size_t i;
+	int ret;
+
+	for (i = 0; i < sizeof(notify_backends) / sizeof(notify_backends[0]); i++) {
+		ret = app_uio_find_path(notify_backends[i]->dev_name, uio_path,
+					sizeof(uio_path));
+		if (!ret)
+			return notify_backends[i];
+		if (ret != -ENODEV) {
+			metal_err("HOST: Failed to look up UIO device %s: %d.\n",
+				  notify_backends[i]->dev_name, ret);
+			return NULL;
+		}
+	}
+
+	metal_err("HOST: No notification UIO device found.\n");
+	return NULL;
+}
+
 /**
  * @brief close_metal_devices() - close libmetal devices
  *        This function closes all the libmetal devices which have
@@ -161,10 +193,10 @@ static void close_metal_devices(void)
 		shm_dev = NULL;
 	}
 
-	/* Close IPI device */
-	if (ipi_dev) {
-		metal_device_close(ipi_dev);
-		ipi_dev = NULL;
+	/* Close notification device */
+	if (notify_dev) {
+		metal_device_close(notify_dev);
+		notify_dev = NULL;
 	}
 
 	/* Close TTC device */
@@ -215,13 +247,6 @@ int open_metal_devices(void)
 		goto out;
 	}
 
-	/* Open IPI device */
-	ret = metal_device_open(APP_UIO_BUS_NAME, APP_IPI_DEV_NAME, &ipi_dev);
-	if (ret) {
-		metal_err("HOST: Failed to open device %s.\n", APP_IPI_DEV_NAME);
-		goto out;
-	}
-
 	/* Open TTC device */
 	ret = metal_device_open(APP_UIO_BUS_NAME, APP_TTC_DEV_NAME, &ttc_dev);
 	if (ret) {
@@ -233,32 +258,51 @@ out:
 	return ret;
 }
 
-static int irq_isr(int vect_id, void *priv)
+/**
+ * @brief open_notify_device() - open and initialize the notification device
+ *
+ * @return 0 - succeeded, non-zero for failures.
+ */
+static int open_notify_device(struct channel_s *ch)
 {
-	struct channel_s *ch = (struct channel_s *)priv;
 	struct channel_machine_ctx_s *machine = channel_machine_ctx(ch);
-	struct metal_io_region *ipi_io = ch->ipi_io;
-	uint32_t ipi_mask = ch->ipi_mask;
-	uint64_t val = 1;
+	const struct notify_ops *notify;
+	int ret;
 
-	(void)vect_id;
+	notify = find_notify_backend();
+	if (!notify)
+		return -ENODEV;
 
-	if (!ipi_io)
-		return METAL_IRQ_NOT_HANDLED;
-	val = metal_io_read32(ipi_io, IPI_ISR_OFFSET);
-	if (val & ipi_mask) {
-		metal_io_write32(ipi_io, IPI_ISR_OFFSET, ipi_mask);
-		atomic_flag_clear(&machine->remote_nkicked);
-		return METAL_IRQ_HANDLED;
+	ret = metal_device_open(APP_UIO_BUS_NAME, notify->dev_name, &notify_dev);
+	if (ret) {
+		metal_err("HOST: Failed to open device %s.\n", notify->dev_name);
+		return ret;
 	}
-	return METAL_IRQ_NOT_HANDLED;
+
+	ch->ipi_io = metal_device_io_region(notify_dev, 0);
+	if (!ch->ipi_io) {
+		metal_err("HOST: Failed to map io region for %s.\n", notify_dev->name);
+		return -ENODEV;
+	}
+
+	/* Get the IRQ from the opened notification device */
+	ch->irq_vector_id = (intptr_t)notify_dev->irq_info;
+
+	ret = notify->init(ch);
+	if (ret) {
+		metal_err("HOST: Failed to initialize notification device %s.\n",
+			  notify->dev_name);
+		return ret;
+	}
+	machine->notify = notify;
+
+	return 0;
 }
 
 int platform_init(struct channel_s *ch)
 {
 	struct metal_init_params init_param = METAL_INIT_DEFAULTS;
 	struct channel_machine_ctx_s *machine = channel_machine_ctx(ch);
-	uint32_t ipi_mask;
 	int ret;
 
 	ret = metal_init(&init_param);
@@ -301,14 +345,6 @@ int platform_init(struct channel_s *ch)
 		goto out_close;
 	}
 
-	/* Get IPI device IO region */
-	ch->ipi_io = metal_device_io_region(ipi_dev, 0);
-	if (!ch->ipi_io) {
-		metal_err("HOST: Failed to map io region for %s.\n", ipi_dev->name);
-		ret = -ENODEV;
-		goto out_close;
-	}
-
 	/* Check before narrowing the runtime mapping sizes to channel fields. */
 	if (metal_io_region_size(ch->host_to_remote_desc_io) > UINT32_MAX ||
 	    metal_io_region_size(ch->remote_to_host_desc_io) > UINT32_MAX ||
@@ -327,14 +363,6 @@ int platform_init(struct channel_s *ch)
 		goto out_close;
 	}
 
-	ret = app_uio_read_dt_u32(APP_IPI_DEV_NAME, APP_IPI_REMOTE_MASK_PROP, &ipi_mask);
-	if (ret) {
-		metal_err("HOST: Failed to read %s for %s.\n",
-			  APP_IPI_REMOTE_MASK_PROP, APP_IPI_DEV_NAME);
-		goto out_close;
-	}
-	ch->ipi_mask = ipi_mask;
-
 	/* Get TTC IO region */
 	ch->ttc_io = metal_device_io_region(ttc_dev, 0);
 	if (!ch->ttc_io) {
@@ -343,22 +371,10 @@ int platform_init(struct channel_s *ch)
 		goto out_close;
 	}
 
-	/* Get the IPI IRQ from the opened IPI device */
-	ch->irq_vector_id = (intptr_t)ipi_dev->irq_info;
-
-	/* disable IPI interrupt */
-	metal_io_write32(ch->ipi_io, IPI_IDR_OFFSET, ch->ipi_mask);
-	/* clear old IPI interrupt */
-	metal_io_write32(ch->ipi_io, IPI_ISR_OFFSET, ch->ipi_mask);
-	/* Register IPI irq handler */
-	ret = metal_irq_register(ch->irq_vector_id, irq_isr, ch);
-	if (ret) {
-		metal_err("HOST: Failed to register IRQ handler.\n");
+	/* Open the notification device and enable its interrupt */
+	ret = open_notify_device(ch);
+	if (ret)
 		goto out_close;
-	}
-	metal_irq_enable(ch->irq_vector_id);
-	/* Enable IPI interrupt */
-	metal_io_write32(ch->ipi_io, IPI_IER_OFFSET, ch->ipi_mask);
 
 	return 0;
 
@@ -370,11 +386,12 @@ out_close:
 
 void platform_cleanup(struct channel_s *ch)
 {
-	/* disable IPI interrupt */
-	metal_io_write32(ch->ipi_io, IPI_IDR_OFFSET, ch->ipi_mask);
-	/* unregister IPI irq handler by setting the handler to 0 */
-	metal_irq_disable(ch->irq_vector_id);
-	metal_irq_unregister(ch->irq_vector_id);
+	struct channel_machine_ctx_s *machine = channel_machine_ctx(ch);
+
+	/* Disable and unregister the notification interrupt */
+	if (machine->notify)
+		machine->notify->cleanup(ch);
+	machine->notify = NULL;
 	memset(ch, 0, sizeof(*ch));
 
 	/* Close libmetal devices which have been opened */
