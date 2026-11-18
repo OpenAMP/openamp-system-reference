@@ -4,12 +4,16 @@ include (${APPS_ROOT_DIR}/../legacy_apps/cmake/options.cmake)
 
 collect (APP_COMMON_SOURCES platform_init.c)
 collect (APP_COMMON_SOURCES notify_ipi.c)
+collect (APP_COMMON_SOURCES notify_pl_mbox.c)
 collect (APP_INC_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set (_elf_name ${DEMO})
 
 collector_list  (_list PROJECT_INC_DIRS)
-include_directories (${_list} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_INCLUDE_PATH})
+# ../.. holds amd_mbv_hw.h, the mailbox register map shared with the
+# MicroBlaze-V remote.
+include_directories (${_list} ${CMAKE_CURRENT_SOURCE_DIR}
+		     ${CMAKE_CURRENT_SOURCE_DIR}/../.. ${CMAKE_INCLUDE_PATH})
 
 collector_list  (_list PROJECT_LIB_DIRS)
 link_directories (${_list})

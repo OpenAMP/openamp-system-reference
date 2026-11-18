@@ -32,6 +32,7 @@ static struct metal_device *shm_dev, *notify_dev, *ttc_dev;
 
 /* Notification backends, in the order platform_init() looks for them. */
 static const struct notify_ops *const notify_backends[] = {
+	&notify_pl_mbox_ops,
 	&notify_ipi_ops,
 };
 
