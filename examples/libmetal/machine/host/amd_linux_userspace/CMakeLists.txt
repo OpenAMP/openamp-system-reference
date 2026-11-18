@@ -5,6 +5,15 @@ include (${APPS_ROOT_DIR}/../legacy_apps/cmake/options.cmake)
 collect (APP_COMMON_SOURCES platform_init.c)
 collect (APP_COMMON_SOURCES notify_ipi.c)
 collect (APP_COMMON_SOURCES notify_pl_mbox.c)
+
+# Optional notification latency profiling of the PL Mailbox backend, with
+# a shared AXI Timer (see pl_mbox_profile.h).
+option (MBV_PROFILE "Profile PL Mailbox notification latency" OFF)
+if (MBV_PROFILE)
+  collect (APP_COMMON_SOURCES pl_mbox_profile.c)
+  add_definitions (-DMBV_PROFILE)
+endif ()
+
 collect (APP_INC_DIRS "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set (_elf_name ${DEMO})

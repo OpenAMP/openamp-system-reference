@@ -25,4 +25,7 @@
 #define MBOX_BASE_ADDR @MBOX_BASE_ADDR@UL
 #define MBOX_SIZE @MBOX_SIZE@UL
 
+/* Shared AXI Timer of the optional MBV_PROFILE latency profiling */
+#cmakedefine TIMER_BASE_ADDR @TIMER_BASE_ADDR@UL
+
 #endif /* CONFIG_H */

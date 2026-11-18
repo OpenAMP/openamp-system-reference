@@ -180,6 +180,23 @@ mbv_mailbox_S0@b2060000 {
 };
 ```
 
+### Latency profiling (optional)
+`-DMBV_PROFILE=ON` measures the PL Mailbox notification latency in both
+directions with a shared AXI Timer, and prints, when the demo ends, the
+minimum, average and maximum of:
+
+- host->remote notify: host write to remote read;
+- remote read->reply: remote read to remote reply;
+- remote->host notify: remote reply to host read;
+- round trip.
+
+The remote returns its timestamps with each reply, so it must be built
+with `MBV_PROFILE` too (see `../../remote/amd_mbv/README.md`, which also
+lists what the design and the domain YAMLs need). The host opens the timer
+as the UIO device `libmetal-mbv-timer` and takes its clock from the node's
+`clock-frequency` property; it fails at startup without them. See
+`pl_mbox_profile.h`.
+
 ## Troubleshooting
 - **Hangs waiting for notification**: ensure the host IPI UIO node exposes
   `libmetal,uio-ipi-bitmask`, that the host process can write to the IPI

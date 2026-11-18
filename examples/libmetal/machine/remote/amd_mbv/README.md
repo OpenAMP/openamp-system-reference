@@ -50,9 +50,12 @@ The addresses are as the MicroBlaze-V sees them, translated through its
 ## Build
 
 From `examples/libmetal`, with the BSP's MicroBlaze-V toolchain file and a
-standalone BSP that provides libxil, libmetal and libmetal_xlnx_extension:
+standalone BSP that provides libxil, libmetal and libmetal_xlnx_extension.
+The toolchain file finds the compiler specs through `ESW_REPO`, the
+embeddedsw tree the BSP was created from:
 
 ```sh
+export ESW_REPO=/path/to/embeddedsw
 cmake -S . -B build_remote \
   -DCMAKE_TOOLCHAIN_FILE=${BSP_DIR}/microblaze_riscv_toolchain.cmake \
   -DCMAKE_INCLUDE_PATH=${BSP_DIR}/include \
@@ -63,3 +66,26 @@ cmake -S . -B build_remote \
   -DLINKER_METADATA_FILE=$(ls $PWD/linker/*Example.cmake)
 cmake --build build_remote
 ```
+
+## Latency profiling (optional)
+
+`-DMBV_PROFILE=ON` measures the notification latency in both directions.
+The host and the remote read one shared AXI Timer: the remote timestamps
+each host notification when it reads it and each reply when it sends it,
+and returns both timestamps with the reply, as two extra mailbox words. The
+host adds its own timestamps and prints the latencies when the demo ends.
+See `../../amd_mbv_hw.h` for the word format and
+`../../host/amd_linux_userspace/pl_mbox_profile.h` for what is measured.
+
+It needs:
+
+- a PL design with an AXI Timer both the APU and the MicroBlaze-V reach;
+- `timer: <timer label>` in the libmetal relation of both domains, so the
+  generated files give the timer's address (`TIMER_BASE_ADDR`, as the
+  MicroBlaze-V sees it), and the timer exported to Linux as the UIO device
+  `libmetal-mbv-timer` (see the comments in Lopper's
+  `versal-2ve-2vm-mbv-libmetal-overlay.yaml`);
+- the host built with `-DMBV_PROFILE=ON` too.
+
+CMake fails if `MBV_PROFILE` is on and the configuration does not name a
+timer.

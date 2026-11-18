@@ -9,7 +9,8 @@
  * The host's interface of the mailbox is the UIO device "libmetal-mbox". A
  * kick writes one word, a sequence number, into the host send FIFO; the
  * remote's reply raises the host receive-threshold interrupt, delivered
- * through uio_pdrv_genirq.
+ * through uio_pdrv_genirq. With MBV_PROFILE, replies also carry the
+ * remote's timestamps (see pl_mbox_profile.h).
  */
 
 #include <errno.h>
@@ -19,6 +20,7 @@
 #include "amd_mbv_hw.h"
 #include "common.h"
 #include "notify.h"
+#include "pl_mbox_profile.h"
 
 #define APP_MBOX_DEV_NAME "libmetal-mbox"
 
@@ -44,8 +46,12 @@ static int mbox_isr(int vect_id, void *priv)
 		 * condition clears and the next word raises a new interrupt.
 		 */
 		while (!(metal_io_read32(mbox_io, MBOX_STATUS) &
-			 MBOX_STATUS_EMPTY))
-			(void)metal_io_read32(mbox_io, MBOX_RDDATA);
+			 MBOX_STATUS_EMPTY)) {
+			uint32_t word = metal_io_read32(mbox_io, MBOX_RDDATA);
+
+			if (word & MBV_PROF_REPLY)
+				mbv_prof_reply(mbox_io, word);
+		}
 	}
 
 	if (pending & MBOX_IRQ_ERR)
@@ -88,6 +94,15 @@ static int mbox_init(struct channel_s *ch)
 	metal_irq_enable(ch->irq_vector_id);
 	metal_io_write32(mbox_io, MBOX_IE, MBOX_IRQ_RTI | MBOX_IRQ_ERR);
 
+	/* No reply can arrive before the first kick, after this returns. */
+	ret = mbv_prof_init();
+	if (ret) {
+		metal_io_write32(mbox_io, MBOX_IE, 0);
+		metal_irq_disable(ch->irq_vector_id);
+		metal_irq_unregister(ch->irq_vector_id);
+		return ret;
+	}
+
 	return 0;
 }
 
@@ -97,7 +112,9 @@ static void mbox_kick(struct channel_s *ch)
 	/* The send FIFO may be full; wait for the remote to drain it. */
 	while (metal_io_read32(ch->ipi_io, MBOX_STATUS) & MBOX_STATUS_FULL)
 		metal_cpu_yield();
-	metal_io_write32(ch->ipi_io, MBOX_WRDATA, ++kick_seq);
+	++kick_seq;
+	mbv_prof_kick(kick_seq);
+	metal_io_write32(ch->ipi_io, MBOX_WRDATA, kick_seq);
 }
 
 static void mbox_cleanup(struct channel_s *ch)
@@ -107,6 +124,7 @@ static void mbox_cleanup(struct channel_s *ch)
 			 MBOX_IRQ_STI | MBOX_IRQ_RTI | MBOX_IRQ_ERR);
 	metal_irq_disable(ch->irq_vector_id);
 	metal_irq_unregister(ch->irq_vector_id);
+	mbv_prof_report(kick_seq);
 }
 
 const struct notify_ops notify_pl_mbox_ops = {

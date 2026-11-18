@@ -11,6 +11,11 @@
  * identity-mapped libmetal devices at the addresses the Lopper-generated
  * configuration gives, as the MicroBlaze-V addresses them. The mailbox
  * interrupt comes from the BSP's configuration of that mailbox.
+ *
+ * With MBV_PROFILE, the remote timestamps each host word when it reads it
+ * (t1) and each reply when it sends it (t2), from the shared AXI Timer at
+ * TIMER_BASE_ADDR, and returns both with the reply; see amd_mbv_hw.h and
+ * the host's pl_mbox_profile.h.
  */
 
 #include <stdarg.h>
@@ -24,6 +29,14 @@
 /* Single-entry physmaps on RV32 need an all-ones page shift and mask. */
 #define DEFAULT_PAGE_SHIFT (-1UL)
 #define DEFAULT_PAGE_MASK  (-1UL)
+
+#ifdef MBV_PROFILE
+#define TIMER_NOW() (*(volatile uint32_t *)(TIMER_BASE_ADDR + TIMER_TCR0))
+/* t1 of the last host words, by count; the host waits for each reply. */
+#define PROF_RX_RING 64U
+static uint32_t rx_count;
+static uint32_t rx_t1[PROF_RX_RING];
+#endif
 
 static const metal_phys_addr_t metal_phys[] = {
 	SHM0_DESC_BASE,
@@ -98,8 +111,17 @@ static void mailbox_isr(void *arg)
 	if (pending & MBOX_IRQ_RTI) {
 		/* Drain so the receive threshold can fire for the next word. */
 		while (!(metal_io_read32(mbox_io, MBOX_STATUS) &
-			 MBOX_STATUS_EMPTY))
+			 MBOX_STATUS_EMPTY)) {
 			(void)metal_io_read32(mbox_io, MBOX_RDDATA);
+#ifdef MBV_PROFILE
+			/*
+			 * Timestamp each word when it is read: words written by
+			 * the host while this loop drains the FIFO arrive after
+			 * the interrupt entry.
+			 */
+			rx_t1[++rx_count % PROF_RX_RING] = TIMER_NOW();
+#endif
+		}
 		system_resume(ch);
 	}
 
@@ -110,12 +132,28 @@ static void mailbox_isr(void *arg)
 	metal_io_write32(mbox_io, MBOX_IS, pending);
 }
 
+/* Write one word to the send FIFO, waiting for the host to make room. */
+static void mbox_put(struct metal_io_region *mbox_io, uint32_t word)
+{
+	while (metal_io_read32(mbox_io, MBOX_STATUS) & MBOX_STATUS_FULL)
+		;
+	metal_io_write32(mbox_io, MBOX_WRDATA, word);
+}
+
 void mbv_mailbox_kick(struct channel_s *ch)
 {
-	/* The send FIFO may be full; wait for the host to drain it. */
-	while (metal_io_read32(ch->ipi_io, MBOX_STATUS) & MBOX_STATUS_FULL)
-		;
-	metal_io_write32(ch->ipi_io, MBOX_WRDATA, ++tx_seq);
+	uint32_t seq = ++tx_seq;
+
+#ifdef MBV_PROFILE
+	/* The seq-th reply answers the host's seq-th word. */
+	uint32_t t2 = TIMER_NOW();
+
+	mbox_put(ch->ipi_io, (seq & MBV_PROF_SEQ_MASK) | MBV_PROF_REPLY);
+	mbox_put(ch->ipi_io, rx_t1[seq % PROF_RX_RING]);
+	mbox_put(ch->ipi_io, t2);
+#else
+	mbox_put(ch->ipi_io, seq);
+#endif
 }
 
 int platform_init(struct channel_s *ch)
@@ -126,6 +164,9 @@ int platform_init(struct channel_s *ch)
 	int ret;
 
 	tx_seq = 0;
+#ifdef MBV_PROFILE
+	rx_count = 0;
+#endif
 
 	params.log_handler = mbv_log;
 	params.log_level = METAL_LOG_INFO;

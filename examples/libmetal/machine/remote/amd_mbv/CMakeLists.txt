@@ -41,6 +41,15 @@ foreach (_var BUS_NAME SHM0_DESC_DEV_NAME SHM1_DESC_DEV_NAME SHM_DEV_NAME
   endif ()
 endforeach ()
 
+# Optional notification latency profiling with the shared AXI Timer the
+# configuration names (see README.md). Build the host with it too.
+option (MBV_PROFILE "Timestamp mailbox notifications with the shared timer" OFF)
+if (MBV_PROFILE AND (NOT DEFINED TIMER_BASE_ADDR OR TIMER_BASE_ADDR STREQUAL ""))
+  message (FATAL_ERROR
+    "amd_mbv: MBV_PROFILE needs TIMER_BASE_ADDR; name the shared timer in "
+    "the libmetal relation (see README.md)")
+endif ()
+
 amd_mbv_input (LINKER_METADATA_FILE)
 include ("${LINKER_METADATA_FILE}")
 set (_linker_script "${CMAKE_CURRENT_BINARY_DIR}/lscript.ld")
@@ -68,6 +77,9 @@ target_include_directories (${_elf_name} PRIVATE
 	${CMAKE_CURRENT_SOURCE_DIR}/../..
 	${CMAKE_CURRENT_BINARY_DIR}
 	${CMAKE_INCLUDE_PATH})
+if (MBV_PROFILE)
+  target_compile_definitions (${_elf_name} PRIVATE MBV_PROFILE=1)
+endif ()
 target_link_directories (${_elf_name} PRIVATE ${CMAKE_LIBRARY_PATH})
 target_link_libraries (${_elf_name} PRIVATE
 	-Wl,-Map=${DEMO}.map
