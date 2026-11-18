@@ -364,9 +364,47 @@ void close_metal_devices(void)
 		metal_device_close(ttc_dev);
 }
 
+#ifdef PLATFORM_ZYNQMP
+/* ZynqMP: wait for PMUFW status so failures are caught before InitFinalize */
+#define XLNX_PM_REQ_ACK REQUEST_ACK_BLOCKING
+
+/* PS UART used for this application's console, if any */
+#if defined(STDOUT_BASEADDRESS) && (STDOUT_BASEADDRESS == 0xFF000000U)
+#define XLNX_STDOUT_UART_NODE NODE_UART_0
+#elif defined(STDOUT_BASEADDRESS) && (STDOUT_BASEADDRESS == 0xFF010000U)
+#define XLNX_STDOUT_UART_NODE NODE_UART_1
+#endif
+#else
+#define XLNX_PM_REQ_ACK 0
+#endif
+
+/*
+ * Power management usage differs between SoC families:
+ *
+ * ZynqMP (PMUFW): until a master calls XPm_InitFinalize(), PMUFW keeps every
+ * slave that the PM configuration object permits for that master at full
+ * capability. When FSBL loads this RPU, PMUFW does not force it down as
+ * unused, so those holds stay in place, including DP and other FPD
+ * peripherals. They block FPD power down across APU suspend. Here the
+ * remote must request every slave it uses and then call XPm_InitFinalize().
+ *
+ * Versal, Versal Net and Versal Gen 2 (PLM): a subsystem holds a device only
+ * through requirements preallocated in its CDO or explicitly requested, so
+ * the missing InitFinalize does not hold extra devices. The NODE_DDR, UART
+ * and InitFinalize calls below are therefore ZynqMP only, because on these
+ * platforms they can break the application:
+ *  - XPm_InitFinalize() marks the subsystem finalized and runs the PLM sweep
+ *    that powers down devices not requested by any subsystem. A device this
+ *    application uses without requesting it, such as its console UART or a
+ *    device another subsystem relies on, can then be powered off.
+ *  - XPm_RequestNode() for DDR or a UART only succeeds if the subsystem's
+ *    CDO grants that device. Otherwise the request fails and initialization
+ *    aborts on a setup that works today.
+ * Enabling the same model there needs every used device to be requested
+ * and the subsystem CDO checked for each platform.
+ */
 static XStatus init_ttc(void)
 {
-	XPm_NodeStatus node_status = {0};
 	XIpiPsu_Config *ipi_cfg_ptr;
 	XIpiPsu ipi_inst;
 
@@ -389,20 +427,54 @@ static XStatus init_ttc(void)
 		return -EINVAL;
 	}
 
-	if (XPm_GetNodeStatus(TTC_NODEID, &node_status) != XST_SUCCESS) {
-		metal_err("REMOTE: XPm_GetNodeStatus failed\n");
-		return -EINVAL;
-	}
-
 	/*
-	 * If node status is 1, then TTC is powered on.
-	 * Else attempt to power on TTC.
+	 * Always request the TTC. Its current power state does not say whether
+	 * this processor holds a requirement on it, and on ZynqMP an unrequested
+	 * slave is released by XPm_InitFinalize() below.
 	 */
-	if (!node_status.status == 0 &&
-	    XPm_RequestNode(TTC_NODEID, PM_CAP_ACCESS, 100, 0) != XST_SUCCESS) {
+	if (XPm_RequestNode(TTC_NODEID, PM_CAP_ACCESS, 100,
+			    XLNX_PM_REQ_ACK) != XST_SUCCESS) {
 		metal_err("REMOTE: Attempt to power on TTC failed.\n");
 		return -EINVAL;
 	}
+
+#ifdef PLATFORM_ZYNQMP
+	/*
+	 * This application and its shared memory run from DDR. NODE_DDR is not
+	 * preallocated for the RPU in the PM configuration object, so request
+	 * it explicitly before finalizing.
+	 */
+	if (XPm_RequestNode(NODE_DDR, PM_CAP_ACCESS, 100,
+			    REQUEST_ACK_BLOCKING) != XST_SUCCESS) {
+		metal_err("REMOTE: Attempt to request DDR failed.\n");
+		return -EINVAL;
+	}
+
+#ifdef XLNX_STDOUT_UART_NODE
+	/*
+	 * Console UART. It is not preallocated for the RPU, so without this request
+	 * XPm_InitFinalize() could drop its power and clocks if Linux does not
+	 * also hold the UART.
+	 */
+	if (XPm_RequestNode(XLNX_STDOUT_UART_NODE, PM_CAP_ACCESS, 100,
+			    REQUEST_ACK_BLOCKING) != XST_SUCCESS) {
+		metal_err("REMOTE: Attempt to request console UART failed.\n");
+		return -EINVAL;
+	}
+#endif
+
+	/*
+	 * Until a master calls InitFinalize, PMUFW keeps every slave that the
+	 * PM configuration object permits for that master at full capability.
+	 * When this RPU is loaded by FSBL it is not forced down as unused, so
+	 * without this call it would keep FPD peripherals such as DP powered
+	 * across APU suspend. Release everything not explicitly requested.
+	 */
+	if (XPm_InitFinalize() != XST_SUCCESS) {
+		metal_err("REMOTE: XPm_InitFinalize failed\n");
+		return -EINVAL;
+	}
+#endif
 
 	return 0;
 }
