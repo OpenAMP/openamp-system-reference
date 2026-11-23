@@ -1,4 +1,4 @@
-# OpenAMP MicroBlaze example
+# OpenAMP MicroBlaze Example
 
 The microblaze_generic directories in OpenAMP repository provide an
 implementation of rpmsg for Xilinx MicroBlaze design
@@ -11,7 +11,7 @@ memory is not present. The MicroBlaze Vector Base Address is set to
 without performing any bus access. The design is available in the Xilinx
 Shell Archive (XSA) format at https://xilinx-wiki.atlassian.net
 
-## How to build OpenAMP echo server for the MicroBlaze design example.
+## How to Build OpenAMP Echo Server for the MicroBlaze Design Example.
 For simplicity the example is not using Inter-Processor Interrupt (IPI)
 hardware at this time and the MicroBlaze OpenAMP echo server is built
 with RPMSG_NO_IPI flag.
@@ -91,7 +91,7 @@ The OpenAMP library will be built in `build/usr/local/lib` directory,
 headers will be built in `build/usr/local/include` directory, and the
 application executable will be built in `build/usr/local/bin` directory.
 
-## How to build OpenAMP Linux Userspace echo Client for ZynqMP MPSoC
+## How to Build OpenAMP Linux Userspace Echo Client for ZynqMP MPSoC
 
 To test the MicroBlaze echo server we use an rpmsg-echo-ping client from
 Linux running on the Application Processing Unit (APU) in PS. To run both

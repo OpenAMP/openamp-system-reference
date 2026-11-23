@@ -1,4 +1,4 @@
-# Demo: echo test
+# Demo: Echo Test
 
   This demo uses the Linux kernel rpmsg framework to send various size of data buffer to remote
   processor and validates integrity of received buffer from remote processor.
@@ -9,7 +9,7 @@
 
   Board: ZynqMP Zcu102
 
-  ## Remote Processor firmware (image_echo_test)
+  ## Remote Processor Firmware (image_echo_test)
 
   * Remote processor firmware for Xilinx ZynqMP cortex-r5 platform based on: [rpmsg-echo.c](https://github.com/OpenAMP/open-amp/blob/main/apps/examples/echo/rpmsg-echo.c)
 
@@ -21,35 +21,35 @@
 
   * More information is provided here: [Xilinx Wiki page for OpenAMP](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841718/OpenAMP)
 
-  ## Run the demo
+  ## Run the Demo
 
   Assume all the binaries are board specific.
 
   ```shell
-  # Specify remote processor firmware to be loaded.
+  # Specify Remote Processor Firmware to Be Loaded.
   echo image_echo_test > /sys/class/remoteproc/remoteproc0/firmware
 
-  # Load and start target firmware onto remote processor
+  # Load and Start Target Firmware Onto Remote Processor
   echo start > /sys/class/remoteproc/remoteproc0/state
 
-  # check remote processor state
+  # Check Remote Processor State
   cat /sys/class/remoteproc/remoteproc0/state
 
-  # load rpmsg_char driver
+  # Load rpmsg_char Driver
   modprobe rpmsg_char
 
-  # load rpmsg_ctrl driver
+  # Load rpmsg_ctrl Driver
   modprobe rpmsg_ctrl
 
-  # Run echo_test application on host processor
+  # Run echo_test Application on Host Processor
   rpmsg_echo_test
 
-  # unload rpmsg_ctrl driver
+  # Unload rpmsg_ctrl Driver
   modprobe -r rpmsg_ctrl
 
-  #unload rpmsg_char driver
+  #unload rpmsg_char Driver
   modprobe -r rpmsg_char
 
-  # Stop remote processor
+  # Stop Remote Processor
   echo stop > /sys/class/remoteproc/remoteproc0/state
   ```

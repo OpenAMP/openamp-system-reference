@@ -35,13 +35,13 @@ cmake . -Bbuild -DCMAKE_INSTALL_PREFIX=$PROJECT_ROOT/target
 make -C build VERBOSE=1 install
 ```
 
-### Build open_amp
+### Build open-amp
 ```shell
 cd $PROJECT_ROOT/open-amp
 cmake . -Bbuild -DCMAKE_INCLUDE_PATH=$PROJECT_ROOT/libmetal/build/lib/include/   -DCMAKE_LIBRARY_PATH=$PROJECT_ROOT/libmetal/build/lib/ -DCMAKE_INSTALL_PREFIX=$PROJECT_ROOT/target
 make -C build VERBOSE=1 install
 ```
-### Build legacy Apps
+### Build Legacy Apps
 ```shell
 cd $PROJECT_ROOT/openamp-system-reference/examples/legacy_apps
 cmake -Bbuild \

@@ -1,4 +1,4 @@
-# Demo: proxy app
+# Demo: Proxy App
 
   This app demonstrates two functionality
   1) Use of host processor's file system by remote processor
@@ -42,7 +42,7 @@
 
   Board: ZynqMP Zcu102
 
-  ## Remote Processor firmware (image_rpc_demo)
+  ## Remote Processor Firmware (image_rpc_demo)
 
   * Remote processor firmware for Xilinx ZynqMP cortex-r5 platform based on: [rpc_demo.c](https://github.com/OpenAMP/open-amp/blob/main/apps/examples/rpc_demo/rpc_demo.c)
 
@@ -54,32 +54,32 @@
 
   * More information is provided here: [Xilinx Wiki page for OpenAMP](https://xilinx-wiki.atlassian.net/wiki/spaces/A/pages/18841718/OpenAMP)
 
-  ## Run the demo
+  ## Run the Demo
 
   Assume all the binaries are zcu102 board specific.
 
   ```shell
-  # Specify remote processor firmware to be loaded.
+  # Specify Remote Processor Firmware to Be Loaded.
   echo image_rpc_demo > /sys/class/remoteproc/remoteproc0/firmware
 
-  # Load and start target Firmware onto remote processor.
+  # Load and Start Target Firmware Onto Remote Processor.
   echo start > /sys/class/remoteproc/remoteproc0/state
 
-  # load rpmsg_char driver
+  # Load rpmsg_char Driver
   modprobe rpmsg_char
 
-  # load rpmsg_ctrl driver
+  # Load rpmsg_ctrl Driver
   modprobe rpmsg_ctrl
 
-  # Run proxy application.
+  # Run Proxy Application.
   rpmsg_proxy_app
 
-  # unload rpmsg_ctrl driver
+  # Unload rpmsg_ctrl Driver
   modprobe -r rpmsg_ctrl
 
-  #unload rpmsg_char driver
+  #unload rpmsg_char Driver
   modprobe -r rpmsg_char
 
-  # Stop target firmware
+  # Stop Target Firmware
   echo stop > /sys/class/remoteproc/remoteproc0/state
   ```

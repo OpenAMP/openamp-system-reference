@@ -18,7 +18,7 @@ Add cmake option `-DWITH_PROXY_APPS=ON` to build the system reference demonstrat
 If you are perusing the github repository refer to the `legacy_apps README.md <../../README.md>`_
 for compilation information.
 
-Run demonstration on a Linux PC
+Run Demonstration on a Linux PC
 *******************************
 
 * Start rpc demo server on one console

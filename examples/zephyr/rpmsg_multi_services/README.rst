@@ -27,7 +27,7 @@ Tested on board:
 * `imx95_evk/mimx9596/m7        <https://docs.zephyrproject.org/latest/boards/nxp/imx95_evk/doc/index.html>`_
 
 
-Building the application
+Building the Application
 *************************
 
 .. include:: ../README.md
@@ -59,7 +59,7 @@ Enable:
 fulfill these requirements as do the `OpenAMP demo images <https://github.com/OpenAMP/openamp-demo/releases>`_
 and the `OpenAMP demo docker images <https://openamp.readthedocs.io/en/latest/demos/docker_images.html>`_.
 
-Running the sample
+Running the Sample
 *******************
 
 The demo1 script (
@@ -68,7 +68,7 @@ or for `zynqmp <https://github.com/OpenAMP/openamp-demo/blob/main/demos/demo-stm
 in the demo images run this demo. The section below can be used to run the demo manually or to
 better understand what is going on.
 
-Zephyr console
+Zephyr Console
 ==============
 
 Open a serial terminal (minicom, putty, etc.) and connect the board with the
@@ -81,7 +81,7 @@ following settings:
 
 Reset the board.
 
-Linux console
+Linux Console
 =============
 
 Open a Linux shell (minicom, ssh, etc.)
@@ -102,7 +102,7 @@ Then start the firmware:
   echo rpmsg_multi_services.elf > /sys/class/remoteproc/remoteproc0/firmware
   echo start >/sys/class/remoteproc/remoteproc0/state
 
-Result on Zephyr console on boot
+Result on Zephyr Console on Boot
 ================================
 
 The following messages will appear on the corresponding Zephyr console
@@ -185,7 +185,7 @@ in the remoteproc trace buffer depending on the Hardware.
    OpenAMP Linux sample client responder ended
 
 
-Demo 1: rpmsg-client-sample device
+Demo 1: rpmsg-client-sample Device
 ==================================
 
 Demo 1 Principle
@@ -199,7 +199,7 @@ Demo 1 Principle
   processor, which answers to each message. After answering to each rpmsgs the Zephyr destroys the
   channel.
 
-Associated traces
+Associated Traces
 -----------------
 
   .. code-block:: console
@@ -218,7 +218,7 @@ Associated traces
      [   55.469707] rpmsg_client_sample virtio0.rpmsg-client-sample.-1.1024: rpmsg sample client driver is removed
 
 
-Demo 2: rpmsg-tty device
+Demo 2: rpmsg-tty Device
 ========================
 
 Demo 2 Principle
@@ -271,7 +271,7 @@ Demo 2 Instructions
 
      TTY 0: Goodbye Zephyr
 
-Demo 3: dynamic creation/release of a rpmsg-tty device
+Demo 3: Dynamic Creation/Release of a rpmsg-tty Device
 ======================================================
 
 Demo 3 Principle
@@ -426,7 +426,7 @@ Demo 3 Instructions
 
   The /dev/ttyRPMGx devices no more exists
 
-Demo 4: rpmsg-char device
+Demo 4: rpmsg-char Device
 =========================
 
 Demo 4 Principle
@@ -482,7 +482,7 @@ Demo 4 Instructions
 
      message for /dev/rpmsg0: "from ept 0x0402: ping /dev/rpmsg0"
 
-Demo 5: Multi endpoints demo using rpmsg-ctrl device
+Demo 5: Multi Endpoints Demo Using rpmsg-ctrl Device
 ====================================================
 
 Demo 5 Principle
