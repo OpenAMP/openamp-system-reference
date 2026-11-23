@@ -23,7 +23,7 @@ See `README.md <../../README.md>`_ for details.
 Linux Compilation
 =================
 
-Linux kernel Compilation
+Linux Kernel Compilation
 ------------------------
 
 Enable the `CONFIG_SAMPLE_RPMSG_CLIENT` to build the `rpmsg_sample_client` module
@@ -33,7 +33,7 @@ Linux Userspace Compilation
 
 See `README.md <../../README.md>`_ to generate the `rpmsg-sample-ping` application.
 
-Run demonstration on a Linux PC
+Run Demonstration on a Linux PC
 *******************************
 
 It is possible to run the application on a Linux PC to communicate between two Linux processes.

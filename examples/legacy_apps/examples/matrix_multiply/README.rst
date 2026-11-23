@@ -14,7 +14,7 @@ Compilation
 If you are perusing the github repository refer to the `legacy_apps README.md <../../README.md>`_
 for compilation information.
 
-Run demonstration on a Linux PC
+Run Demonstration on a Linux PC
 *******************************
 
 It is possible to run the application on a Linux PC to communicate between two Linux processes.

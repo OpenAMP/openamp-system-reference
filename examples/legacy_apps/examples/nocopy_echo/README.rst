@@ -10,7 +10,7 @@ Compilation
 
 See `README.md <../../README.md>`_ for details.
 
-Run demonstration on a Linux PC
+Run Demonstration on a Linux PC
 *******************************
 
 It is possible to run the application on a Linux PC to communicate between two Linux processes.

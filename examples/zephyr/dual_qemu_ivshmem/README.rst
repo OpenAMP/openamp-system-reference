@@ -1,4 +1,4 @@
-OpenAMP RPMSG over IVSHMEM system reference sample
+OpenAMP RPMSG Over IVSHMEM System Reference Sample
 ##################################################
 This application sample implements an RPMSg echo communication between
 two QEMU instances based on the ARM Cortex A53 CPU, to use the RPMsg protocol
@@ -29,7 +29,7 @@ QEMU source tree.
 Optionally the ivshmem-client, if available, can help to troubleshoot the
 IVSHMEM communication between QEMU instances.
 
-Preparing IVSHMEM server before doing anything:
+Preparing IVSHMEM Server Before Doing Anything:
 ***********************************************
 
 #. The ivshmem-server utillity for QEMU can be found into the zephyr sdk
@@ -102,7 +102,7 @@ For the remote instance, just go to the remote side directory in another termina
       cd path/to/this-repo/examples/zephyr/dual_qemu_ivshmem/remote
       west build -t run
 
-Expected output:
+Expected Output:
 ****************
 After running both host and remote QEMU instances in their own terminal tabs, and
 in the ``RIGHT ORDER``, that is it, first the host instance followed by remote instance
@@ -263,7 +263,7 @@ for example shutdown the remote side unexpectedly:
 
       Remote side response timed out!
 
-Known limitation:
+Known Limitation:
 *****************
 The limitation of this sample is in respect to the instances shutdown, if for some
 reason host side or remote side get turned-off it ``MUST NOT`` be reinitialized individually,

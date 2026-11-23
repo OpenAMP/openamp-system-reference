@@ -22,7 +22,7 @@ cd my-workspace
 west update
 ```
 
-### Build and run on a board
+### Build and Run on a Board
 
 The application can be built by running:
 
@@ -45,7 +45,7 @@ Example to compile rpmsg_multi_services on stm32mp157 discovery board:
 west build -b stm32mp157c_dk2 openamp-system-reference/examples/zephyr/rpmsg_multi_services
 ```
 
-### Running on a board
+### Running on a Board
 
 We consider here board on which the Zephyr image is running on a coprocessor.
 
