@@ -28,17 +28,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/ioctl.h>
-
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <poll.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+/* rpmsg_hdr.len is 16-bit; buffer size itself is configurable via virtio config space */
+#define RPMSG_MAX_MESSAGE_SIZE UINT16_MAX
 
 static void usage(void)
 {
@@ -48,46 +47,9 @@ static void usage(void)
 	exit(1);
 }
 
-static ssize_t pending_message_size(int fd)
-{
-	struct pollfd pfd = {
-		.fd = fd,
-		.events = POLLIN,
-	};
-	int pending = 0;
-	int ret;
-
-	/*
-	 * The rpmsg char device is message-oriented, so size the receive
-	 * buffer from the next pending message instead of assuming the
-	 * default 512-byte vring buffer.
-	 */
-	ret = poll(&pfd, 1, -1);
-	if (ret < 0)
-		return -1;
-
-	if (!(pfd.revents & POLLIN)) {
-		errno = EIO;
-		return -1;
-	}
-
-	ret = ioctl(fd, FIONREAD, &pending);
-	if (ret < 0)
-		return -1;
-
-	if (pending <= 0) {
-		errno = EIO;
-		return -1;
-	}
-
-	return pending;
-}
-
 int main(int argc, char **argv)
 {
 	char *buffer;
-	size_t buffer_size;
-	ssize_t pending;
 	int ret;
 	int fd;
 
@@ -98,13 +60,12 @@ int main(int argc, char **argv)
 	if (fd < 0)
 		err(1, "failed to open %s\n", argv[1]);
 
-	buffer_size = strlen("ping ") + strlen(argv[1]) + 1;
-	buffer = malloc(buffer_size);
+	buffer = malloc(RPMSG_MAX_MESSAGE_SIZE + 1);
 	if (!buffer)
 		err(1, "failed to allocate message buffer");
 
-	ret = snprintf(buffer, buffer_size, "ping %s",  argv[1]);
-	if (ret < 0 || (size_t)ret >= buffer_size)
+	ret = snprintf(buffer, RPMSG_MAX_MESSAGE_SIZE + 1, "ping %s",  argv[1]);
+	if (ret < 0 || ret > RPMSG_MAX_MESSAGE_SIZE)
 		errx(1, "failed to format ping message for %s", argv[1]);
 
 	ret = write(fd, buffer, (size_t)ret);
@@ -114,25 +75,14 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-	pending = pending_message_size(fd);
-	if (pending < 0)
-		err(1, "failed to query pending message size for %s", argv[1]);
-
-	if ((size_t)pending + 1 > buffer_size) {
-		buffer_size = (size_t)pending + 1;
-		buffer = realloc(buffer, buffer_size);
-		if (!buffer)
-			err(1, "failed to grow message buffer");
-	}
-
-	ret = read(fd, buffer, (size_t)pending);
+	ret = read(fd, buffer, RPMSG_MAX_MESSAGE_SIZE);
 	if (ret < 0) {
 		fprintf(stderr, "failed to read endpoint %s", argv[1]);
 		free(buffer);
 		exit(1);
 	}
 	buffer[ret] = '\0';
-	fprintf(stderr, "message received: \"%.*s\"\n", (int)ret, buffer);
+	fprintf(stderr, "message received: \"%.*s\"\n", ret, buffer);
 
 	close(fd);
 	free(buffer);
