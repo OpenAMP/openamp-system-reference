@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (C) 2025 Advanced Micro Devices, Inc.  All rights reserved.
+* Copyright (C) 2025-2026 Advanced Micro Devices, Inc.  All rights reserved.
 * SPDX-License-Identifier: MIT
 ******************************************************************************/
 
@@ -23,23 +23,40 @@ SECTIONS
 .vectors : {
    KEEP (*(.vectors))
    *(.boot)
-} > psv_r5_0_atcm_MEM_0
+} > @VECTORS@
 
 /*
  * This section must be at the start of Shared memory (here DDR)
  * between APU and RPU. This is special shared memory to store firmware
  * text/data.
  */
-.resource_table_metadata @RSC_TABLE@ : {
+.resource_table_metadata ORIGIN(@RSC_TABLE_REGION@) : {
 	KEEP(*(.resource_table_metadata))
-} > @DDR@
+} > @RSC_TABLE_REGION@
 
-.resource_table @RSC_TABLE@ + 0x100 : {
-. = ALIGN(4);
-*(.resource_table)
-} > @DDR@
+.resource_table ORIGIN(@RSC_TABLE_REGION@) + 0x100 : {
+	. = ALIGN(4);
+	*(.resource_table)
+} > @RSC_TABLE_REGION@
 
-.text @RSC_TABLE@ + 0x200 : {
+/* Large newlib formatting and allocator helpers can overflow ATCM in the
+ * legacy OpenAMP demos. Keep the main runtime/demo text in @CODE@ and place
+ * these bulky libc slow paths in the secondary region selected by @RODATA@.
+ */
+.text_libc_large : {
+   *libc.a:libc_a-svfprintf.o(.text .text.*)
+   *libc.a:libc_a-vfiprintf.o(.text .text.*)
+   *libc.a:libc_a-dtoa.o(.text .text.*)
+   *libc.a:libc_a-mprec.o(.text .text.*)
+   *libc.a:libc_a-mallocr.o(.text .text.*)
+   *libc.a:libc_a-findfp.o(.text .text.*)
+   *libc.a:libc_a-fvwrite.o(.text .text.*)
+   *libc.a:libc_a-fflush.o(.text .text.*)
+   *libc.a:libc_a-freer.o(.text .text.*)
+   *libc.a:libc_a-reallocr.o(.text .text.*)
+} > @RODATA@
+
+.text : {
    *(.text)
    *(.text.*)
    *(.gnu.linkonce.t.*)
@@ -51,22 +68,22 @@ SECTIONS
    *(.vfp11_veneer)
    *(.ARM.extab)
    *(.gnu.linkonce.armextab.*)
-} > @DDR@
+} > @CODE@
 
 .init : {
    KEEP (*(.init))
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .fini : {
    KEEP (*(.fini))
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .interp : {
    KEEP (*(.interp))
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 .note-ABI-tag : {
    KEEP (*(.note-ABI-tag))
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .rodata : {
    __rodata_start = .;
@@ -74,14 +91,14 @@ SECTIONS
    *(.rodata.*)
    *(.gnu.linkonce.r.*)
    __rodata_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @RODATA@
 
 .rodata1 : {
    __rodata1_start = .;
    *(.rodata1)
    *(.rodata1.*)
    __rodata1_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @RODATA@
 
 .sdata2 : {
    __sdata2_start = .;
@@ -89,7 +106,7 @@ SECTIONS
    *(.sdata2.*)
    *(.gnu.linkonce.s2.*)
    __sdata2_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @RODATA@
 
 .sbss2 : {
    __sbss2_start = .;
@@ -97,7 +114,7 @@ SECTIONS
    *(.sbss2.*)
    *(.gnu.linkonce.sb2.*)
    __sbss2_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @RODATA@
 
 .data : {
    __data_start = .;
@@ -108,18 +125,18 @@ SECTIONS
    *(.got)
    *(.got.plt)
    __data_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .data1 : {
    __data1_start = .;
    *(.data1)
    *(.data1.*)
    __data1_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .got : {
    *(.got)
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .ctors : {
    __CTOR_LIST__ = .;
@@ -130,7 +147,7 @@ SECTIONS
    KEEP (*(.ctors))
    __CTOR_END__ = .;
    ___CTORS_END___ = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .dtors : {
    __DTOR_LIST__ = .;
@@ -141,67 +158,67 @@ SECTIONS
    KEEP (*(.dtors))
    __DTOR_END__ = .;
    ___DTORS_END___ = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .fixup : {
    __fixup_start = .;
    *(.fixup)
    __fixup_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .eh_frame : {
    *(.eh_frame)
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .eh_framehdr : {
    __eh_framehdr_start = .;
    *(.eh_framehdr)
    __eh_framehdr_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .gcc_except_table : {
    *(.gcc_except_table)
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .mmu_tbl (ALIGN(16384)) : {
    __mmu_tbl_start = .;
    *(.mmu_tbl)
    __mmu_tbl_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .ARM.exidx : {
    __exidx_start = .;
    *(.ARM.exidx*)
    *(.gnu.linkonce.armexidix.*.*)
    __exidx_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .preinit_array : {
    __preinit_array_start = .;
    KEEP (*(SORT(.preinit_array.*)))
    KEEP (*(.preinit_array))
    __preinit_array_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .init_array : {
    __init_array_start = .;
    KEEP (*(SORT(.init_array.*)))
    KEEP (*(.init_array))
    __init_array_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .fini_array : {
    __fini_array_start = .;
    KEEP (*(SORT(.fini_array.*)))
    KEEP (*(.fini_array))
    __fini_array_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .ARM.attributes : {
    __ARM.attributes_start = .;
    *(.ARM.attributes)
    __ARM.attributes_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .sdata : {
    __sdata_start = .;
@@ -209,7 +226,7 @@ SECTIONS
    *(.sdata.*)
    *(.gnu.linkonce.s.*)
    __sdata_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .sbss (NOLOAD) : {
    __sbss_start = .;
@@ -217,7 +234,7 @@ SECTIONS
    *(.sbss.*)
    *(.gnu.linkonce.sb.*)
    __sbss_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .tdata : {
    __tdata_start = .;
@@ -225,7 +242,7 @@ SECTIONS
    *(.tdata.*)
    *(.gnu.linkonce.td.*)
    __tdata_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .tbss : {
    __tbss_start = .;
@@ -233,7 +250,7 @@ SECTIONS
    *(.tbss.*)
    *(.gnu.linkonce.tb.*)
    __tbss_end = .;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 .bss (NOLOAD) : {
    . = ALIGN(4);
@@ -244,7 +261,7 @@ SECTIONS
    *(COMMON)
    . = ALIGN(4);
    __bss_end__ = .;
-} > @DDR@
+} > @BSS@
 
 _SDA_BASE_ = __sdata_start + ((__sbss_end - __sdata_start) / 2 );
 
@@ -261,7 +278,7 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
    . += _HEAP_SIZE;
    _heap_end = .;
    HeapLimit = .;
-} > psv_r5_0_btcm_MEM_0
+} > @HEAP@
 
 .stack (NOLOAD) : {
    . = ALIGN(16);
@@ -289,7 +306,7 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
    . += _UNDEF_STACK_SIZE;
    . = ALIGN(16);
    __undef_stack = .;
-} > psv_r5_0_btcm_MEM_0
+} > @STACK@
 
 .drvcfg_sec : {
     . = ALIGN(8);
@@ -297,7 +314,7 @@ _SDA2_BASE_ = __sdata2_start + ((__sbss2_end - __sdata2_start) / 2 );
     KEEP (*(.drvcfg_sec))
     __drvcfgsecdata_end = .;
     __drvcfgsecdata_size = __drvcfgsecdata_end - __drvcfgsecdata_start;
-} > psv_r5_0_btcm_MEM_0
+} > @DATA@
 
 
 end = .;
